@@ -79,6 +79,7 @@ class MainWindow(QMainWindow):
 		self.editDetectAction = self.createAction(detect, self.editDetect, None, "blank1", detect, True)
 		self.editAbjustAction = self.createAction(adjust, self.editabjust, None, "blank2", adjust, True)
 		self.editAreaAction = self.createAction(area, self.editarea, None, "blank3", area, False)
+		self.editAreaActionHE = self.createAction(area, self.editareaHE, None, "blank3", area, False)
 		self.editAverAction = self.createAction(aver, self.editAver, None, "blank4", aver, True)
 		self.editPointAnnoAction = self.createAction(pointanno, self.editPointAnno, QKeySequence.Paste, "polygon",
 		                                             pointanno, True)
@@ -108,7 +109,8 @@ class MainWindow(QMainWindow):
 		editAnno.setIcon(QIcon(":/anno.png"))
 		self.addActions(editAnno, (self.editPointAnnoAction, self.editRectAnnoAction, self.editElliAnnoAction))
 		self.addActions(editMason, (self.editSegAction, self.editAreaAction))
-		self.addActions(editHe, (self.editAbjustAction, self.editDetectAction, self.editAverAction))
+		self.addActions(editHe,
+		                (self.editAbjustAction, self.editDetectAction, self.editAverAction, self.editAreaActionHE))
 		# 帮助菜单
 		helpMenu = self.menuBar().addMenu("&帮助")
 		helpMenu.addAction(helpAboutAction)
@@ -130,8 +132,8 @@ class MainWindow(QMainWindow):
 		editToolbar = self.addToolBar("Edit")
 		editToolbar.setObjectName("EditToolBar")
 		self.addActions(editToolbar, (
-		self.editSegAction, self.editAreaAction, None, self.editAbjustAction, self.editDetectAction,
-		self.editAverAction, None))
+			self.editSegAction, self.editAreaAction, None, self.editAbjustAction, self.editDetectAction,
+			self.editAverAction, None))
 		# 标注显示工具条
 		self.annoshowToolbar = self.addToolBar('Annos')
 		self.annoshowToolbar.setObjectName("annoshowToolbar")
@@ -146,7 +148,8 @@ class MainWindow(QMainWindow):
 		self.changeGroup = (self.annoMenu, None, self.masonMenu, self.heMenu)
 		self.addActions(self.annoMenu, (self.editPointAnnoAction, self.editRectAnnoAction, self.editElliAnnoAction))
 		self.addActions(self.masonMenu, (self.editSegAction, self.editAreaAction))
-		self.addActions(self.heMenu, (self.editAbjustAction, self.editDetectAction, self.editAverAction))
+		self.addActions(self.heMenu,
+		                (self.editAbjustAction, self.editDetectAction, self.editAverAction, self.editAreaActionHE))
 		self.addActions(self.imageLabelMenu, self.changeGroup)
 		self.imageLabelMenu.aboutToHide.connect(self.mouserelease)
 		
@@ -358,6 +361,7 @@ class MainWindow(QMainWindow):
 				return
 		if fname:
 			self.filename = None
+			# open slide
 			self.slide = openslide.open_slide(fname)
 			if self.slide is None:
 				message = "Failed to read %s" % fname
@@ -454,9 +458,9 @@ class MainWindow(QMainWindow):
 		if self.picture.thumbnail.geometry().contains(
 				event.pos() - self.imageLabel.pos()) and event.button() == Qt.LeftButton:
 			x = (
-						    event.pos().x() - self.imageLabel.pos().x() - self.picture.thumbnail.geometry().x()) * self.geshi.wa / self.picture.thumbnail.geometry().width()
+					    event.pos().x() - self.imageLabel.pos().x() - self.picture.thumbnail.geometry().x()) * self.geshi.wa / self.picture.thumbnail.geometry().width()
 			y = (
-						    event.pos().y() - self.imageLabel.pos().y() - self.picture.thumbnail.geometry().y()) * self.geshi.ha / self.picture.thumbnail.geometry().height()
+					    event.pos().y() - self.imageLabel.pos().y() - self.picture.thumbnail.geometry().y()) * self.geshi.ha / self.picture.thumbnail.geometry().height()
 			self.geshi.setx(x)
 			self.geshi.sety(y)
 			self.showImage(True)
@@ -790,7 +794,9 @@ class MainWindow(QMainWindow):
 						self.annotation.list[len(self.annotation.list) - 1].setColor('#238E23')
 		self.ifabjust = self.checkableaction(self.ifabjust, abjust, self.editAbjustAction, arg)
 	
+	# 分区密度处理
 	def editarea(self):
+		print "called"
 		for i in self.annotation.list:
 			if i.name.split(":")[0] == 'density':
 				i.hide()
@@ -812,7 +818,8 @@ class MainWindow(QMainWindow):
 		fibrosis = cv2.inRange(hsv, (90, 20, 0), (150, 255, 255))
 		
 		averagegreyimg = cv2.blur(greyimg, (30, 30))
-		
+		cv2.imshow("average grey img", averagegreyimg)
+
 		ret, erode = cv2.threshold(averagegreyimg, 120, 255, cv2.THRESH_BINARY)
 		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 		erode = cv2.erode(erode, kernel, iterations=15)
@@ -821,6 +828,9 @@ class MainWindow(QMainWindow):
 		averimage, avercnts, averhierarchy = cv2.findContours(averimage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 		
 		image, cnts, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+		cv2.imshow("contour after erosion", image)
+		
+		
 		object = []
 		maxarea = 0
 		max = None
@@ -846,6 +856,7 @@ class MainWindow(QMainWindow):
 			if i != max:
 				other = cv2.add(other, object[i])
 		
+		# 通过矩moments计算重心
 		M1 = cv2.moments(wall)
 		cx1 = int(M1["m10"] / M1["m00"])
 		cy1 = int(M1["m01"] / M1["m00"])
@@ -867,7 +878,11 @@ class MainWindow(QMainWindow):
 		
 		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 		wall = cv2.dilate(wall, kernel, iterations=15)
+		cv2.imshow("wall", wall)
+		
 		other = cv2.dilate(other, kernel, iterations=15)
+		cv2.imshow("other", other)
+		
 		image, contours, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		image1, contours1, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		points = cv2.approxPolyDP(contours[0], 15, True)
@@ -975,7 +990,7 @@ class MainWindow(QMainWindow):
 				pr = pr + 1
 			if pl >= 0 and pr < len(xlist):
 				y = (xlist[pl][1]) * (xlist[pr][0] - xlist[i][0]) / (xlist[pr][0] - xlist[pl][0]) + (xlist[pr][1]) * (
-							xlist[i][0] - xlist[pl][0]) / (xlist[pr][0] - xlist[pl][0])
+						xlist[i][0] - xlist[pl][0]) / (xlist[pr][0] - xlist[pl][0])
 				addPoints[n].append([[int(xlist[i][0]), int((xlist[i][1] - y) / 3 + y)]])
 				addPoints[m].append([[int(xlist[i][0]), int((xlist[i][1] - y) * 2 / 3 + y)]])
 			elif pl < 0:
@@ -1032,8 +1047,8 @@ class MainWindow(QMainWindow):
 		
 		if sqrt((box1[0][0] - otherline[0][0][0]) * (box1[0][0] - otherline[0][0][0]) + (
 				box1[0][1] - otherline[0][0][1]) * (box1[0][1] - otherline[0][0][1])) > sqrt(
-				(box1[1][0] - otherline[0][0][0]) * (box1[1][0] - otherline[0][0][0]) + (
-						box1[1][1] - otherline[0][0][1]) * (box1[1][1] - otherline[0][0][1])):
+			(box1[1][0] - otherline[0][0][0]) * (box1[1][0] - otherline[0][0][0]) + (
+					box1[1][1] - otherline[0][0][1]) * (box1[1][1] - otherline[0][0][1])):
 			otherline.append([[box1[0][0], box1[0][1]]])
 			otherline.append([[box1[1][0], box1[1][1]]])
 		else:
@@ -1120,6 +1135,324 @@ class MainWindow(QMainWindow):
 			self.ifrectanno = False
 			self.editPointAnnoAction.setChecked(False)
 			self.editRectAnnoAction.setChecked(False)
+	
+	def editareaHE(self):
+		print "called editHE"
+		for i in self.annotation.list:
+			if i.name.split(":")[0] == 'density':
+				i.hide()
+				i.deleting()
+				del i
+		self.canchange = []
+		n = 21
+		if self.geshi.la > 4:
+			level = self.geshi.la - 4
+		else:
+			level = self.geshi.la - 1
+		workingDimensions = self.slide.level_dimensions[level]
+		img = np.array(self.slide.read_region((0, 0), level, workingDimensions))
+		
+		b, g, r, a = cv2.split(img)
+		rgbimg = cv2.merge((r, g, b))
+		hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+		# greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 180))
+		greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
+		fibrosis = cv2.inRange(hsv, (90, 20, 0), (150, 255, 255))
+		# cv2.imshow("fibrosis",fibrosis)
+		averagegreyimg = cv2.blur(greyimg, (30, 30))
+		# cv2.imshow('average grey img', averagegreyimg)
+		# cv2.imwrite("test/HE/average_grey_img.jpg", averagegreyimg)
+		
+		ret, erode = cv2.threshold(averagegreyimg, 120, 255, cv2.THRESH_BINARY)
+		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
+		erode = cv2.erode(erode, kernel, iterations=3)
+		# cv2.imshow("after erosion", erode)
+		# cv2.imwrite("test/HE/after_erosion.jpg", erode)
+
+
+		# cv2.imshow("")
+		#  多次腐蚀，除去小梁
+		
+		ret, averimage = cv2.threshold(averagegreyimg, 120, 255, cv2.THRESH_BINARY)
+		averimage, avercnts, averhierarchy = cv2.findContours(averimage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+		# cv2.imshow("aver image", averimage)
+
+		# 得到整体的边界
+		
+		image, cnts, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+		# cv2.imshow("contour after erosion", erode)
+		# 腐蚀后的边界
+		
+		object = []
+		maxarea = 0
+		max = None
+		
+		for cnt in cnts:
+			area = cv2.contourArea(cnt)
+			if area > 100:
+				points = []
+				for i in cnt:
+					x = i[0][0]
+					y = i[0][1]
+					points.append([x, y])
+				i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+				cv2.fillPoly(i, np.array([points], np.int32), 255)
+				object.append(i)
+				if area > maxarea:
+					maxarea = area
+					max = len(object) - 1
+		wall = object[max]
+		# 把每一个区域都分割出来，最大的心肌壁
+		
+		other = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+		for i in range(0, len(object)):
+			if i != max:
+				other = cv2.add(other, object[i])
+		
+		# 通过矩moments计算重心
+		M1 = cv2.moments(wall)
+		cx1 = int(M1["m10"] / M1["m00"])
+		cy1 = int(M1["m01"] / M1["m00"])
+		
+		M0 = cv2.moments(other)
+		cx0 = int((M0["m10"]) / (M0["m00"]))
+		cy0 = int((M0["m01"]) / (M0["m00"]))
+		
+		if cx0 - cx1 == 0:
+			if cy0 - cy1 > 0:
+				baseangle = 90
+			else:
+				baseangle = -90
+		else:
+			if cx0 - cx1 > 0:
+				baseangle = 180 * math.atan(-(cy0 - cy1) / (cx0 - cx1)) / math.pi
+			else:
+				baseangle = 180 + 180 * math.atan(-(cy0 - cy1) / (cx0 - cx1)) / math.pi
+		
+		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
+		wall = cv2.dilate(wall, kernel, iterations=15)
+		# cv2.imshow("wall", wall)
+		other = cv2.dilate(other, kernel, iterations=15)
+		# cv2.imshow("other", other)
+		
+		image, contours, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		image1, contours1, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		points = cv2.approxPolyDP(contours[0], 15, True)
+		points1 = []
+		for i in contours1:
+			for j in i:
+				points1.append(j)
+		points1 = np.array(points1)
+		
+		rect = cv2.minAreaRect(points)
+		rect1 = cv2.minAreaRect(points1)
+		# 最小外切矩形
+		
+		rect = (rect[0], rect[1], -rect[2])
+		if (math.fabs(rect[2] - baseangle) % 360) < 45 or (math.fabs(rect[2] - baseangle) % 360) > 135:
+			angle = 90 - rect[2]
+			width = rect[1][1]
+			height = rect[1][0]
+		else:
+			angle = rect[2]
+			width = rect[1][0]
+			height = rect[1][1]
+		points = rotatePoints(points, rect[0], -angle)
+		
+		for i in avercnts:
+			averpoints = rotatePoints(i, rect[0], -angle)
+		
+		notheightPoints = [[], []]
+		for i in range(0, len(points)):
+			if points[i][0][1] - rect[0][1] > height / 5:
+				notheightPoints[0].append(points[i])
+			else:
+				if points[i][0][1] - rect[0][1] < -height / 5:
+					notheightPoints[1].append(points[i])
+		
+		avery0 = 0
+		for i in range(0, len(notheightPoints[0])):
+			avery0 = avery0 + notheightPoints[0][i][0][1]
+		avery0 = avery0 / len(notheightPoints[0])
+		avery1 = 0
+		for i in range(0, len(notheightPoints[1])):
+			avery1 = avery1 + notheightPoints[1][i][0][1]
+		avery1 = avery1 / len(notheightPoints[1])
+		
+		if (baseangle % 360) < 180:
+			if avery1 < avery0:
+				abc = notheightPoints[0]
+				notheightPoints[0] = notheightPoints[1]
+				notheightPoints[1] = abc
+		else:
+			if avery1 > avery0:
+				abc = notheightPoints[0]
+				notheightPoints[0] = notheightPoints[1]
+				notheightPoints[1] = abc
+		
+		nothei1 = []
+		for i in avercnts:
+			for j in i:
+				distance0 = 100000
+				for k in notheightPoints[0]:
+					distance = math.sqrt(
+						(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
+					if distance < distance0:
+						distance0 = distance
+				distance1 = 100000
+				for k in notheightPoints[1]:
+					distance = math.sqrt(
+						(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
+					if distance < distance1:
+						distance1 = distance
+				if distance1 < distance0 / 2:
+					nothei1.append(j)
+		
+		notheightPoints[1] = nothei1
+		
+		for i in range(0, len(notheightPoints[0])):
+			notheightPoints[0][i] = [notheightPoints[0][i][0][0], notheightPoints[0][i][0][1]]
+		for i in range(0, len(notheightPoints[1])):
+			notheightPoints[1][i] = [notheightPoints[1][i][0][0], notheightPoints[1][i][0][1]]
+		notheightPoints[0].sort()
+		notheightPoints[1].sort()
+		for i in range(0, len(notheightPoints[0])):
+			notheightPoints[0][i] = [[notheightPoints[0][i][0], notheightPoints[0][i][1]]]
+		for i in range(0, len(notheightPoints[1])):
+			notheightPoints[1][i] = [[notheightPoints[1][i][0], notheightPoints[1][i][1]]]
+		
+		xlist = []
+		for i in notheightPoints[0]:
+			xlist.append((i[0][0], i[0][1], 0))
+		for i in notheightPoints[1]:
+			xlist.append((i[0][0], i[0][1], 1))
+		xlist.sort(key=itemgetter(0))
+		
+		addPoints = [[], []]
+		for i in range(0, len(xlist)):
+			pl = i - 1
+			pr = i + 1
+			if xlist[i][2] == 0:
+				n = 0
+				m = 1
+			else:
+				n = 1
+				m = 0
+			while pl >= 0 and xlist[pl][2] == xlist[i][2]:
+				pl = pl - 1
+			while pr < len(xlist) and xlist[pr][2] == xlist[i][2]:
+				pr = pr + 1
+			if pl >= 0 and pr < len(xlist):
+				y = (xlist[pl][1]) * (xlist[pr][0] - xlist[i][0]) / (xlist[pr][0] - xlist[pl][0]) + (xlist[pr][1]) * (
+						xlist[i][0] - xlist[pl][0]) / (xlist[pr][0] - xlist[pl][0])
+				addPoints[n].append([[int(xlist[i][0]), int((xlist[i][1] - y) / 3 + y)]])
+				addPoints[m].append([[int(xlist[i][0]), int((xlist[i][1] - y) * 2 / 3 + y)]])
+			elif pl < 0:
+				addPoints[n].append([[int(xlist[i][0]), int((xlist[i][1] - xlist[pr][1]) / 3 + xlist[pr][1])]])
+				addPoints[m].append([[int(xlist[i][0]), int((xlist[i][1] - xlist[pr][1]) * 2 / 3 + xlist[pr][1])]])
+			else:
+				addPoints[n].append([[int(xlist[i][0]), int((xlist[i][1] - xlist[pl][1]) / 3 + xlist[pl][1])]])
+				addPoints[m].append([[int(xlist[i][0]), int((xlist[i][1] - xlist[pl][1]) * 2 / 3 + xlist[pl][1])]])
+		
+		notheightPoints[0] = rotatePoints(notheightPoints[0], rect[0], angle)
+		notheightPoints[1] = rotatePoints(notheightPoints[1], rect[0], angle)
+		addPoints[0] = rotatePoints(addPoints[0], rect[0], angle)
+		addPoints[1] = rotatePoints(addPoints[1], rect[0], angle)
+		
+		m = cv2.moments(numpy.array(notheightPoints[1]))
+		cx1 = int(m["m10"] / m["m00"])
+		cy1 = int(m["m01"] / m["m00"])
+		
+		addPoints[1].reverse()
+		notheightPoints[1].reverse()
+		first = notheightPoints[0] + addPoints[1]
+		second = addPoints[0] + addPoints[1]
+		third = addPoints[0] + notheightPoints[1]
+		
+		i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+		firstmask = cv2.fillPoly(i, np.array([first], np.int32), 255)
+		
+		i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+		secondmask = cv2.fillPoly(i, np.array([second], np.int32), 255)
+		
+		i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+		thirdmask = cv2.fillPoly(i, np.array([third], np.int32), 255)
+		
+		firstdensity = areaaveragedensity(fibrosis, greyimg, firstmask)
+		seconddensity = areaaveragedensity(fibrosis, greyimg, secondmask)
+		thirddensity = areaaveragedensity(fibrosis, greyimg, thirdmask)
+		
+		box1 = cv2.boxPoints(rect1)
+		box1 = np.array(box1)
+		for i in range(0, 2):
+			max = sqrt((box1[i][0] - cx1) * (box1[i][0] - cx1) + (box1[i][1] - cy1) * (box1[i][1] - cy1))
+			n = i
+			for j in range(i, 4):
+				if sqrt((box1[j][0] - cx1) * (box1[j][0] - cx1) + (box1[j][1] - cy1) * (box1[j][1] - cy1)) > max:
+					max = sqrt((box1[j][0] - cx1) * (box1[j][0] - cx1) + (box1[j][1] - cy1) * (box1[j][1] - cy1))
+					n = j
+			k = (box1[i][0], box1[i][1])
+			box1[i] = box1[n]
+			box1[n] = [k[0], k[1]]
+		
+		firstarea = 'Endocardium'
+		thirdarea = 'Epicardium'
+		otherline = notheightPoints[0]
+		
+		if sqrt((box1[0][0] - otherline[0][0][0]) * (box1[0][0] - otherline[0][0][0]) + (
+				box1[0][1] - otherline[0][0][1]) * (box1[0][1] - otherline[0][0][1])) > sqrt(
+			(box1[1][0] - otherline[0][0][0]) * (box1[1][0] - otherline[0][0][0]) + (
+					box1[1][1] - otherline[0][0][1]) * (box1[1][1] - otherline[0][0][1])):
+			otherline.append([[box1[0][0], box1[0][1]]])
+			otherline.append([[box1[1][0], box1[1][1]]])
+		else:
+			otherline.append([[box1[1][0], box1[1][1]]])
+			otherline.append([[box1[0][0], box1[0][1]]])
+		
+		i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+		othermask = cv2.fillPoly(i, np.array([otherline], np.int32), 255)
+		otherdensity = areaaveragedensity(fibrosis, greyimg, othermask)
+		
+		self.annotation.list.append(
+			Annotation(self.imageLabel, self.geshi, firstarea + ':' + str(firstdensity * 100)[0:4] + '%', "Polygon",
+			           self.annotation))
+		for i in first:
+			self.annotation.list[len(self.annotation.list) - 1].list.append(
+				(i[0][0] * self.geshi.bei[level], i[0][1] * self.geshi.bei[level]))
+		self.annotation.list[len(self.annotation.list) - 1].list.append(
+			(first[0][0][0] * self.geshi.bei[level], first[0][0][1] * self.geshi.bei[level]))
+		self.annotation.list[len(self.annotation.list) - 1].ending()
+		self.annotation.list[len(self.annotation.list) - 1].setColor('#FFC0CB')
+		self.annotation.list.append(
+			Annotation(self.imageLabel, self.geshi, 'Midwall:' + str(seconddensity * 100)[0:4] + '%', "Polygon",
+			           self.annotation))
+		for i in second:
+			self.annotation.list[len(self.annotation.list) - 1].list.append(
+				(i[0][0] * self.geshi.bei[level], i[0][1] * self.geshi.bei[level]))
+		self.annotation.list[len(self.annotation.list) - 1].list.append(
+			(second[0][0][0] * self.geshi.bei[level], second[0][0][1] * self.geshi.bei[level]))
+		self.annotation.list[len(self.annotation.list) - 1].ending()
+		self.annotation.list[len(self.annotation.list) - 1].setColor('#000000')
+		self.annotation.list.append(
+			Annotation(self.imageLabel, self.geshi, thirdarea + ':' + str(thirddensity * 100)[0:4] + '%', "Polygon",
+			           self.annotation))
+		for i in third:
+			self.annotation.list[len(self.annotation.list) - 1].list.append(
+				(i[0][0] * self.geshi.bei[level], i[0][1] * self.geshi.bei[level]))
+		self.annotation.list[len(self.annotation.list) - 1].list.append(
+			(third[0][0][0] * self.geshi.bei[level], third[0][0][1] * self.geshi.bei[level]))
+		self.annotation.list[len(self.annotation.list) - 1].ending()
+		self.annotation.list[len(self.annotation.list) - 1].setColor('#32CD32')
+		self.annotation.list.append(
+			Annotation(self.imageLabel, self.geshi, 'Trabecular:' + str(otherdensity * 100)[0:4] + '%', "Polygon",
+			           self.annotation))
+		for i in otherline:
+			self.annotation.list[len(self.annotation.list) - 1].list.append(
+				(i[0][0] * self.geshi.bei[level], i[0][1] * self.geshi.bei[level]))
+		self.annotation.list[len(self.annotation.list) - 1].list.append(
+			(otherline[0][0][0] * self.geshi.bei[level], otherline[0][0][1] * self.geshi.bei[level]))
+		self.annotation.list[len(self.annotation.list) - 1].ending()
+		self.annotation.list[len(self.annotation.list) - 1].setColor('#6495ED')
 
 
 app = QApplication(sys.argv)
@@ -1130,3 +1463,4 @@ app.setWindowIcon(QIcon(":/icon.png"))
 form = MainWindow()
 form.show()
 app.exec_()
+cv2.destroyAllWindows()
