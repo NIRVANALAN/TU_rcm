@@ -60,13 +60,13 @@ for y in range(0, dimension[1] - 1000, 1000):
 		# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 		if firstmask[int((y + 500) / magnify)][int((x + 500) / magnify)] != 0:
 			print x, y
-			region = slide.read_region((x, y), 0, (1000, 1000))
+			region = np.array(slide.read_region((x, y), 0, (1000, 1000)))
 			region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 			hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
 			detect = detectprocess(region, hsv)
 			result[0].append(detect[0])
 			result[1].append(detect[1])
-
+print (sum(result[0]),sum(result[1]))
 # img = numpy.array(slide.read_region((0, 0), level, workingDimensions))
 # grey = cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
 # greyret, greyimg = cv2.threshold(grey, 225, 255, cv2.THRESH_BINARY_INV)
