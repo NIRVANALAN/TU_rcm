@@ -819,7 +819,7 @@ class MainWindow(QMainWindow):
 		
 		averagegreyimg = cv2.blur(greyimg, (30, 30))
 		cv2.imshow("average grey img", averagegreyimg)
-
+		
 		ret, erode = cv2.threshold(averagegreyimg, 120, 255, cv2.THRESH_BINARY)
 		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 		erode = cv2.erode(erode, kernel, iterations=15)
@@ -829,7 +829,6 @@ class MainWindow(QMainWindow):
 		
 		image, cnts, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 		cv2.imshow("contour after erosion", image)
-		
 		
 		object = []
 		maxarea = 0
@@ -1168,15 +1167,14 @@ class MainWindow(QMainWindow):
 		erode = cv2.erode(erode, kernel, iterations=3)
 		# cv2.imshow("after erosion", erode)
 		# cv2.imwrite("test/HE/after_erosion.jpg", erode)
-
-
+		
 		# cv2.imshow("")
 		#  多次腐蚀，除去小梁
 		
 		ret, averimage = cv2.threshold(averagegreyimg, 120, 255, cv2.THRESH_BINARY)
 		averimage, avercnts, averhierarchy = cv2.findContours(averimage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 		# cv2.imshow("aver image", averimage)
-
+		
 		# 得到整体的边界
 		
 		image, cnts, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -1237,9 +1235,9 @@ class MainWindow(QMainWindow):
 		
 		image, contours, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		image1, contours1, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-		points = cv2.approxPolyDP(contours[0], 15, True)
+		points = cv2.approxPolyDP(contours[0], 15, True)  # 主要功能是把一个连续光滑曲线折线化，对图像轮廓点进行多边形拟合。
 		points1 = []
-		for i in contours1:
+		for i in contours1:  # contours1 : other
 			for j in i:
 				points1.append(j)
 		points1 = np.array(points1)
@@ -1248,7 +1246,7 @@ class MainWindow(QMainWindow):
 		rect1 = cv2.minAreaRect(points1)
 		# 最小外切矩形
 		
-		rect = (rect[0], rect[1], -rect[2])
+		rect = (rect[0], rect[1], -rect[2])  # ?
 		if (math.fabs(rect[2] - baseangle) % 360) < 45 or (math.fabs(rect[2] - baseangle) % 360) > 135:
 			angle = 90 - rect[2]
 			width = rect[1][1]
