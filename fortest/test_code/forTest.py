@@ -52,6 +52,7 @@ print firstmask
 dimension (81920L, 65536L)
 (1280L, 1024L)
 '''
+areas = [firstmask, secondmask, thirdmask, othermask]
 
 magnify = pow(2, level)
 area_length = 500
@@ -66,7 +67,7 @@ for y in range(0, dimension[1] - 1000, 1000):
 			detect = detectprocess(region, hsv)
 			result[0].append(detect[0])
 			result[1].append(detect[1])
-print (sum(result[0]),sum(result[1]))
+print (sum(result[0]), sum(result[1]))
 # img = numpy.array(slide.read_region((0, 0), level, workingDimensions))
 # grey = cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
 # greyret, greyimg = cv2.threshold(grey, 225, 255, cv2.THRESH_BINARY_INV)
