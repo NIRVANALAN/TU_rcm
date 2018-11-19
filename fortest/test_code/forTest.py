@@ -26,7 +26,7 @@ result = [[], []]
 
 
 def init():
-	img_dir = './../../images/'
+	img_dir = './../../rcm_images/'
 	kk = 1
 	name = '25845-' + str(kk)
 	he_imgname = name + '.ndpi'

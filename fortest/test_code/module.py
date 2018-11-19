@@ -1,6 +1,7 @@
 # -*- coding:UTF-8 -*-
 from math import *
 from operator import itemgetter
+
 from adjust import *
 
 
@@ -291,20 +292,23 @@ def detectprocess(a, hsv):
 	h = cv2.subtract(180, h)
 	ret, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY_INV)
 	gray = cv2.addWeighted(s, -1, h, 1, 0)
-	cv2.imshow("gray", gray)
+	# cv2.imshow("gray", gray)
 	
 	kernel = np.ones((3, 3), np.uint8)
 	
 	ret, nuclear0 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
-	cv2.imshow("nuclear", nuclear0)
+	# cv2.imshow("nuclear", nuclear0)
 	
 	nuclear0 = cv2.morphologyEx(nuclear0, cv2.MORPH_OPEN, kernel, iterations=2)
-	cv2.imshow("nuclear0", nuclear0)
+	# cv2.imshow("nuclear0", nuclear0)
 	sure_bg = cv2.dilate(nuclear0, kernel, iterations=3)
-	
+	# cv2.imshow("sure_bg",sure_bg)
 	ret, nuclear1 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
+	
 	for i in range(0, len(nuclear1[0])):
 		nuclear1[0][i] = 0
+	
+	# cv2.imshow("nuclear1", nuclear1)
 	mask = np.zeros((c + 2, b + 2), np.uint8)
 	cv2.floodFill(nuclear1, mask, (0, 0), 100)
 	nuclear1[nuclear1 == 0] = 255
@@ -313,10 +317,14 @@ def detectprocess(a, hsv):
 	dist_transform = cv2.distanceTransform(nuclear1, cv2.DIST_L2, 5)
 	dist_transform = np.uint8(dist_transform)
 	ret, out = cv2.threshold(dist_transform, 5, 255, cv2.THRESH_BINARY_INV)
+	# cv2.imshow("dist_transform",dist_transform)
 	nuclear1 = 255 - nuclear1
 	gray1 = cv2.subtract(gray, nuclear1)
+	# cv2.imshow("gray1", gray1)  # 去掉细胞质，得到细胞的图像
 	gray1 = cv2.blur(gray1, (5, 5))
+	
 	dist_transform = cv2.addWeighted(dist_transform, 1, gray1, 0.1, 0)
+	
 	max = cv2.dilate(dist_transform, kernel, iterations=10)
 	max = cv2.multiply(max, 0.75)
 	sure_fg = cv2.subtract(dist_transform, max)
