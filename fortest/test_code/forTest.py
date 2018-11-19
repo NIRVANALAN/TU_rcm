@@ -1,24 +1,7 @@
 from module import *
 
-img_dir = 'G:\Junior\Tsinghua research\images\\'
-kk = 1
-name = '25845-' + str(kk)
-he_imgname = name + '.ndpi'
-patients = ['/25845', '/28330', '/29708', '/30638', '/31398', '/35485']
-patient = patients[0]
-imgname = patient + '-' + str(kk) + '.ndpi'
+# img_dir = 'G:\Junior\Tsinghua research\images\\'
 
-path = img_dir + 'HE\\' + patient + imgname
-path1 = img_dir + 'MASSON\\' + patient + imgname
-
-slide = openslide.open_slide(path)
-slide2 = openslide.open_slide(path1)
-
-# mason = averagefibrosis(slide, slide2)
-
-dimension = slide.dimensions
-print "dimension", dimension
-result = [[], []]
 
 # beilv = dimension[0] / mason['dimensions'][0]
 countbodyMax = 0
@@ -27,10 +10,8 @@ detectmax = 0
 avermax = 0
 numbermax = 0
 
-# region = numpy.array(slide.read_region((30000, 30000), 0, (1000, 1000)))
-# region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
-# cv2.imshow("region", region)
-# hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+slide = []
+
 # cv2.imshow('hsv', hsv)
 # body = cv2.inRange(hsv, (0, 40, 0), (180, 255, 255))
 # cv2.imshow('body', body)
@@ -38,36 +19,83 @@ numbermax = 0
 # cv2.imshow("body", body)
 
 # N, W = detectprocess(region, hsv)
+slide2 = []
+level = 0
+dimension = ()
+result = [[], []]
 
-max_level = slide.level_count - 1
-n = 21
-level = max_level - 4
-workingDimensions = slide.level_dimensions[level]
-print workingDimensions
+
+def init():
+	img_dir = './../../images/'
+	kk = 1
+	name = '25845-' + str(kk)
+	he_imgname = name + '.ndpi'
+	patients = ['/25845', '/28330', '/29708', '/30638', '/31398', '/35485']
+	patient = patients[0]
+	imgname = patient + '-' + str(kk) + '.ndpi'
+	
+	path = img_dir + 'HE\\' + patient + imgname
+	global slide
+	global slide2
+	path1 = img_dir + 'MASSON\\' + patient + imgname
+	slide = openslide.open_slide(path)
+	# slide2 = openslide.open_slide(path1)
+	# mason = averagefibrosis(slide, slide2)
+	global dimension
+	dimension = slide.dimensions
+	'''
+	dimension (81920L, 65536L)
+	(1280L, 1024L)
+	'''
+	# print "dimension", dimension
+	max_level = slide.level_count - 1
+	n = 21
+	global level
+	level = max_level - 4
+	workingDimensions = slide.level_dimensions[level]
+	# print workingDimensions
+	print "init finished, working dimension: ", workingDimensions
+
+
+def test_proc():
+	region = np.array(slide.read_region((30000, 30000), 0, (1000, 1000)))
+	region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
+	# cv2.imshow("region", region)
+	hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+	detect = detectprocess(region, hsv)
+	print detect
+
+
 # whole_img = slide.read_region((0, 0), 0, dimension)
 
-firstmask, secondmask, thirdmask, othermask = editareaHE(level, slide)
-print firstmask
-'''
-dimension (81920L, 65536L)
-(1280L, 1024L)
-'''
-areas = [firstmask, secondmask, thirdmask, othermask]
+# print firstmask
 
-magnify = pow(2, level)
-area_length = 500
-for y in range(0, dimension[1] - 1000, 1000):
-	for x in range(0, dimension[0] - 1000, 1000):
-		# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
-		if firstmask[int((y + 500) / magnify)][int((x + 500) / magnify)] != 0:
-			print x, y
-			region = np.array(slide.read_region((x, y), 0, (1000, 1000)))
-			region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
-			hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
-			detect = detectprocess(region, hsv)
-			result[0].append(detect[0])
-			result[1].append(detect[1])
-print (sum(result[0]), sum(result[1]))
+def he_proc():
+	firstmask, secondmask, thirdmask, othermask = editareaHE(level, slide)
+	areas = [firstmask, secondmask, thirdmask, othermask]
+	magnify = pow(2, level)
+	area_length = 500
+	for y in range(0, dimension[1] - 1000, 1000):
+		for x in range(0, dimension[0] - 1000, 1000):
+			# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
+			if firstmask[int((y + 500) / magnify)][int((x + 500) / magnify)] != 0:
+				print x, y
+				region = np.array(slide.read_region((x, y), 0, (1000, 1000)))
+				region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
+				hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+				detect = detectprocess(region, hsv)
+				result[0].append(detect[0])
+				result[1].append(detect[1])
+	print (sum(result[0]), sum(result[1]))
+
+
+if __name__ == '__main__':
+	init()
+	test_proc()
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
+# print dimension
+
 # img = numpy.array(slide.read_region((0, 0), level, workingDimensions))
 # grey = cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
 # greyret, greyimg = cv2.threshold(grey, 225, 255, cv2.THRESH_BINARY_INV)

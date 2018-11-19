@@ -1,7 +1,6 @@
 # -*- coding:UTF-8 -*-
 from math import *
 from operator import itemgetter
-
 from adjust import *
 
 
@@ -292,11 +291,15 @@ def detectprocess(a, hsv):
 	h = cv2.subtract(180, h)
 	ret, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY_INV)
 	gray = cv2.addWeighted(s, -1, h, 1, 0)
+	cv2.imshow("gray", gray)
 	
 	kernel = np.ones((3, 3), np.uint8)
 	
 	ret, nuclear0 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
+	cv2.imshow("nuclear", nuclear0)
+	
 	nuclear0 = cv2.morphologyEx(nuclear0, cv2.MORPH_OPEN, kernel, iterations=2)
+	cv2.imshow("nuclear0", nuclear0)
 	sure_bg = cv2.dilate(nuclear0, kernel, iterations=3)
 	
 	ret, nuclear1 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
@@ -348,7 +351,7 @@ def detectprocess(a, hsv):
 			if white > total / 2:
 				detect[0] = detect[0] + 1
 	
-	return (detect[0], detect[1])
+	return detect[0], detect[1]
 
 
 if __name__ == '__main__':
