@@ -162,7 +162,7 @@ for jj in range(0, 6):
 	for kk in range(1, 7):
 		print
 		patients[jj], kk
-		imgdir = '/home/zhourongchen/zrc/rcm/images'
+		imgdir = '/home/zhourongchen/zrc/rcm/rcm_images'
 		patient = patients[jj]
 		imgname = patient + '-' + str(kk) + '.ndpi'
 		path = imgdir + '/HE' + patient + imgname

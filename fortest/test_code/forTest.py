@@ -1,6 +1,13 @@
+import sys
+import os
+
+curPath = os.path.abspath(os.path.dirname(__file__))
+rootPath = os.path.split(curPath)[0]
+rootPath = os.path.split(rootPath)[0]
+sys.path.append(rootPath)
 from module import *
 
-# img_dir = 'G:\Junior\Tsinghua research\images\\'
+# img_dir = 'G:\Junior\Tsinghua research\rcm_images\\'
 
 
 # beilv = dimension[0] / mason['dimensions'][0]
@@ -54,15 +61,37 @@ def init():
 	level = max_level - 4
 	workingDimensions = slide.level_dimensions[level]
 	# print workingDimensions
-	print "init finished, working dimension: ", workingDimensions
+	print "init finished, working dimension: ", workingDimensions, "working level:", level
 
 
 def test_proc():
+	# print dimension
+	# region = np.array((slide.read_region((0, 0), level, (1000, 1000))))
+	# region = cv2.cvtColor(region, cv2.COLOR_BGR2RGB)
+	# cv2.imshow("whole_img", region)
 	region = np.array(slide.read_region((30000, 30000), 0, (1000, 1000)))
+	# region = np.array(slide.read_region((0, 0), 0, (1000, 1000)))
 	region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 	# cv2.imshow("region", region)
 	hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+	# cv2.imshow("origin", hsv)
+	# h, s, v = cv2.split(hsv)
+	# res, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY)
+	
+	# lower = np.array([0, 20, 100])
+	# upper = np.array([255, 180, 255])
+	# mask = cv2.inRange(hsv, lower, upper)
+	# res = cv2.bitwise_and(hsv, hsv, mask)
+	# cv2.imshow("res", res)
+	
 	detect = detectprocess(region, hsv)
+	
+	def getpos(event, x, y, flags, param):
+		if event == cv2.EVENT_LBUTTONDOWN:
+			print(hsv[y, x])
+	
+	# cv2.imshow('HSV', hsv)
+	cv2.setMouseCallback('HSV', getpos)
 	print detect
 
 
@@ -92,8 +121,8 @@ def he_proc():
 if __name__ == '__main__':
 	init()
 	test_proc()
-	cv2.waitKey(0)
-	cv2.destroyAllWindows()
+	# cv2.waitKey(0)
+	# cv2.destroyAllWindows()
 # print dimension
 
 # img = numpy.array(slide.read_region((0, 0), level, workingDimensions))

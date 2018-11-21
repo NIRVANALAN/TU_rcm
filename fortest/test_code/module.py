@@ -1,7 +1,12 @@
 # -*- coding:UTF-8 -*-
 from math import *
 from operator import itemgetter
+import sys
+import os
 
+curPath = os.path.abspath(os.path.dirname(__file__))
+rootPath = os.path.split(curPath)[0]
+sys.path.append(rootPath)
 from adjust import *
 
 
@@ -291,9 +296,10 @@ def detectprocess(a, hsv):
 	h, s, v = cv2.split(hsv)
 	h = cv2.subtract(180, h)
 	ret, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY_INV)
-	gray = cv2.addWeighted(s, -1, h, 1, 0)
+	gray = cv2.addWeighted(s, -1, h, 1, 0)  # why?
 	# cv2.imshow("gray", gray)
-	
+	area_space = cv2.countNonZero(gray)
+	print 'myocardium space in this region: ', area_space
 	kernel = np.ones((3, 3), np.uint8)
 	
 	ret, nuclear0 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
@@ -330,7 +336,7 @@ def detectprocess(a, hsv):
 	sure_fg = cv2.subtract(dist_transform, max)
 	sure_fg = cv2.subtract(sure_fg, out)
 	ret, sure_fg = cv2.threshold(sure_fg, 0, 255, cv2.THRESH_BINARY)
-	
+	# sure_fg ?
 	sure_fg = np.uint8(sure_fg)
 	unknown = cv2.subtract(sure_bg, sure_fg)
 	
@@ -340,26 +346,31 @@ def detectprocess(a, hsv):
 	
 	markers[unknown == 255] = 0
 	markers = cv2.watershed(a, markers)
+	# step 11 get nuclear
 	
-	detect = [0, 0]
-	for i in range(0, markers.max() + 1):
+	# detect = [0, 0]
+	detect = [0, 0, 0]
+	for i in range(1, markers.max() + 1):
 		j = np.zeros((c, b), np.uint8)
-		j[markers == i] = 255
+		# print 'j.size:', j.size
+		j[markers == i] = 255  # why?
 		area = cv2.countNonZero(j)
-		if area > 361:
-			detect[1] = detect[1] + 1
+		# if area > 361:
+		if area > 321:
+			detect[1] += 1
 			jd = cv2.dilate(j, kernel, iterations=2)
 			image, lines, hier = cv2.findContours(jd, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 			white = 0
 			total = 0
-			for k in lines[0]:
+			for k in lines[0]:  # why lines[0]?
 				total = total + 1
 				if hsv[k[0][1]][k[0][0]][1] < 80:
 					white = white + 1
 			if white > total / 2:
 				detect[0] = detect[0] + 1
-	
-	return detect[0], detect[1]
+		else:
+			detect[2] += 1
+	return detect[0], detect[1], detect[2], area_space
 
 
 if __name__ == '__main__':
