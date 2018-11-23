@@ -323,18 +323,20 @@ def detectprocess(a, hsv):
 	dist_transform = cv2.distanceTransform(nuclear1, cv2.DIST_L2, 5)
 	dist_transform = np.uint8(dist_transform)
 	ret, out = cv2.threshold(dist_transform, 5, 255, cv2.THRESH_BINARY_INV)
-	# cv2.imshow("dist_transform",dist_transform)
+	# cv2.imshow('out', out)
 	nuclear1 = 255 - nuclear1
 	gray1 = cv2.subtract(gray, nuclear1)
 	# cv2.imshow("gray1", gray1)  # 去掉细胞质，得到细胞的图像
 	gray1 = cv2.blur(gray1, (5, 5))
 	
 	dist_transform = cv2.addWeighted(dist_transform, 1, gray1, 0.1, 0)
-	
+	# cv2.imshow("dist_transform", dist_transform)
 	max = cv2.dilate(dist_transform, kernel, iterations=10)
-	max = cv2.multiply(max, 0.75)
+	# max = cv2.multiply(max, 0.75)
+	max = cv2.multiply(max, 0.90)
 	sure_fg = cv2.subtract(dist_transform, max)
 	sure_fg = cv2.subtract(sure_fg, out)
+	# cv2.imshow('sure_fg', sure_fg)
 	ret, sure_fg = cv2.threshold(sure_fg, 0, 255, cv2.THRESH_BINARY)
 	# sure_fg ?
 	sure_fg = np.uint8(sure_fg)
@@ -346,8 +348,11 @@ def detectprocess(a, hsv):
 	
 	markers[unknown == 255] = 0
 	markers = cv2.watershed(a, markers)
-	# a[markers == 45] = [255, 0, 0]
-	# cv2.imshow('watershed', a)
+	cv2.imshow('origin', a)
+	a[markers == 312] = [0, 0, 255]
+	
+	#  307 need segmentation
+	cv2.imshow('watershed', a)
 	# step 11 get nuclear
 	nuclear_area_space = []
 	# detect = [0, 0]
@@ -359,8 +364,10 @@ def detectprocess(a, hsv):
 		area = cv2.countNonZero(j)
 		# if area > 361:
 		if area > 321:
-			nuclear_area_space.append([i,area])
+			nuclear_area_space.append([i, area])
 			detect[1] += 1
+			if area >= 1334:
+				detect[1] += 1
 			jd = cv2.dilate(j, kernel, iterations=2)
 			image, lines, hier = cv2.findContours(jd, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 			white = 0
