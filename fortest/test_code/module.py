@@ -298,8 +298,8 @@ def detectprocess(a, hsv):
 	ret, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY_INV)
 	gray = cv2.addWeighted(s, -1, h, 1, 0)  # why?
 	# cv2.imshow("gray", gray)
-	area_space = cv2.countNonZero(gray)
-	print 'myocardium space in this region: ', area_space
+	whole_area_space = cv2.countNonZero(gray)
+	print 'myocardium space in this region: ', whole_area_space
 	kernel = np.ones((3, 3), np.uint8)
 	
 	ret, nuclear0 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
@@ -346,17 +346,20 @@ def detectprocess(a, hsv):
 	
 	markers[unknown == 255] = 0
 	markers = cv2.watershed(a, markers)
+	# a[markers == 45] = [255, 0, 0]
+	# cv2.imshow('watershed', a)
 	# step 11 get nuclear
-	
+	nuclear_area_space = []
 	# detect = [0, 0]
 	detect = [0, 0, 0]
-	for i in range(1, markers.max() + 1):
+	for i in range(2, markers.max() + 1):
 		j = np.zeros((c, b), np.uint8)
 		# print 'j.size:', j.size
 		j[markers == i] = 255  # why?
 		area = cv2.countNonZero(j)
 		# if area > 361:
 		if area > 321:
+			nuclear_area_space.append([i,area])
 			detect[1] += 1
 			jd = cv2.dilate(j, kernel, iterations=2)
 			image, lines, hier = cv2.findContours(jd, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -370,7 +373,7 @@ def detectprocess(a, hsv):
 				detect[0] = detect[0] + 1
 		else:
 			detect[2] += 1
-	return detect[0], detect[1], detect[2], area_space
+	return detect[0], detect[1], detect[2], whole_area_space, nuclear_area_space
 
 
 if __name__ == '__main__':

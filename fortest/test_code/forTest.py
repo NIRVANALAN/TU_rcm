@@ -121,8 +121,8 @@ def he_proc():
 if __name__ == '__main__':
 	init()
 	test_proc()
-	# cv2.waitKey(0)
-	# cv2.destroyAllWindows()
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
 # print dimension
 
 # img = numpy.array(slide.read_region((0, 0), level, workingDimensions))
