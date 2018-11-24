@@ -270,8 +270,8 @@ def editareaHE(level, slide):
 		box1[i] = box1[n]
 		box1[n] = [k[0], k[1]]
 	
-	firstarea = 'Endocardium'
-	thirdarea = 'Epicardium'
+	# firstarea = 'Endocardium'
+	# thirdarea = 'Epicardium'
 	otherline = notheightPoints[0]
 	
 	if sqrt((box1[0][0] - otherline[0][0][0]) * (box1[0][0] - otherline[0][0][0]) + (
@@ -348,11 +348,11 @@ def detectprocess(a, hsv):
 	
 	markers[unknown == 255] = 0
 	markers = cv2.watershed(a, markers)
-	cv2.imshow('origin', a)
-	a[markers == 304] = [0, 0, 255]
-	
+	# cv2.imshow('origin', a)
+	# a[markers == 89] = [0, 0, 255]
+	#
 	#  307 need segmentation
-	cv2.imshow('watershed', a)
+	# cv2.imshow('watershed', a)
 	# step 11 get nuclear
 	nuclear_area_space = []
 	# detect = [0, 0]
@@ -384,7 +384,7 @@ def detectprocess(a, hsv):
 				detect[0] = detect[0] + 1
 		else:
 			detect[2] += 1
-	return detect[0], detect[1], detect[2], whole_area_space, nuclear_area_space
+	return detect[0], detect[1], detect[2], whole_area_space, [i[1:] for i in nuclear_area_space]
 
 
 if __name__ == '__main__':

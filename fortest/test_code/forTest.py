@@ -1,5 +1,7 @@
+# coding=utf-8
 import sys
 import os
+from scipy.stats import iqr
 
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
@@ -75,6 +77,7 @@ def test_proc():
 	region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 	# cv2.imshow("region", region)
 	hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+	
 	# cv2.imshow("origin", hsv)
 	# h, s, v = cv2.split(hsv)
 	# res, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY)
@@ -100,13 +103,17 @@ def test_proc():
 # whole_img = slide.read_region((0, 0), 0, dimension)
 
 # print firstmask
+mask_name = ['firstmask', 'secondmask', 'secondmask', 'secondmask', 'whole']
+
 
 def he_proc():
 	global result
 	firstmask, secondmask, thirdmask, othermask = editareaHE(level, slide)
+	global mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	magnify = pow(2, level)
 	area_length = 500
+	i = 0
 	for area in areas:
 		for y in range(0, dimension[1] - 1000, 1000):
 			for x in range(0, dimension[0] - 1000, 1000):
@@ -117,22 +124,73 @@ def he_proc():
 					region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 					hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
 					detect = detectprocess(region, hsv)
-					result[0].append(detect[0])
-					result[1].append(detect[1])
-					result[2].append(detect[2])
-					result[3].append(detect[3])
-		print (sum(result[0]), sum(result[1]), sum(result[2]), np.mean(result[3]))
+					result[0] += (detect[0])
+					result[1] += (detect[1])
+					result[2] += (detect[2])
+					result[3] += (detect[3])
+					result[4].append(detect[4])
+		print (mask_name[i], ' : ', sum(result[0]), sum(result[1]), sum(result[2]), sum(result[3]))
+		i += 1
 		whole_res.append(result)
 		result = [[], [], [], ]
 
 
-def he_statics(res):
+def he_statics_persistence(res):
+	global mask_name
+	index = 0
+	for i in xrange(len(res)):
+		cardiac_cells_num = res[1]
+		non_cardiac_cells_num = res[2]
+		vacuole_num = res[0]
+		region_area = res[3]
+		cardiac_cells_nucleus_area = [i[0] for i in res[4]]
+		cardiac_cells_nucleus_perimeter = [i[1] for i in res[4]]
+		
+		cardiac_cells_ratio = non_cardiac_cells_num / float(cardiac_cells_num)
+		cardiac_area_num_ratio = region_area / float(cardiac_cells_num)
+		
+		#  cardiac cell nucleus statics
+		# mean
+		cardiac_cells_nucleus_area_mean = np.mean(cardiac_cells_nucleus_area)
+		# median
+		cardiac_cells_nucleus_area_median = np.median(cardiac_cells_nucleus_area)
+		# SD
+		cardiac_cells_nucleus_area_sd = np.std(cardiac_cells_nucleus_area, ddof=1)
+		# IQR
+		cardiac_cells_nucleus_area_iqr = iqr(cardiac_cells_nucleus_area, rng=(25, 75), interpolation='midpoint')
+		
+		# perimeter calculation
+		cardiac_cells_nucleus_perimeter_mean = np.mean(cardiac_cells_nucleus_perimeter)
+		cardiac_cells_nucleus_perimeter_median = np.median(cardiac_cells_nucleus_perimeter)
+		cardiac_cells_nucleus_perimeter_sd = np.std(cardiac_cells_nucleus_perimeter, ddof=1)
+		cardiac_cells_nucleus_perimeter_iqr = iqr(cardiac_cells_nucleus_perimeter, rng=(25, 75),
+		                                          interpolation='midpoint')
+		
+		# nucleus / whole_area 细胞核总数量/切片总面积
+		# intensity = cardiac_cells_num/float(region_area)
+		
+		# area ratio  心肌细胞核面积占心肌细胞的面积比例
+		cardiac_cells_nucleus_area_region_ratio = float(sum(cardiac_cells_nucleus_area)) / region_area
+		
+		# vacuole calculation
+		cardiac_cells_vacuole_area_mean = np.mean(vacuole_num)
+		cardiac_cells_vacuole_area_median = np.median(vacuole_num)
+		cardiac_cells_vacuole_area_sd = np.std(vacuole_num, ddof=1)
+		
+		print 'region: ' + mask_name[index]
+		print 'Cardiac cells num' + str(res[1])
+		print 'vacuole cells num' + str(res[0])
+		print 'Non-cardiac cells num' + str(res[2])
+		print 'region area: ' + mask_name[index] + str(res[3])
+	
+	# print
 	pass
 
 
 if __name__ == '__main__':
 	init()
-	he_res = test_proc()
+	whole_res = test_proc()
+	he_statics_persistence(whole_res)
 # 空泡 心肌细胞核 非心肌细胞核 区域总面积 列表[编号，细胞核面积，细胞核周长]
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
