@@ -349,7 +349,7 @@ def detectprocess(a, hsv):
 	markers[unknown == 255] = 0
 	markers = cv2.watershed(a, markers)
 	cv2.imshow('origin', a)
-	a[markers == 312] = [0, 0, 255]
+	a[markers == 304] = [0, 0, 255]
 	
 	#  307 need segmentation
 	cv2.imshow('watershed', a)
@@ -364,7 +364,11 @@ def detectprocess(a, hsv):
 		area = cv2.countNonZero(j)
 		# if area > 361:
 		if area > 321:
-			nuclear_area_space.append([i, area])
+			# get arc
+			_, contours, hierarchy = cv2.findContours(j, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+			cnt = contours[0]
+			perimeter = cv2.arcLength(cnt, True)
+			nuclear_area_space.append([i, area, perimeter])
 			detect[1] += 1
 			if area >= 1334:
 				detect[1] += 1

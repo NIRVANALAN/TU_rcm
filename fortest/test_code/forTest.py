@@ -29,7 +29,8 @@ slide = []
 slide2 = []
 level = 0
 dimension = ()
-result = [[], []]
+result = [[], [], [], ]
+whole_res = []
 
 
 def init():
@@ -93,6 +94,7 @@ def test_proc():
 	# cv2.imshow('HSV', hsv)
 	cv2.setMouseCallback('HSV', getpos)
 	print detect
+	return detect
 
 
 # whole_img = slide.read_region((0, 0), 0, dimension)
@@ -100,31 +102,44 @@ def test_proc():
 # print firstmask
 
 def he_proc():
+	global result
 	firstmask, secondmask, thirdmask, othermask = editareaHE(level, slide)
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	magnify = pow(2, level)
 	area_length = 500
-	for y in range(0, dimension[1] - 1000, 1000):
-		for x in range(0, dimension[0] - 1000, 1000):
-			# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
-			if firstmask[int((y + 500) / magnify)][int((x + 500) / magnify)] != 0:
-				print x, y
-				region = np.array(slide.read_region((x, y), 0, (1000, 1000)))
-				region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
-				hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
-				detect = detectprocess(region, hsv)
-				result[0].append(detect[0])
-				result[1].append(detect[1])
-	print (sum(result[0]), sum(result[1]))
+	for area in areas:
+		for y in range(0, dimension[1] - 1000, 1000):
+			for x in range(0, dimension[0] - 1000, 1000):
+				# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
+				if firstmask[int((y + 500) / magnify)][int((x + 500) / magnify)] != 0:
+					print x, y
+					region = np.array(slide.read_region((x, y), 0, (1000, 1000)))
+					region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
+					hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+					detect = detectprocess(region, hsv)
+					result[0].append(detect[0])
+					result[1].append(detect[1])
+					result[2].append(detect[2])
+					result[3].append(detect[3])
+		print (sum(result[0]), sum(result[1]), sum(result[2]), np.mean(result[3]))
+		whole_res.append(result)
+		result = [[], [], [], ]
+
+
+def he_statics(res):
+	pass
 
 
 if __name__ == '__main__':
 	init()
-	test_proc()
-	cv2.waitKey(0)
-	cv2.destroyAllWindows()
+	he_res = test_proc()
+# 空泡 心肌细胞核 非心肌细胞核 区域总面积 列表[编号，细胞核面积，细胞核周长]
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 # print dimension
-
+'''
+(1, 136, 236, 919452, [[3, 355, 99.94112491607666], [8, 322, 67.4558436870575], [9, 541, 161.01219260692596], [10, 329, 73.4558436870575], [12, 911, 152.36753106117249], [14, 606, 104.66904675960541], [18, 436, 87.94112491607666], [20, 732, 107.35533845424652], [24, 435, 89.35533845424652],
+'''
 # img = numpy.array(slide.read_region((0, 0), level, workingDimensions))
 # grey = cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
 # greyret, greyimg = cv2.threshold(grey, 225, 255, cv2.THRESH_BINARY_INV)
