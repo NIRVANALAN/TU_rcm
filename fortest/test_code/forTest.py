@@ -96,7 +96,7 @@ def test_proc():
 	
 	# cv2.imshow('HSV', hsv)
 	cv2.setMouseCallback('HSV', getpos)
-	print detect
+	# print detect
 	return detect
 
 
@@ -138,13 +138,14 @@ def he_proc():
 def he_statics_persistence(res):
 	global mask_name
 	index = 0
+	print len(res)
 	for i in xrange(len(res)):
-		cardiac_cells_num = res[1]
-		non_cardiac_cells_num = res[2]
-		vacuole_num = res[0]
-		region_area = res[3]
-		cardiac_cells_nucleus_area = [i[0] for i in res[4]]
-		cardiac_cells_nucleus_perimeter = [i[1] for i in res[4]]
+		cardiac_cells_num = res[index][1]
+		non_cardiac_cells_num = res[index][2]
+		vacuole_num = res[index][0]
+		region_area = res[index][3]
+		cardiac_cells_nucleus_area = [i[0] for i in res[index][4]]
+		cardiac_cells_nucleus_perimeter = [i[1] for i in res[index][4]]
 		
 		cardiac_cells_ratio = non_cardiac_cells_num / float(cardiac_cells_num)
 		cardiac_area_num_ratio = region_area / float(cardiac_cells_num)
@@ -178,10 +179,10 @@ def he_statics_persistence(res):
 		cardiac_cells_vacuole_area_sd = np.std(vacuole_num, ddof=1)
 		
 		print 'region: ' + mask_name[index]
-		print 'Cardiac cells num' + str(res[1])
-		print 'vacuole cells num' + str(res[0])
-		print 'Non-cardiac cells num' + str(res[2])
-		print 'region area: ' + mask_name[index] + str(res[3])
+		print 'Cardiac cells num: ' + str(res[index][1])
+		print 'vacuole cells num: ' + str(res[index][0])
+		print 'Non-cardiac cells num: ' + str(res[index][2])
+		print 'region area: ' + mask_name[index] + str(res[index][3])
 	
 	# print
 	pass
@@ -189,7 +190,7 @@ def he_statics_persistence(res):
 
 if __name__ == '__main__':
 	init()
-	whole_res = test_proc()
+	whole_res.append(test_proc())
 	he_statics_persistence(whole_res)
 # 空泡 心肌细胞核 非心肌细胞核 区域总面积 列表[编号，细胞核面积，细胞核周长]
 # cv2.waitKey(0)
