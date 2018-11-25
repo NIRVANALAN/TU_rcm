@@ -766,7 +766,7 @@ class MainWindow(QMainWindow):
 				fibrosislevel = self.geshi.la - 6
 			else:
 				fibrosislevel = self.geshi.la - 1
-			masonimg = fibrosis(self.slide2, mason['dimensions'], fibrosislevel, threshold)
+			masonimg = fibrosis_and_threshold(self.slide2, mason['dimensions'], fibrosislevel, threshold)
 			masonimg = cv2.warpPerspective(masonimg, M, he['dimensions'])
 			global arg
 			arg = {'masonimg': masonimg, 'dimensions': he['dimensions']}

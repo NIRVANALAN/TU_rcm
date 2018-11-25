@@ -10,8 +10,11 @@ sys.path.append(rootPath)
 from adjust import *
 
 
-def editareaHE(level, slide):
-	print "called editHE"
+def edit_area(level, slide, is_masson=False):
+	if is_masson is True:
+		print 'edit MASSON'
+	else:
+		print "called editHE"
 	# for i in self.annotation.list:
 	# 	if i.name.split(":")[0] == 'density':
 	# 		i.hide()
@@ -29,9 +32,11 @@ def editareaHE(level, slide):
 	b, g, r, a = cv2.split(img)
 	rgbimg = cv2.merge((r, g, b))
 	hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-	# greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 180))
-	greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
-	fibrosis = cv2.inRange(hsv, (90, 20, 0), (150, 255, 255))
+	if is_masson is True:
+		greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 180))
+	else:
+		greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
+	fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (150, 255, 255))
 	# cv2.imshow("fibrosis",fibrosis)
 	averagegreyimg = cv2.blur(greyimg, (30, 30))
 	# cv2.imshow('average grey img', averagegreyimg)
@@ -39,8 +44,11 @@ def editareaHE(level, slide):
 	
 	ret, erode = cv2.threshold(averagegreyimg, 120, 255, cv2.THRESH_BINARY)
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-	erode = cv2.erode(erode, kernel, iterations=3)
-	# cv2.imshow("after erosion", erode)
+	if is_masson is True:
+		erode = cv2.erode(erode, kernel, iterations=15)
+	else:
+		erode = cv2.erode(erode, kernel, iterations=3)
+	cv2.imshow("after erosion", erode)
 	# cv2.imwrite("test/HE/after_erosion.jpg", erode)
 	
 	# cv2.imshow("")
@@ -253,9 +261,9 @@ def editareaHE(level, slide):
 	i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
 	thirdmask = cv2.fillPoly(i, np.array([third], np.int32), 255)
 	
-	firstdensity = areaaveragedensity(fibrosis, greyimg, firstmask)
-	seconddensity = areaaveragedensity(fibrosis, greyimg, secondmask)
-	thirddensity = areaaveragedensity(fibrosis, greyimg, thirdmask)
+	# firstdensity = areaaveragedensity(fibrosis, greyimg, firstmask)
+	# seconddensity = areaaveragedensity(fibrosis, greyimg, secondmask)
+	# thirddensity = areaaveragedensity(fibrosis, greyimg, thirdmask)
 	
 	box1 = cv2.boxPoints(rect1)
 	box1 = np.array(box1)
@@ -286,8 +294,11 @@ def editareaHE(level, slide):
 	
 	i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
 	othermask = cv2.fillPoly(i, np.array([otherline], np.int32), 255)
-	otherdensity = areaaveragedensity(fibrosis, greyimg, othermask)
-	return firstmask, secondmask, thirdmask, othermask
+	# otherdensity = areaaveragedensity(fibrosis, greyimg, othermask)
+	if is_masson is True:
+		return firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img
+	else:
+		return firstmask, secondmask, thirdmask, othermask
 
 
 def detectprocess(a, hsv):
@@ -385,6 +396,16 @@ def detectprocess(a, hsv):
 		else:
 			detect[2] += 1
 	return detect[0], detect[1], detect[2], whole_area_space, [i[1:] for i in nuclear_area_space]
+
+
+def fibrosis_slide(slide, fibrosislevel):
+	workingDimensions = slide.level_dimensions[fibrosislevel]
+	img = np.array(slide.read_region((0, 0), fibrosislevel, workingDimensions))
+	rr, gg, bb, aa = cv2.split(img)
+	rgbimg = cv2.merge((bb, gg, rr))
+	hsv = cv2.cvtColor(rgbimg, cv2.COLOR_BGR2HSV)
+	hsv = cv2.inRange(hsv, (90, 20, 20), (140, 255, 255))  # s 50-250 in paper
+	return hsv
 
 
 if __name__ == '__main__':

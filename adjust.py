@@ -43,7 +43,7 @@ def densityprocess(slide, level):
 	workingDimensions[0] / (workingDimensions[0] / 1000), workingDimensions[1] / (workingDimensions[0] / 1000))}
 
 
-def fibrosis(slide, dimension, fibrosislevel, threshold):
+def fibrosis_and_threshold(slide, dimension, fibrosislevel, threshold):
 	n = 11
 	workingDimensions = slide.level_dimensions[fibrosislevel]
 	img = np.array(slide.read_region((0, 0), fibrosislevel, workingDimensions))

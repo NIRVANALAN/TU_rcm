@@ -29,7 +29,7 @@ slide = []
 
 # N, W = detectprocess(region, hsv)
 slide2 = []
-level = 0
+max_level = 0
 dimension = ()
 result = [[], [], [], ]
 whole_res = []
@@ -44,11 +44,12 @@ def init():
 	patient = patients[0]
 	imgname = patient + '-' + str(kk) + '.ndpi'
 	
-	path = img_dir + 'HE\\' + patient + imgname
+	he_path = img_dir + 'HE\\' + patient + imgname
 	global slide
 	global slide2
-	path1 = img_dir + 'MASSON\\' + patient + imgname
-	slide = openslide.open_slide(path)
+	masson_path = img_dir + 'MASSON\\' + patient + imgname
+	slide = openslide.open_slide(he_path)
+	slide2 = openslide.open_slide(masson_path)
 	# slide2 = openslide.open_slide(path1)
 	# mason = averagefibrosis(slide, slide2)
 	global dimension
@@ -60,14 +61,14 @@ def init():
 	# print "dimension", dimension
 	max_level = slide.level_count - 1
 	n = 21
-	global level
-	level = max_level - 4
-	workingDimensions = slide.level_dimensions[level]
+	global max_level
+	max_level = max_level - 4
+	workingDimensions = slide.level_dimensions[max_level]
 	# print workingDimensions
-	print "init finished, working dimension: ", workingDimensions, "working level:", level
+	print "init finished, working dimension: ", workingDimensions, "working level:", max_level
 
 
-def test_proc():
+def he_test_proc():
 	# print dimension
 	# region = np.array((slide.read_region((0, 0), level, (1000, 1000))))
 	# region = cv2.cvtColor(region, cv2.COLOR_BGR2RGB)
@@ -108,10 +109,10 @@ mask_name = ['firstmask', 'secondmask', 'secondmask', 'secondmask', 'whole']
 
 def he_proc():
 	global result
-	firstmask, secondmask, thirdmask, othermask = editareaHE(level, slide)
+	firstmask, secondmask, thirdmask, othermask = edit_area(max_level, slide)
 	global mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
-	magnify = pow(2, level)
+	magnify = pow(2, max_level)
 	area_length = 500
 	i = 0
 	for area in areas:
@@ -188,13 +189,28 @@ def he_statics_persistence(res):
 	pass
 
 
+def masson_test_proc(working_level=max_level + 4):
+	masson_level = working_level
+	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(masson_level, slide2,
+	                                                                                    is_masson=True)
+	print areaaveragedensity(fibrosis_img, greyimg, firstmask)
+	pass
+
+
 if __name__ == '__main__':
 	init()
-	whole_res.append(test_proc())
+	masson_test_proc()
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
+	'''
+	he test
+	whole_res.append(he_test_proc())
 	he_statics_persistence(whole_res)
 # 空泡 心肌细胞核 非心肌细胞核 区域总面积 列表[编号，细胞核面积，细胞核周长]
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
+	'''
+
 # print dimension
 '''
 (1, 136, 236, 919452, [[3, 355, 99.94112491607666], [8, 322, 67.4558436870575], [9, 541, 161.01219260692596], [10, 329, 73.4558436870575], [12, 911, 152.36753106117249], [14, 606, 104.66904675960541], [18, 436, 87.94112491607666], [20, 732, 107.35533845424652], [24, 435, 89.35533845424652],
