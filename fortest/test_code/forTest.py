@@ -59,9 +59,9 @@ def init():
 	(1280L, 1024L)
 	'''
 	# print "dimension", dimension
+	global max_level
 	max_level = slide.level_count - 1
 	n = 21
-	global max_level
 	max_level = max_level - 4
 	workingDimensions = slide.level_dimensions[max_level]
 	# print workingDimensions
@@ -189,16 +189,20 @@ def he_statics_persistence(res):
 	pass
 
 
-def masson_test_proc(working_level=max_level + 4):
-	masson_level = working_level
-	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(masson_level, slide2,
+def masson_test_proc(working_level=6):
+	print working_level
+	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(working_level, slide2,
 	                                                                                    is_masson=True)
-	print areaaveragedensity(fibrosis_img, greyimg, firstmask)
-	pass
-
+# working_dimensions = slide2.level_dimensions[working_level]
+# print working_dimensions
+# img = np.array(slide2.read_region((0, 0), working_level, working_dimensions))
+# cv2.imshow('masson_img', img)
+# print areaaveragedensity(fibrosis_img, greyimg, firstmask)
+# pass
 
 if __name__ == '__main__':
 	init()
+	# print 11
 	masson_test_proc()
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
@@ -210,11 +214,11 @@ if __name__ == '__main__':
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 	'''
-
-# print dimension
-'''
-(1, 136, 236, 919452, [[3, 355, 99.94112491607666], [8, 322, 67.4558436870575], [9, 541, 161.01219260692596], [10, 329, 73.4558436870575], [12, 911, 152.36753106117249], [14, 606, 104.66904675960541], [18, 436, 87.94112491607666], [20, 732, 107.35533845424652], [24, 435, 89.35533845424652],
-'''
+	
+	# print dimension
+	'''
+	(1, 136, 236, 919452, [[3, 355, 99.94112491607666], [8, 322, 67.4558436870575], [9, 541, 161.01219260692596], [10, 329, 73.4558436870575], [12, 911, 152.36753106117249], [14, 606, 104.66904675960541], [18, 436, 87.94112491607666], [20, 732, 107.35533845424652], [24, 435, 89.35533845424652],
+	'''
 # img = numpy.array(slide.read_region((0, 0), level, workingDimensions))
 # grey = cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
 # greyret, greyimg = cv2.threshold(grey, 225, 255, cv2.THRESH_BINARY_INV)

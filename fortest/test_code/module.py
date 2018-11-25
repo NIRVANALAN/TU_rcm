@@ -15,34 +15,26 @@ def edit_area(level, slide, is_masson=False):
 		print 'edit MASSON'
 	else:
 		print "called editHE"
-	# for i in self.annotation.list:
-	# 	if i.name.split(":")[0] == 'density':
-	# 		i.hide()
-	# 		i.deleting()
-	# 		del i
-	# self.canchange = []
 	n = 21
-	# if self.geshi.la > 4:
-	# 	# 	level = self.geshi.la - 4
-	# 	# else:
-	# 	# 	level = self.geshi.la - 1
-	workingDimensions = slide.level_dimensions[level]
-	img = np.array(slide.read_region((0, 0), level, workingDimensions))
-	
+	print level
+	working_dimensions = slide.level_dimensions[level]
+	print working_dimensions
+	img = np.array(slide.read_region((0, 0), level, working_dimensions))
+	cv2.imshow('img', img)
 	b, g, r, a = cv2.split(img)
 	rgbimg = cv2.merge((r, g, b))
 	hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
 	if is_masson is True:
 		greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 180))
+		fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (150, 255, 255))
+		cv2.imshow("fibrosis", fibrosis_img)
 	else:
 		greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
-	fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (150, 255, 255))
-	# cv2.imshow("fibrosis",fibrosis)
-	averagegreyimg = cv2.blur(greyimg, (30, 30))
+	average_greyimg = cv2.blur(greyimg, (30, 30))
 	# cv2.imshow('average grey img', averagegreyimg)
 	# cv2.imwrite("test/HE/average_grey_img.jpg", averagegreyimg)
 	
-	ret, erode = cv2.threshold(averagegreyimg, 120, 255, cv2.THRESH_BINARY)
+	ret, erode = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 	if is_masson is True:
 		erode = cv2.erode(erode, kernel, iterations=15)
@@ -54,7 +46,7 @@ def edit_area(level, slide, is_masson=False):
 	# cv2.imshow("")
 	#  多次腐蚀，除去小梁
 	
-	ret, averimage = cv2.threshold(averagegreyimg, 120, 255, cv2.THRESH_BINARY)
+	ret, averimage = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
 	averimage, avercnts, averhierarchy = cv2.findContours(averimage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	# cv2.imshow("aver image", averimage)
 	
@@ -76,7 +68,7 @@ def edit_area(level, slide, is_masson=False):
 				x = i[0][0]
 				y = i[0][1]
 				points.append([x, y])
-			i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+			i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 			cv2.fillPoly(i, np.array([points], np.int32), 255)
 			object.append(i)
 			if area > maxarea:
@@ -85,7 +77,7 @@ def edit_area(level, slide, is_masson=False):
 	wall = object[max]
 	# 把每一个区域都分割出来，最大的心肌壁
 	
-	other = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+	other = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	for i in range(0, len(object)):
 		if i != max:
 			other = cv2.add(other, object[i])
@@ -250,15 +242,15 @@ def edit_area(level, slide, is_masson=False):
 	second = addPoints[0] + addPoints[1]
 	third = addPoints[0] + notheightPoints[1]
 	
-	i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	firstmask = cv2.fillPoly(i, np.array([first], np.int32), 255)
 	# cv2.imshow("firstmask", firstmask)
 	# print firstmask[363][154]
 	
-	i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	secondmask = cv2.fillPoly(i, np.array([second], np.int32), 255)
 	
-	i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	thirdmask = cv2.fillPoly(i, np.array([third], np.int32), 255)
 	
 	# firstdensity = areaaveragedensity(fibrosis, greyimg, firstmask)
@@ -292,7 +284,7 @@ def edit_area(level, slide, is_masson=False):
 		otherline.append([[box1[1][0], box1[1][1]]])
 		otherline.append([[box1[0][0], box1[0][1]]])
 	
-	i = np.zeros((workingDimensions[1], workingDimensions[0]), np.uint8)
+	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	othermask = cv2.fillPoly(i, np.array([otherline], np.int32), 255)
 	# otherdensity = areaaveragedensity(fibrosis, greyimg, othermask)
 	if is_masson is True:
