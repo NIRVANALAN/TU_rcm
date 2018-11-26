@@ -119,7 +119,7 @@ def he_proc():
 		for y in range(0, dimension[1] - 1000, 1000):
 			for x in range(0, dimension[0] - 1000, 1000):
 				# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
-				if firstmask[int((y + 500) / magnify)][int((x + 500) / magnify)] != 0:
+				if firstmask[int((y + area_length) / magnify)][int((x + area_length) / magnify)] != 0:
 					print x, y
 					region = np.array(slide_he.read_region((x, y), 0, (1000, 1000)))
 					region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
@@ -189,17 +189,29 @@ def he_statics_persistence(res):
 	pass
 
 
-def masson_proc(working_level=6):
+def masson_proc(slide=slide_masson, working_level=6):
 	print working_level
-	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(working_level, slide_masson,
+	working_dimensions = slide.level_dimensions[working_level]
+	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(working_level, slide,
 	                                                                                    is_masson=True)
+	areas = [firstmask, secondmask, thirdmask, othermask]
+	magnify = pow(2, max_level)
+	area_length = 250
+	for area in areas:
+		for y in range(0, working_dimensions[1], 500):
+			for x in range(0, working_dimensions[0], 500):
+				if firstmask[int((y + area_length) / magnify)][int((x + area_length) / magnify)] != 0:
+					print x, y
+					# fibrosis area
+					# fat area
+					# cardiac cell area
 	pass
 
 
 def masson_test_proc(working_level=6):
 	print 'working level', working_level
 	working_dimension = slide_masson.level_dimensions[working_level]
-	cardiac_threshold = (155, 140, 50), (175, 180, 255)  # cardiac
+	cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
 	fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
 	
 	# hsv = []

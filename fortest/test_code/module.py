@@ -403,8 +403,9 @@ def masson_region_slide(slide, working_level, threshold=(), start_pos=(0, 0), is
 	# (155, 140, 50), (175, 180, 255) cardiac
 	# (90, 20, 20), (140, 255, 255) fibrosis
 	hsv = cv2.inRange(hsv, threshold[0], threshold[1])  # s 50-250 in paper
+	region_area = cv2.countNonZero(hsv)
 	cv2.imshow('hsv_cardiac_cell', hsv)
-	return hsv
+	return hsv, region_area
 	pass
 
 
@@ -432,7 +433,7 @@ def cardiac_cell_slide(slide, working_level, start_pos=(0, 0), is_debug=False, d
 	bgr_cv_img = cv2.merge((bb, gg, rr))
 	cv2.imshow('bgr_img', bgr_cv_img)
 	hsv = cv2.cvtColor(bgr_cv_img, cv2.COLOR_BGR2HSV)
-	hsv = cv2.inRange(hsv, (155, 140, 50), (175, 180, 255))  # s 50-250 in paper
+	hsv = cv2.inRange(hsv, (155, 140, 50), (175, 230, 255))  # s 50-250 in paper
 	cv2.imshow('hsv_cardiac_cell', hsv)
 	return hsv
 
