@@ -390,13 +390,50 @@ def detectprocess(a, hsv):
 	return detect[0], detect[1], detect[2], whole_area_space, [i[1:] for i in nuclear_area_space]
 
 
-def fibrosis_slide(slide, fibrosislevel):
-	workingDimensions = slide.level_dimensions[fibrosislevel]
-	img = np.array(slide.read_region((0, 0), fibrosislevel, workingDimensions))
+def masson_region_slide(slide, working_level, threshold=(), start_pos=(0, 0), is_debug=False, dimension=(1000, 1000)):
+	working_dimensions = slide.level_dimensions[working_level]
+	if is_debug is False:
+		img = np.array(slide.read_region(start_pos, working_level, working_dimensions))
+	else:
+		img = np.array(slide.read_region(start_pos, working_level, dimension))
 	rr, gg, bb, aa = cv2.split(img)
-	rgbimg = cv2.merge((bb, gg, rr))
-	hsv = cv2.cvtColor(rgbimg, cv2.COLOR_BGR2HSV)
+	bgr_cv_img = cv2.merge((bb, gg, rr))
+	cv2.imshow('bgr_img', bgr_cv_img)
+	hsv = cv2.cvtColor(bgr_cv_img, cv2.COLOR_BGR2HSV)
+	# (155, 140, 50), (175, 180, 255) cardiac
+	# (90, 20, 20), (140, 255, 255) fibrosis
+	hsv = cv2.inRange(hsv, threshold[0], threshold[1])  # s 50-250 in paper
+	cv2.imshow('hsv_cardiac_cell', hsv)
+	return hsv
+	pass
+
+
+def fibrosis_slide(slide, fibrosislevel, start_pos=(0, 0), is_debug=False, dimension=(1000, 1000)):
+	workingDimensions = slide.level_dimensions[fibrosislevel]
+	if is_debug is False:
+		img = np.array(slide.read_region(start_pos, fibrosislevel, workingDimensions))
+	else:
+		img = np.array(slide.read_region(start_pos, 0, dimension))
+	rr, gg, bb, aa = cv2.split(img)
+	bgr_cv_img = cv2.merge((bb, gg, rr))
+	cv2.imshow('bgr_img', bgr_cv_img)
+	hsv = cv2.cvtColor(bgr_cv_img, cv2.COLOR_BGR2HSV)
 	hsv = cv2.inRange(hsv, (90, 20, 20), (140, 255, 255))  # s 50-250 in paper
+	return hsv
+
+
+def cardiac_cell_slide(slide, working_level, start_pos=(0, 0), is_debug=False, dimension=(1000, 1000)):
+	working_dimensions = slide.level_dimensions[working_level]
+	if is_debug is False:
+		img = np.array(slide.read_region(start_pos, working_level, working_dimensions))
+	else:
+		img = np.array(slide.read_region(start_pos, working_level, dimension))
+	rr, gg, bb, aa = cv2.split(img)
+	bgr_cv_img = cv2.merge((bb, gg, rr))
+	cv2.imshow('bgr_img', bgr_cv_img)
+	hsv = cv2.cvtColor(bgr_cv_img, cv2.COLOR_BGR2HSV)
+	hsv = cv2.inRange(hsv, (155, 140, 50), (175, 180, 255))  # s 50-250 in paper
+	cv2.imshow('hsv_cardiac_cell', hsv)
 	return hsv
 
 

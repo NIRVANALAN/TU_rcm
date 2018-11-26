@@ -19,7 +19,7 @@ detectmax = 0
 avermax = 0
 numbermax = 0
 
-slide = []
+slide_he = []
 
 # cv2.imshow('hsv', hsv)
 # body = cv2.inRange(hsv, (0, 40, 0), (180, 255, 255))
@@ -28,7 +28,7 @@ slide = []
 # cv2.imshow("body", body)
 
 # N, W = detectprocess(region, hsv)
-slide2 = []
+slide_masson = []
 max_level = 0
 dimension = ()
 result = [[], [], [], ]
@@ -45,25 +45,25 @@ def init():
 	imgname = patient + '-' + str(kk) + '.ndpi'
 	
 	he_path = img_dir + 'HE\\' + patient + imgname
-	global slide
-	global slide2
+	global slide_he
+	global slide_masson
 	masson_path = img_dir + 'MASSON\\' + patient + imgname
-	slide = openslide.open_slide(he_path)
-	slide2 = openslide.open_slide(masson_path)
+	slide_he = openslide.open_slide(he_path)
+	slide_masson = openslide.open_slide(masson_path)
 	# slide2 = openslide.open_slide(path1)
 	# mason = averagefibrosis(slide, slide2)
 	global dimension
-	dimension = slide.dimensions
+	dimension = slide_he.dimensions
 	'''
 	dimension (81920L, 65536L)
 	(1280L, 1024L)
 	'''
 	# print "dimension", dimension
 	global max_level
-	max_level = slide.level_count - 1
+	max_level = slide_he.level_count - 1
 	n = 21
 	max_level = max_level - 4
-	workingDimensions = slide.level_dimensions[max_level]
+	workingDimensions = slide_he.level_dimensions[max_level]
 	# print workingDimensions
 	print "init finished, working dimension: ", workingDimensions, "working level:", max_level
 
@@ -73,7 +73,7 @@ def he_test_proc():
 	# region = np.array((slide.read_region((0, 0), level, (1000, 1000))))
 	# region = cv2.cvtColor(region, cv2.COLOR_BGR2RGB)
 	# cv2.imshow("whole_img", region)
-	region = np.array(slide.read_region((30000, 30000), 0, (1000, 1000)))
+	region = np.array(slide_he.read_region((30000, 30000), 0, (1000, 1000)))
 	# region = np.array(slide.read_region((0, 0), 0, (1000, 1000)))
 	region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 	# cv2.imshow("region", region)
@@ -109,7 +109,7 @@ mask_name = ['firstmask', 'secondmask', 'secondmask', 'secondmask', 'whole']
 
 def he_proc():
 	global result
-	firstmask, secondmask, thirdmask, othermask = edit_area(max_level, slide)
+	firstmask, secondmask, thirdmask, othermask = edit_area(max_level, slide_he)
 	global mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	magnify = pow(2, max_level)
@@ -121,7 +121,7 @@ def he_proc():
 				# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 				if firstmask[int((y + 500) / magnify)][int((x + 500) / magnify)] != 0:
 					print x, y
-					region = np.array(slide.read_region((x, y), 0, (1000, 1000)))
+					region = np.array(slide_he.read_region((x, y), 0, (1000, 1000)))
 					region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 					hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
 					detect = detectprocess(region, hsv)
@@ -189,10 +189,61 @@ def he_statics_persistence(res):
 	pass
 
 
-def masson_test_proc(working_level=6):
+def masson_proc(working_level=6):
 	print working_level
-	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(working_level, slide2,
+	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(working_level, slide_masson,
 	                                                                                    is_masson=True)
+	pass
+
+
+def masson_test_proc(working_level=6):
+	print 'working level', working_level
+	working_dimension = slide_masson.level_dimensions[working_level]
+	cardiac_threshold = (155, 140, 50), (175, 180, 255)  # cardiac
+	fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
+	
+	# hsv = []
+	# rgb_img = []
+	
+	def pure_test():
+		# global hsv
+		# global rgb_img
+		# region = np.array(slide_masson.read_region((30000, 30000), 0, (1000, 1000)))
+		region = np.array(slide_masson.read_region((40000, 50000), 0, (1000, 1000)))
+		r, g, b, a = cv2.split(region)
+		bgr_img = cv2.merge((b, g, r))
+		hsv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HSV)
+		res_fibrosis_hsv = cv2.inRange(hsv, fibrosis_threshold[0], fibrosis_threshold[1])  # s 50-255 in paper fibrosis
+		res_cardiac_hsv = cv2.inRange(hsv, cardiac_threshold[0], cardiac_threshold[1])  # cardiac threshold
+		
+		cv2.imshow('HSV', hsv)
+		cv2.imshow('res_cardiac_HSV', res_cardiac_hsv)
+		cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
+		cv2.imshow('rgb_masson', bgr_img)
+		
+		def getpos(event, x, y, flags, param):
+			if event == cv2.EVENT_LBUTTONDOWN:
+				print(hsv[y, x])
+		
+		cv2.setMouseCallback('HSV', getpos)
+	
+	pure_test()
+
+
+# hsv = cardiac_cell_slide(slide_masson, 0, start_pos=(40000, 40000), is_debug=True, dimension=(1000, 1000))
+
+
+# cv2.imshow('masson_region', bgr_img)
+
+
+# cv2.imshow('origin', region)
+# fibrosis_hsv = fibrosis_slide(slide_masson, working_level, (30000, 30000), is_debug=True)
+# cv2.imshow('masson_fibrosis_hsv', fibrosis_hsv)
+
+
+# fibrosis_slide()
+
+
 # working_dimensions = slide2.level_dimensions[working_level]
 # print working_dimensions
 # img = np.array(slide2.read_region((0, 0), working_level, working_dimensions))
@@ -202,7 +253,8 @@ def masson_test_proc(working_level=6):
 
 if __name__ == '__main__':
 	init()
-	# print 11
+	
+	# masson_proc()
 	masson_test_proc()
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
