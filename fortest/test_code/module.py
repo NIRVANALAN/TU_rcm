@@ -390,7 +390,7 @@ def detectprocess(a, hsv):
 	return detect[0], detect[1], detect[2], whole_area_space, [i[1:] for i in nuclear_area_space]
 
 
-def masson_region_slide(slide, working_level, threshold=(), start_pos=(0, 0), is_debug=False, dimension=(1000, 1000)):
+def masson_region_slide(slide, working_level, threshold=(), start_pos=(0, 0), is_debug=False, dimension=(500, 500)):
 	working_dimensions = slide.level_dimensions[working_level]
 	if is_debug is False:
 		img = np.array(slide.read_region(start_pos, working_level, working_dimensions))

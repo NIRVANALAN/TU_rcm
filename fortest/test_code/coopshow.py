@@ -72,13 +72,13 @@ for nu in range(0,len(patients)):
                     else:
                         e[j][i] = 0
                     if f[j][i] == 1:
-                        result.append([a[j][i],b[j][i]/beilv,c[j][i]/beilv,d[j][i]/beilv,e[j][i],100,0,0,i,j])
+                        result.append([a[j][i], b[j][i] / beilv, c[j][i] / beilv, d[j][i] / beilv, e[j][i], 100, 0, 0, i, j])
                     elif f[j][i] == 2:
-                        result.append([a[j][i],b[j][i]/beilv,c[j][i]/beilv,d[j][i]/beilv,e[j][i],0,100,0,i,j])
+                        result.append([a[j][i], b[j][i] / beilv, c[j][i] / beilv, d[j][i] / beilv, e[j][i], 0, 100, 0, i, j])
                     elif f[j][i] == 3:
-                        result.append([a[j][i],b[j][i]/beilv,c[j][i]/beilv,d[j][i]/beilv,e[j][i],0,0,100,i,j])
+                        result.append([a[j][i], b[j][i] / beilv, c[j][i] / beilv, d[j][i] / beilv, e[j][i], 0, 0, 100, i, j])
                     else:
-                        result.append([a[j][i],b[j][i]/beilv,c[j][i]/beilv,d[j][i]/beilv,e[j][i],0,0,0,i,j])
+                        result.append([a[j][i], b[j][i] / beilv, c[j][i] / beilv, d[j][i] / beilv, e[j][i], 0, 0, 0, i, j])
                     '''
                     if s[j][i] > totalmax[0]:
                         totalmax[0] = s[j][i]
@@ -113,7 +113,7 @@ for nu in range(0,len(patients)):
 
 print len(result)
 result = np.array(result)
-resultStd = result[:,2:5]
+resultStd = result[:, 2:5]
 for haha in range(0,3):
     x = resultStd[:,haha]
     print np.mean(x), np.std(x)
