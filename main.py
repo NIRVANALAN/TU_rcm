@@ -1160,13 +1160,13 @@ class MainWindow(QMainWindow):
 		# cv2.imshow("fibrosis",fibrosis)
 		averagegreyimg = cv2.blur(greyimg, (30, 30))
 		# cv2.imshow('average grey img', averagegreyimg)
-		# cv2.imwrite("test/HE/average_grey_img.jpg", averagegreyimg)
+		# cv2.imwrite("test_images/HE/average_grey_img.jpg", averagegreyimg)
 		
 		ret, erode = cv2.threshold(averagegreyimg, 120, 255, cv2.THRESH_BINARY)
 		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 		erode = cv2.erode(erode, kernel, iterations=3)
 		# cv2.imshow("after erosion", erode)
-		# cv2.imwrite("test/HE/after_erosion.jpg", erode)
+		# cv2.imwrite("test_images/HE/after_erosion.jpg", erode)
 		
 		# cv2.imshow("")
 		#  多次腐蚀，除去小梁
