@@ -57,8 +57,8 @@ def edit_area(level, slide, is_masson=False):
 	# 腐蚀后的边界
 	
 	object = []
-	maxarea = 0
-	max = None
+	max_area = 0
+	max_area_index = None
 	
 	for cnt in cnts:
 		area = cv2.contourArea(cnt)
@@ -71,15 +71,15 @@ def edit_area(level, slide, is_masson=False):
 			i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 			cv2.fillPoly(i, np.array([points], np.int32), 255)
 			object.append(i)
-			if area > maxarea:
-				maxarea = area
-				max = len(object) - 1
-	wall = object[max]
+			if area > max_area:
+				max_area = area
+				max_area_index = len(object) - 1
+	wall = object[max_area_index]
 	# 把每一个区域都分割出来，最大的心肌壁
 	
 	other = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	for i in range(0, len(object)):
-		if i != max:
+		if i != max_area_index:
 			other = cv2.add(other, object[i])
 	
 	# 通过矩moments计算重心
@@ -260,11 +260,11 @@ def edit_area(level, slide, is_masson=False):
 	box1 = cv2.boxPoints(rect1)
 	box1 = np.array(box1)
 	for i in range(0, 2):
-		max = sqrt((box1[i][0] - cx1) * (box1[i][0] - cx1) + (box1[i][1] - cy1) * (box1[i][1] - cy1))
+		max_area_index = sqrt((box1[i][0] - cx1) * (box1[i][0] - cx1) + (box1[i][1] - cy1) * (box1[i][1] - cy1))
 		n = i
 		for j in range(i, 4):
-			if sqrt((box1[j][0] - cx1) * (box1[j][0] - cx1) + (box1[j][1] - cy1) * (box1[j][1] - cy1)) > max:
-				max = sqrt((box1[j][0] - cx1) * (box1[j][0] - cx1) + (box1[j][1] - cy1) * (box1[j][1] - cy1))
+			if sqrt((box1[j][0] - cx1) * (box1[j][0] - cx1) + (box1[j][1] - cy1) * (box1[j][1] - cy1)) > max_area_index:
+				max_area_index = sqrt((box1[j][0] - cx1) * (box1[j][0] - cx1) + (box1[j][1] - cy1) * (box1[j][1] - cy1))
 				n = j
 		k = (box1[i][0], box1[i][1])
 		box1[i] = box1[n]

@@ -99,7 +99,7 @@ def he_test_proc():
 				os.mkdir(img_path_iter)
 			cv2.imwrite(img_path_iter + '/' + i.split('/')[-1] + '.jpg', region)
 	
-	write_test_img(is_masson=True)
+	# write_test_img(is_masson=True)
 	# region = np.array(slide_he.read_region((30000, 30000), 0, (1000, 1000)))
 	# region = np.array(slide.read_region((0, 0), 0, (1000, 1000)))
 	# region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
