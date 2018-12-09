@@ -902,10 +902,10 @@ class MainWindow(QMainWindow):
 			angle = rect[2]
 			width = rect[1][0]
 			height = rect[1][1]
-		points = rotatePoints(points, rect[0], -angle)
+		points = rotate_points(points, rect[0], -angle)
 		
 		for i in avercnts:
-			averpoints = rotatePoints(i, rect[0], -angle)
+			averpoints = rotate_points(i, rect[0], -angle)
 		
 		notheightPoints = [[], []]
 		for i in range(0, len(points)):
@@ -999,10 +999,10 @@ class MainWindow(QMainWindow):
 				addPoints[n].append([[int(xlist[i][0]), int((xlist[i][1] - xlist[pl][1]) / 3 + xlist[pl][1])]])
 				addPoints[m].append([[int(xlist[i][0]), int((xlist[i][1] - xlist[pl][1]) * 2 / 3 + xlist[pl][1])]])
 		
-		notheightPoints[0] = rotatePoints(notheightPoints[0], rect[0], angle)
-		notheightPoints[1] = rotatePoints(notheightPoints[1], rect[0], angle)
-		addPoints[0] = rotatePoints(addPoints[0], rect[0], angle)
-		addPoints[1] = rotatePoints(addPoints[1], rect[0], angle)
+		notheightPoints[0] = rotate_points(notheightPoints[0], rect[0], angle)
+		notheightPoints[1] = rotate_points(notheightPoints[1], rect[0], angle)
+		addPoints[0] = rotate_points(addPoints[0], rect[0], angle)
+		addPoints[1] = rotate_points(addPoints[1], rect[0], angle)
 		
 		m = cv2.moments(numpy.array(notheightPoints[1]))
 		cx1 = int(m["m10"] / m["m00"])
@@ -1255,10 +1255,10 @@ class MainWindow(QMainWindow):
 			angle = rect[2]
 			width = rect[1][0]
 			height = rect[1][1]
-		points = rotatePoints(points, rect[0], -angle)
+		points = rotate_points(points, rect[0], -angle)
 		
 		for i in avercnts:
-			averpoints = rotatePoints(i, rect[0], -angle)
+			averpoints = rotate_points(i, rect[0], -angle)
 		
 		notheightPoints = [[], []]
 		for i in range(0, len(points)):
@@ -1352,10 +1352,10 @@ class MainWindow(QMainWindow):
 				addPoints[n].append([[int(xlist[i][0]), int((xlist[i][1] - xlist[pl][1]) / 3 + xlist[pl][1])]])
 				addPoints[m].append([[int(xlist[i][0]), int((xlist[i][1] - xlist[pl][1]) * 2 / 3 + xlist[pl][1])]])
 		
-		notheightPoints[0] = rotatePoints(notheightPoints[0], rect[0], angle)
-		notheightPoints[1] = rotatePoints(notheightPoints[1], rect[0], angle)
-		addPoints[0] = rotatePoints(addPoints[0], rect[0], angle)
-		addPoints[1] = rotatePoints(addPoints[1], rect[0], angle)
+		notheightPoints[0] = rotate_points(notheightPoints[0], rect[0], angle)
+		notheightPoints[1] = rotate_points(notheightPoints[1], rect[0], angle)
+		addPoints[0] = rotate_points(addPoints[0], rect[0], angle)
+		addPoints[1] = rotate_points(addPoints[1], rect[0], angle)
 		
 		m = cv2.moments(numpy.array(notheightPoints[1]))
 		cx1 = int(m["m10"] / m["m00"])

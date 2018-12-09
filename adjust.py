@@ -124,7 +124,7 @@ def rotate(point, center, angle):
 		return point
 
 
-def rotatePoints(points, center, angle):
+def rotate_points(points, center, angle):
 	for i in range(0, len(points)):
 		points[i] = rotate(points[i], center, angle)
 	return points
