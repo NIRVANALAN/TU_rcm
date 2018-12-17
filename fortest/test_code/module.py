@@ -10,7 +10,8 @@ sys.path.append(rootPath)
 from adjust import *
 
 
-def edit_area(level, slide, is_masson=False):
+def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
+              is_masson=False):
     if is_masson is True:
         print 'edit MASSON'
     else:
@@ -20,14 +21,14 @@ def edit_area(level, slide, is_masson=False):
     working_dimensions = slide.level_dimensions[level]
     print working_dimensions
     img = np.array(slide.read_region((0, 0), level, working_dimensions))
-    cv2.imshow('img', img)
+    # cv2.imshow('img', img)
     b, g, r, a = cv2.split(img)
     rgbimg = cv2.merge((r, g, b))
     hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
     if is_masson is True:
         greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 180))
         fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (150, 255, 255))
-        cv2.imshow("fibrosis", fibrosis_img)
+        # cv2.imshow("fibrosis", fibrosis_img)
     else:
         greyimg = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
     average_greyimg = cv2.blur(greyimg, (30, 30))
@@ -37,9 +38,14 @@ def edit_area(level, slide, is_masson=False):
     ret, erode = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
     if is_masson is True:
-        erode = cv2.erode(erode, kernel, iterations=15)
+        masson_erosion_iteration_time = masson_erosion_iteration_time_list[slide_no]
+        erode = cv2.erode(erode, kernel, iterations=masson_erosion_iteration_time)
     else:
-        erode = cv2.erode(erode, kernel, iterations=3)
+        if slide_no is not 3:  # slide 04 do not need to ...
+            he_erosion_iteration_time = he_erosion_iteration_time_list[slide_no]
+            erode = cv2.erode(erode, kernel, iterations=he_erosion_iteration_time)
+        else:
+            pass
     cv2.imshow("after erosion", erode)
     # cv2.imwrite("test_images/HE/after_erosion.jpg", erode)
 
@@ -104,9 +110,9 @@ def edit_area(level, slide, is_masson=False):
 
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
     wall = cv2.dilate(wall, kernel, iterations=15)
-    # cv2.imshow("wall", wall)
+    cv2.imshow("wall", wall)
     other = cv2.dilate(other, kernel, iterations=15)
-    # cv2.imshow("other", other)
+    cv2.imshow("other", other)
 
     image, contours, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     image1, contours1, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -235,11 +241,15 @@ def edit_area(level, slide, is_masson=False):
             cutting_line_points[n].append([[int(x_list[i][0]), int((x_list[i][1] - y) / 3 + y)]])
             cutting_line_points[m].append([[int(x_list[i][0]), int((x_list[i][1] - y) * 2 / 3 + y)]])
         elif pl < 0:
-            cutting_line_points[n].append([[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) / 3 + x_list[pr][1])]])
-            cutting_line_points[m].append([[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) * 2 / 3 + x_list[pr][1])]])
+            cutting_line_points[n].append(
+                [[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) / 3 + x_list[pr][1])]])
+            cutting_line_points[m].append(
+                [[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) * 2 / 3 + x_list[pr][1])]])
         else:
-            cutting_line_points[n].append([[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 3 + x_list[pl][1])]])
-            cutting_line_points[m].append([[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) * 2 / 3 + x_list[pl][1])]])
+            cutting_line_points[n].append(
+                [[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 3 + x_list[pl][1])]])
+            cutting_line_points[m].append(
+                [[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) * 2 / 3 + x_list[pl][1])]])
 
     width_points[0] = rotate_points(width_points[0], rect_wall[0], angle)
     width_points[1] = rotate_points(width_points[1], rect_wall[0], angle)
@@ -257,7 +267,7 @@ def edit_area(level, slide, is_masson=False):
     third = cutting_line_points[0] + width_points[1]
 
     i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-    firstmask = cv2.fillPoly(i, np.array([first], np.int32), 255)
+    firstmask = cv2.fillPoly(i, np.array([first], np.int32), 255)  # fillPoly()对于限定轮廓的区域进行填充
     # cv2.imshow("firstmask", firstmask)
     # print firstmask[363][154]
 
