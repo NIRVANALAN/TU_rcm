@@ -248,7 +248,7 @@ def masson_proc(slide=slide_masson, working_level=6):  # need debug and fix
     i = 0
     print working_level
     working_dimensions = slide.level_dimensions[working_level]
-    firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(working_level, slide,
+    firstmask, secondmask, thirdmask, othermask, grey_img, hsv, fibrosis_img = edit_area(working_level, slide,
                                                                                         masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
                                                                                         is_masson=True)
     areas = [firstmask, secondmask, thirdmask, othermask]
@@ -311,7 +311,7 @@ def masson_test_proc(working_level=6):
         cv2.setMouseCallback('HSV', getpos)
 
     # pure_test()
-    slide_no = 5
+    slide_no = 0
     # slide_he = openslide.open_slide(he_path[slide_no])
     slide_masson = openslide.open_slide(masson_path[slide_no])
     firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(working_level, slide_masson,

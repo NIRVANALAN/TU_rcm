@@ -8,21 +8,34 @@ img_show = False
 # print os.path.abspath('./')
 img = cv.imread("../test_images/HE/25845/25845-1.ndpi.jpg", 0)
 if img is not None:
+	# img = np.zeros((512, 512, 3), np.uint8)
+	# dot_list = np.array([[0, 0], [500, 500], [300, 400], [600, 400]], np.int32)
+	# dot_list = dot_list.reshape((-1, 1, 2))  # means -1 dimension will be calculated automatically
+	# # cv.line(img, (0, 0), (500, 500), 255, 5)
+	# cv.polylines(img, dot_list, False, (0, 0, 255))
+	
+	# img = np.zeros((512, 512, 3), np.uint8)
+	
+	pts = np.array([[0, 0], [300, 400], [500, 500], [600, 400]], np.int32)
+	pts = pts.reshape(-1, 1, 2)
+	cv.polylines(img, [pts], False, (0, 255, 255))
+	cv.imshow("line", img)
+	
 	# grey = cv.cvtColor(rgb_img, 0)
-	ret, thresh = cv.threshold(img, 127, 255, 0)
-	_, contours, hier = cv.findContours(thresh, 1, 2)
-	# img contours hierachy
-	cnt = contours[100]
-	M = cv.moments(cnt)
-	area = cv.contourArea(cnt)
-	cont_img = cv.drawContours(img, contours, 100, (0, 255, 0), 10)
-	cv.imshow('cont_img', cont_img)
-	print area
-	print M['m10'] / M['m00']
-	print M['m01'] / M['m00']
-	if img_show:
-		cv.imshow('he_2', img)
-		cv.imshow('grey', thresh)
+	# ret, thresh = cv.threshold(img, 127, 255, 0)
+	# _, contours, hier = cv.findContours(thresh, 1, 2)
+	# # img contours hierachy
+	# cnt = contours[100]
+	# M = cv.moments(cnt)
+	# area = cv.contourArea(cnt)
+	# cont_img = cv.drawContours(img, contours, 100, (0, 255, 0), 10)
+	# cv.imshow('cont_img', cont_img)
+	# print area
+	# print M['m10'] / M['m00']
+	# print M['m01'] / M['m00']
+	# if img_show:
+	# 	cv.imshow('he_2', img)
+	# 	cv.imshow('grey', thresh)
 	cv.waitKey(0)
 	cv.destroyAllWindows()
 else:
