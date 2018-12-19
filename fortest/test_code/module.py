@@ -273,7 +273,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	second_pts.reshape(-1, 1, 2)
 	# img_test = np.zeros((working_dimensions[1], working_dimensions[0], 3), np.uint8)
 	cv2.polylines(rgbimg, first_pts, False, (0, 0, 255), 6)
-	cv2.polylines(rgbimg, second_pts, False, (0, 0, 255), 6)
+	cv2.polylines(rgbimg, second_pts, False, (0, 255, 0), 6)
 	cv2.imshow("img_seg_test", rgbimg)
 	
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
