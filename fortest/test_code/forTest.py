@@ -282,8 +282,8 @@ def masson_test_proc(working_level=6):
     global slide_masson
     print 'working level', working_level
     working_dimension = slide_masson.level_dimensions[working_level]
-    cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
-    fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
+    # cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
+    # fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
 
     # hsv = []
     # rgb_img = []
@@ -311,7 +311,7 @@ def masson_test_proc(working_level=6):
         cv2.setMouseCallback('HSV', getpos)
 
     # pure_test()
-    slide_no = 0
+    slide_no = 5
     # slide_he = openslide.open_slide(he_path[slide_no])
     slide_masson = openslide.open_slide(masson_path[slide_no])
     firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(working_level, slide_masson,

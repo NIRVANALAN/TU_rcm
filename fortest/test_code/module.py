@@ -38,15 +38,14 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	
 	ret, erode = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-	if is_masson is True:
+	if is_masson is True and slide_no is not 3:
 		masson_erosion_iteration_time = masson_erosion_iteration_time_list[slide_no]
 		erode = cv2.erode(erode, kernel, iterations=masson_erosion_iteration_time)
-	else:
-		if slide_no is not 3:  # slide 04 do not need to ...
-			he_erosion_iteration_time = he_erosion_iteration_time_list[slide_no]
-			erode = cv2.erode(erode, kernel, iterations=he_erosion_iteration_time)
-		else:
-			pass
+	elif slide_no is not 3:
+		# slide 04 do not need to ...
+		he_erosion_iteration_time = he_erosion_iteration_time_list[slide_no]
+		erode = cv2.erode(erode, kernel, iterations=he_erosion_iteration_time)
+		pass
 	# cv2.imshow("after erosion", erode)
 	# cv2.imwrite("test_images/HE/after_erosion.jpg", erode)
 	
@@ -97,7 +96,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	M0 = cv2.moments(other)
 	cx0 = int((M0["m10"]) / (M0["m00"]))
 	cy0 = int((M0["m01"]) / (M0["m00"]))
-	# base angle is like: other->left wall->right x0<x1 y0==y1
+	# base angle is like: other->left wall->right x0<x1 y0==y1 attention: The origin point of opencv is at top left corner
 	if cx0 - cx1 == 0:
 		if cy0 - cy1 > 0:
 			base_angle = 90
@@ -111,9 +110,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 	wall = cv2.dilate(wall, kernel, iterations=15)
-	# cv2.imshow("wall", wall)
+	cv2.imshow("wall", wall)
 	other = cv2.dilate(other, kernel, iterations=15)
-	# cv2.imshow("other", other)
+	cv2.imshow("other", other)
 	
 	image, contours, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 	image1, contours1, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -128,10 +127,32 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	rect_wall = cv2.minAreaRect(points_wall)
 	rect_other = cv2.minAreaRect(points_other)
 	# 最小外切矩形 （中心(x,y), (宽,高), 旋转角度）
+	box_wall = cv2.boxPoints(rect_wall)
+	box_wall = np.int0(box_wall)
+	box_other = cv2.boxPoints(rect_other)
+	box_other = np.int0(box_other)
+	# 快速排斥实验 判断两条线段是不是相交，相交的话交点所在的边就是内膜
+	'''
+	max(C.x,D.x)<min(A.x,B.x) || max(C.y,D.y)<min(A.y,B.y) ||
+	max(A.x,B.x)<min(C.x,D.x) || max(A.y,B.y)<min(C.y,C.y)
+	'''
+	endocardium_pts = [[], []]
+	for i in range(len(box_wall)):
+		if max(cx0, cx1) < min(box_wall[i][0], box_wall[(i + 1) % len(box_wall)][0]) \
+				or max(cy0, cy1) < min(box_wall[i][1], box_wall[(i + 1) % len(box_wall)][1]) \
+				or max(box_wall[i][0], box_wall[(i + 1) % len(box_wall)][0]) < min(cx0, cx1) \
+				or max(box_wall[i][1], box_wall[(i + 1) % len(box_wall)][1]) < min(cy0, cy1):
+			continue
+		else:
+			endocardium_pts = [[box_wall[i][0], box_wall[i][1]],
+			                   [box_wall[(i + 1) % len(box_wall)][0], box_wall[(i + 1) % len(box_wall)][1]]]
+			break
 	
-	rect_wall = (rect_wall[0], rect_wall[1], -rect_wall[2])  # ?
-	if (math.fabs(rect_wall[2] - base_angle) % 360) < 45 or (math.fabs(rect_wall[2] - base_angle) % 360) > 135:
-		angle = 90 - rect_wall[2]
+	rect_wall = (rect_wall[0], rect_wall[1], -rect_wall[2])  # minAreaRect 旋转角度小于0
+	# get the width & height
+	if (math.fabs(rect_wall[2] - base_angle) % 360) < 180*atan(rect_wall[1][1] / rect_wall[1][0])/math.pi or (
+			math.fabs(rect_wall[2] - base_angle) % 360) > 135:
+		angle = math.fabs(rect_wall[2] - 90)
 		width = rect_wall[1][1]
 		height = rect_wall[1][0]
 	else:
@@ -236,21 +257,33 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			pl = pl - 1
 		while pr < len(x_list) and x_list[pr][2] == x_list[i][2]:
 			pr = pr + 1
+		# one cutting line for slide_no 4
 		if pl >= 0 and pr < len(x_list):
 			y = (x_list[pl][1]) * (x_list[pr][0] - x_list[i][0]) / (x_list[pr][0] - x_list[pl][0]) + (x_list[pr][1]) * (
 					x_list[i][0] - x_list[pl][0]) / (x_list[pr][0] - x_list[pl][0])
-			cutting_line_points[n].append([[int(x_list[i][0]), int((x_list[i][1] - y) / 3 + y)]])
-			cutting_line_points[m].append([[int(x_list[i][0]), int((x_list[i][1] - y) * 2 / 3 + y)]])
+			if slide_no != 3:
+				cutting_line_points[n].append([[int(x_list[i][0]), int((x_list[i][1] - y) / 3 + y)]])
+				cutting_line_points[m].append([[int(x_list[i][0]), int((x_list[i][1] - y) * 2 / 3 + y)]])
+			else:
+				cutting_line_points[n].append([[int(x_list[i][0]), int((x_list[i][1] - y) / 2 + y)]])
 		elif pl < 0:
-			cutting_line_points[n].append(
-				[[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) / 3 + x_list[pr][1])]])
-			cutting_line_points[m].append(
-				[[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) * 2 / 3 + x_list[pr][1])]])
+			if slide_no != 3:
+				cutting_line_points[n].append(
+					[[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) / 3 + x_list[pr][1])]])
+				cutting_line_points[m].append(
+					[[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) * 2 / 3 + x_list[pr][1])]])
+			else:
+				cutting_line_points[n].append(
+					[[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) / 2 + x_list[pr][1])]])
 		else:
-			cutting_line_points[n].append(
-				[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 3 + x_list[pl][1])]])
-			cutting_line_points[m].append(
-				[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) * 2 / 3 + x_list[pl][1])]])
+			if slide_no != 3:
+				cutting_line_points[n].append(
+					[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 3 + x_list[pl][1])]])
+				cutting_line_points[m].append(
+					[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) * 2 / 3 + x_list[pl][1])]])
+			else:
+				cutting_line_points[n].append(
+					[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 2 + x_list[pl][1])]])
 	
 	width_points[0] = rotate_points(width_points[0], rect_wall[0], angle)
 	width_points[1] = rotate_points(width_points[1], rect_wall[0], angle)
@@ -273,7 +306,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	second_pts.reshape(-1, 1, 2)
 	# img_test = np.zeros((working_dimensions[1], working_dimensions[0], 3), np.uint8)
 	cv2.polylines(rgbimg, first_pts, False, (0, 0, 255), 6)
-	cv2.polylines(rgbimg, second_pts, False, (0, 255, 0), 6)
+	if slide_no != 3:
+		cv2.polylines(rgbimg, second_pts, False, (0, 255, 0), 6)
 	cv2.imshow("img_seg_test", rgbimg)
 	
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
