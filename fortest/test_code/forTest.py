@@ -78,7 +78,7 @@ def init():
     print "init finished, working dimension: ", working_dimension, "working level:", max_level
 
 
-masson_erosion_iteration_time_list = [5, 10, 15, 15, 15, 13]
+masson_erosion_iteration_time_list = [10, 10, 15, 15, 15, 13]
 he_erosion_iteration_time_list = [3, 3, 8, 3, 13, 9]  # for specifications
 
 
@@ -91,7 +91,7 @@ def he_test_proc():
     global slide_masson
     slide_he = openslide.open_slide(he_path[slide_no])
     # slide_masson = openslide.open_slide(masson_path[slide_no])
-    firstmask, secondmask, thirdmask, othermask = edit_area(6, slide_he, he_erosion_iteration_time_list,
+    firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(6, slide_he, he_erosion_iteration_time_list,
                                                             masson_erosion_iteration_time_list, slide_no,
                                                             is_masson=False)
 
@@ -311,10 +311,10 @@ def masson_test_proc(working_level=6):
         cv2.setMouseCallback('HSV', getpos)
 
     # pure_test()
-    slide_no = 5
+    slide_no = 0
     # slide_he = openslide.open_slide(he_path[slide_no])
     slide_masson = openslide.open_slide(masson_path[slide_no])
-    firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img = edit_area(working_level, slide_masson,
+    firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img, rcm_thickening = edit_area(working_level, slide_masson,
                                                                                         masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
                                                                                         slide_no=slide_no,
                                                                                         is_masson=True)

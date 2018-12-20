@@ -16,9 +16,14 @@ if img is not None:
 	
 	# img = np.zeros((512, 512, 3), np.uint8)
 	
-	pts = np.array([[0, 0], [300, 400], [500, 500], [600, 400]], np.int32)
+	pts = np.array([[0, 0], [300, 400], [500, 500], [600, 650]], np.int32)
 	pts = pts.reshape(-1, 1, 2)
-	cv.polylines(img, [pts], False, (0, 255, 255))
+	# cv.polylines(img, [pts], False, (0, 255, 255))
+	rows, cols = img.shape[:2]
+	[vx, vy, x, y] = cv.fitLine(pts, cv.DIST_L2, 0, 0.01, 0.01)
+	lefty = int((-x * vy / vx) + y)
+	righty = int(((cols - x) * vy / vx) + y)
+	img = cv.line(img, (cols - 1, righty), (0, lefty), (0, 255, 0), 2)
 	cv.imshow("line", img)
 	
 	# grey = cv.cvtColor(rgb_img, 0)
