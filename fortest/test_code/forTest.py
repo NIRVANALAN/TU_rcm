@@ -79,17 +79,17 @@ def init():
 
 
 masson_erosion_iteration_time_list = [5, 10, 15, 15, 15, 13]
-he_erosion_iteration_time_list = [3, 3, 8, 3, 7, 9]  # for specifications
+he_erosion_iteration_time_list = [3, 3, 8, 3, 13, 9]  # for specifications
 
 
 def he_test_proc():
     # print dimension
     # whole_level = 6
     # print "he_test_proc_dimension:", max_level
-    slide_no = 0
+    slide_no = 5
     global slide_he
     global slide_masson
-    # slide_he = openslide.open_slide(he_path[slide_no])
+    slide_he = openslide.open_slide(he_path[slide_no])
     # slide_masson = openslide.open_slide(masson_path[slide_no])
     firstmask, secondmask, thirdmask, othermask = edit_area(6, slide_he, he_erosion_iteration_time_list,
                                                             masson_erosion_iteration_time_list, slide_no,
@@ -245,7 +245,7 @@ masson_mask_name = ['firstmask', 'secondmask', 'secondmask', 'secondmask', 'whol
 
 def masson_proc(slide=slide_masson, working_level=6):  # need debug and fix
     global masson_result_iter
-    i = 0
+    # i = 5
     print working_level
     working_dimensions = slide.level_dimensions[working_level]
     firstmask, secondmask, thirdmask, othermask, grey_img, hsv, fibrosis_img = edit_area(working_level, slide,
