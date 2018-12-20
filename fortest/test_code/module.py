@@ -304,6 +304,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
         while pr < len(x_list) and x_list[pr][2] == x_list[i][2]:
             pr = pr + 1
         # one cutting line for slide_no 4
+        y_average_list = []
         if pl >= 0 and pr < len(x_list):
             y = (x_list[pl][1]) * (x_list[pr][0] - x_list[i][0]) / (x_list[pr][0] - x_list[pl][0]) + (x_list[pr][1]) * (
                     x_list[i][0] - x_list[pl][0]) / (x_list[pr][0] - x_list[pl][0])
@@ -312,6 +313,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
                 cutting_line_points[m].append([[int(x_list[i][0]), int((x_list[i][1] - y) * 2 / 3 + y)]])
             else:
                 cutting_line_points[n].append([[int(x_list[i][0]), int((x_list[i][1] - y) / 2 + y)]])
+            y_average_list.append(x_list[i][1] - y)
         elif pl < 0:
             if slide_no != 3:
                 cutting_line_points[n].append(
@@ -321,6 +323,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
             else:
                 cutting_line_points[n].append(
                     [[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) / 2 + x_list[pr][1])]])
+            y_average_list.append(x_list[i][1] - x_list[pr][1])
         else:
             if slide_no != 3:
                 cutting_line_points[n].append(
@@ -330,7 +333,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
             else:
                 cutting_line_points[n].append(
                     [[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 2 + x_list[pl][1])]])
-
+            y_average_list.append(x_list[i][1] - x_list[pl][1])
+    rcm_thickening = np.average(y_average_list)
     width_points[0] = rotate_points(width_points[0], rect_wall[0], angle)
     width_points[1] = rotate_points(width_points[1], rect_wall[0], angle)
     cutting_line_points[0] = rotate_points(cutting_line_points[0], rect_wall[0], angle)
@@ -352,7 +356,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
         while pr < len(y_list) and y_list[pr][2] == y_list[i][2]:
             pr = pr + 1
         # one cutting line for slide_no 4
-        x_average_list = []
+        x_average_list = []  # useless...
         if pl >= 0 and pr < len(y_list):
             x = (y_list[pl][0]) * (y_list[pr][1] - y_list[i][1]) / (y_list[pr][1] - y_list[pl][1]) + (y_list[pr][0]) * (
                     y_list[i][1] - y_list[pl][1]) / (y_list[pr][1] - y_list[pl][1])
@@ -376,7 +380,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
     height_line_points[0] = rotate_points(height_line_points[0], rect_wall[0], angle)
     height_line_points[1] = rotate_points(height_line_points[1], rect_wall[0], angle)
     # update rcm_thickening
-    rcm_thickening = np.average(x_average_list)
+    # rcm_thickening = np.average(x_average_list)
     m = cv2.moments(np.array(width_points[1]))
     cx1 = int(m["m10"] / m["m00"])
     cy1 = int(m["m01"] / m["m00"])
