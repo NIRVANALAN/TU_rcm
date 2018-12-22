@@ -146,26 +146,27 @@ def he_test_proc():
 # whole_img = slide.read_region((0, 0), 0, dimension)
 
 # print firstmask
-he_mask_name = ['firstmask', 'secondmask', 'secondmask', 'secondmask', 'whole']
+he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'whole']
 
 
 def he_proc():
     global he_result_iter
     he_slide_no = 0
-    firstmask, secondmask, thirdmask, othermask = edit_area(max_level, slide_he, he_erosion_iteration_time_list,
+    mask_level = 6
+    firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(mask_level, slide_he, he_erosion_iteration_time_list,
                                                             masson_erosion_iteration_time_list, he_slide_no)
     global he_mask_name
     areas = [firstmask, secondmask, thirdmask, othermask]
     magnify = pow(2, max_level)
-    area_length = 500
+    area_length = 1000
     i = 0
     for area in areas:
-        for y in range(0, dimension[1] - 1000, 1000):
-            for x in range(0, dimension[0] - 1000, 1000):
+        for y in range(0, dimension[1] - area_length, area_length):
+            for x in range(0, dimension[0] - area_length, area_length):
                 # if whole_img[x * magnify + 500][y * magnify + 500] != 0:
-                if firstmask[int((y + area_length) / magnify)][int((x + area_length) / magnify)] != 0:
+                if firstmask[int((y + area_length/2) / magnify)][int((x + area_length/2) / magnify)] != 0:
                     print x, y
-                    region = np.array(slide_he.read_region((x, y), 0, (1000, 1000)))
+                    region = np.array(slide_he.read_region((x, y), 0, (area_length, area_length)))
                     region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
                     hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
                     detect = detectprocess(region, hsv)
