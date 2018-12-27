@@ -10,6 +10,16 @@ sys.path.append(rootPath)
 from adjust import *
 
 
+def fibrosis(slide, fibrosislevel):
+	working_dimensions = slide.level_dimensions[fibrosislevel]
+	img = np.array(slide.read_region((0, 0), fibrosislevel, working_dimensions))
+	rr, gg, bb, aa = cv2.split(img)
+	rgb_img = cv2.merge((bb, gg, rr))
+	hsv = cv2.cvtColor(rgb_img, cv2.COLOR_BGR2HSV)
+	hsv_fibrosis = cv2.inRange(hsv, (90, 20, 20), (140, 255, 255))
+	return hsv_fibrosis
+
+
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
               is_masson=False):
 	if is_masson is True:
@@ -28,7 +38,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# cv2.imshow("rgb_img", rgbimg)
 	if is_masson is True:
 		grey_img = cv2.inRange(hsv, (0, 20, 0), (180, 255, 180))
-		fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (150, 255, 255))
+		fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (140, 255, 255))  # can be returned
 	# cv2.imshow("fibrosis", fibrosis_img)
 	else:
 		grey_img = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
@@ -52,9 +62,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# cv2.imshow("")
 	#  多次腐蚀，除去小梁
 
-	ret, averimage = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
-	averimage, avercnts, averhierarchy = cv2.findContours(averimage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-	# cv2.imshow("aver image", averimage)
+	ret, aver_image = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
+	aver_image, avercnts, averhierarchy = cv2.findContours(aver_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	# cv2.imshow("aver image", aver_image)
 
 	# 得到整体的边界
 
@@ -126,40 +136,49 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 
 	rect_wall = cv2.minAreaRect(points_wall)
 	rect_other = cv2.minAreaRect(points_other)
+	rect_all = cv2.minAreaRect(np.concatenate(points_wall, points_other))  # 整体的最小外接矩形，包括心肌壁和小梁
 	# 最小外切矩形 （中心(x,y), (宽,高), 旋转角度）
 	box_wall = cv2.boxPoints(rect_wall)
 	box_wall = np.int0(box_wall)
 	box_other = cv2.boxPoints(rect_other)
 	box_other = np.int0(box_other)
 	# 快速排斥实验 判断两条线段是不是相交，相交的话交点所在的边就是内膜
+	# 这个办法没用上。。。
 	'''
 	max(C.x,D.x)<min(A.x,B.x) || max(C.y,D.y)<min(A.y,B.y) ||
 	max(A.x,B.x)<min(C.x,D.x) || max(A.y,B.y)<min(C.y,C.y)
 	'''
-	endocardium_pts = [[], []]  # useless now
-	for i in range(len(box_wall)):
-		if max(cx0, cx1) < min(box_wall[i][0], box_wall[(i + 1) % len(box_wall)][0]) \
-				or max(cy0, cy1) < min(box_wall[i][1], box_wall[(i + 1) % len(box_wall)][1]) \
-				or max(box_wall[i][0], box_wall[(i + 1) % len(box_wall)][0]) < min(cx0, cx1) \
-				or max(box_wall[i][1], box_wall[(i + 1) % len(box_wall)][1]) < min(cy0, cy1):
-			continue
-		else:
-			endocardium_pts = [[box_wall[i][0], box_wall[i][1]],
-			                   [box_wall[(i + 1) % len(box_wall)][0], box_wall[(i + 1) % len(box_wall)][1]]]
-			break
+	# for i in range(len(box_wall)):
+	# 	if max(cx0, cx1) < min(box_wall[i][0], box_wall[(i + 1) % len(box_wall)][0]) \
+	# 			or max(cy0, cy1) < min(box_wall[i][1], box_wall[(i + 1) % len(box_wall)][1]) \
+	# 			or max(box_wall[i][0], box_wall[(i + 1) % len(box_wall)][0]) < min(cx0, cx1) \
+	# 			or max(box_wall[i][1], box_wall[(i + 1) % len(box_wall)][1]) < min(cy0, cy1):
+	# 		continue
+	# 	else:
+	# 		endocardium_pts = [[box_wall[i][0], box_wall[i][1]],
+	# 		                   [box_wall[(i + 1) % len(box_wall)][0], box_wall[(i + 1) % len(box_wall)][1]]]
+	# 		break
 
 	rect_wall = (rect_wall[0], rect_wall[1], -rect_wall[2])  # minAreaRect 旋转角度小于0
-	# get the width & height
+	# get the width & height and compute the height of 'other'
+	other_height = 0
 	if (math.fabs(rect_wall[2] - base_angle) % 360) < 180 * atan(rect_wall[1][1] / rect_wall[1][0]) / math.pi or (
 			math.fabs(rect_wall[2] - base_angle) % 360) > 180 - 180 * atan(rect_wall[1][1] / rect_wall[1][0]) / math.pi:
 		angle = math.fabs(rect_wall[2] - 90)
-		width = rect_wall[1][1]
-		height = rect_wall[1][0]
+		wall_width = rect_wall[1][1]
+		wall_height = rect_wall[1][0]
+		all_width = rect_all[1][1]
+		all_height = rect_all[1][0]
+		other_height = all_height - wall_height
+
 	else:
 		angle = rect_wall[2]
-		width = rect_wall[1][0]
-		height = rect_wall[1][1]
-	rcm_thickening = height
+		wall_width = rect_wall[1][0]
+		wall_height = rect_wall[1][1]
+		all_width = rect_all[1][0]
+		all_height = rect_all[1][1]
+		other_height = all_height - wall_height
+	rcm_thickening = [other_height]
 	points_wall = rotate_points(points_wall, rect_wall[0], -angle)
 	# rotate the point matrix, base_angle after rotation should be 0
 	for i in avercnts:
@@ -167,18 +186,18 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 
 	width_points = [[], []]
 	for i in range(0, len(points_wall)):
-		if points_wall[i][0][1] - rect_wall[0][1] > height / 5:
+		if points_wall[i][0][1] - rect_wall[0][1] > wall_height / 5:
 			width_points[0].append(points_wall[i])
 		else:
-			if points_wall[i][0][1] - rect_wall[0][1] < -height / 5:
+			if points_wall[i][0][1] - rect_wall[0][1] < -wall_height / 5:
 				width_points[1].append(points_wall[i])
 
 	height_points = [[], []]
 	for i in xrange(0, len(points_wall)):
-		if points_wall[i][0][0] - rect_wall[0][0] > width / 4:
+		if points_wall[i][0][0] - rect_wall[0][0] > wall_width / 4:
 			height_points[0].append(points_wall[i])
 		else:
-			if points_wall[i][0][0] - rect_wall[0][0] < -width / 4:
+			if points_wall[i][0][0] - rect_wall[0][0] < -wall_width / 4:
 				height_points[1].append(points_wall[i])
 
 	avery0 = 0
@@ -305,6 +324,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		while pr < len(x_list) and x_list[pr][2] == x_list[i][2]:
 			pr = pr + 1
 		# one cutting line for slide_no 4
+		# 以下，通过线性回归找到对边的对应位置的y。两个距离可以用来估计心肌壁厚度
 		if pl >= 0 and pr < len(x_list):
 			y = (x_list[pl][1]) * (x_list[pr][0] - x_list[i][0]) / (x_list[pr][0] - x_list[pl][0]) + (x_list[pr][1]) * (
 					x_list[i][0] - x_list[pl][0]) / (x_list[pr][0] - x_list[pl][0])
@@ -334,7 +354,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 				cutting_line_points[n].append(
 					[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 2 + x_list[pl][1])]])
 			y_average_list.append(x_list[i][1] - x_list[pl][1])
-	rcm_thickening = np.average(y_average_list)
+		rcm_thickening.append(np.average(y_average_list))
+	#  旋转回去
 	width_points[0] = rotate_points(width_points[0], rect_wall[0], angle)
 	width_points[1] = rotate_points(width_points[1], rect_wall[0], angle)
 	cutting_line_points[0] = rotate_points(cutting_line_points[0], rect_wall[0], angle)
@@ -386,6 +407,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	cy1 = int(m["m01"] / m["m00"])
 	cutting_line_points[1].reverse()
 	width_points[1].reverse()
+	#######################################
 	if slide_no != 4 and slide_no != 5:
 		first = width_points[0] + cutting_line_points[1]
 		second = cutting_line_points[0] + cutting_line_points[1]
@@ -394,6 +416,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		first = width_points[0] + cutting_line_points[0]
 		second = cutting_line_points[0] + width_points[1]
 		third = []
+	#######################################
 	# draw the segmentation lines
 	first_pts = np.array([cutting_line_points[0]], np.int32)
 	second_pts = np.array([cutting_line_points[1]], np.int32)
@@ -414,7 +437,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	cv2.polylines(rgbimg, height_first_pts, False, (255, 0, 0), 5)
 	cv2.polylines(rgbimg, height_second_pts, False, (255, 0, 0), 5)
 	cv2.imshow("img_seg_test", rgbimg)
-
+	#################################################
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	firstmask = cv2.fillPoly(i, np.array([first], np.int32), 255)  # fillPoly()对于限定轮廓的区域进行填充
 	# cv2.imshow("firstmask", firstmask)
@@ -422,11 +445,10 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	secondmask = cv2.fillPoly(i, np.array([second], np.int32), 255)
+	thirdmask = []
 	if slide_no != 4 and slide_no != 5:
 		i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 		thirdmask = cv2.fillPoly(i, np.array([third], np.int32), 255)
-	else:
-		thirdmask = []
 	# firstdensity = areaaveragedensity(fibrosis, grey_img, firstmask)
 	# seconddensity = areaaveragedensity(fibrosis, grey_img, secondmask)
 	# thirddensity = areaaveragedensity(fibrosis, grey_img, thirdmask)
@@ -446,23 +468,25 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 
 	# firstarea = 'Endocardium'
 	# thirdarea = 'Epicardium'
-	otherline = width_points[0]
+	othermask = []
+	if slide_no != 3:
+		other_line = width_points[0]
 
-	if sqrt((box1[0][0] - otherline[0][0][0]) * (box1[0][0] - otherline[0][0][0]) + (
-			box1[0][1] - otherline[0][0][1]) * (box1[0][1] - otherline[0][0][1])) > sqrt(
-		(box1[1][0] - otherline[0][0][0]) * (box1[1][0] - otherline[0][0][0]) + (
-				box1[1][1] - otherline[0][0][1]) * (box1[1][1] - otherline[0][0][1])):
-		otherline.append([[box1[0][0], box1[0][1]]])
-		otherline.append([[box1[1][0], box1[1][1]]])
-	else:
-		otherline.append([[box1[1][0], box1[1][1]]])
-		otherline.append([[box1[0][0], box1[0][1]]])
+		if sqrt((box1[0][0] - other_line[0][0][0]) * (box1[0][0] - other_line[0][0][0]) + (
+				box1[0][1] - other_line[0][0][1]) * (box1[0][1] - other_line[0][0][1])) > sqrt(
+			(box1[1][0] - other_line[0][0][0]) * (box1[1][0] - other_line[0][0][0]) + (
+					box1[1][1] - other_line[0][0][1]) * (box1[1][1] - other_line[0][0][1])):
+			other_line.append([[box1[0][0], box1[0][1]]])
+			other_line.append([[box1[1][0], box1[1][1]]])
+		else:
+			other_line.append([[box1[1][0], box1[1][1]]])
+			other_line.append([[box1[0][0], box1[0][1]]])
 
-	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-	othermask = cv2.fillPoly(i, np.array([otherline], np.int32), 255)
+		i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+		othermask = cv2.fillPoly(i, np.array([other_line], np.int32), 255)
 	# otherdensity = areaaveragedensity(fibrosis, grey_img, othermask)
 	if is_masson is True:
-		return firstmask, secondmask, thirdmask, othermask, grey_img, hsv, fibrosis_img, rcm_thickening
+		return firstmask, secondmask, thirdmask, othermask, grey_img, hsv, fibrosis_img, rcm_thickening  # [other_height, wall_height]
 	else:
 		return firstmask, secondmask, thirdmask, othermask, rcm_thickening
 

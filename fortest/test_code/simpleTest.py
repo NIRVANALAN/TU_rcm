@@ -43,12 +43,12 @@ def write_to_xls():
 	f.save('test.xls')
 
 
-def write_excel(file, list_data):
+def write_excel(file, data):
 	rb = xlrd.open_workbook(file, formatting_info=True)
 	wb = copy(rb)
 	ws = wb.get_sheet(0)
 	# ws.write(row, col, str, styl)
-	for i, p in enumerate(col):
+	for i, p in enumerate(data):
 		for j, q in enumerate(p):
 			ws.write(j + 1, i+1, p)
 	wb.save(file)
