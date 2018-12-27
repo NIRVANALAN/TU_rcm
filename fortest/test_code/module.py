@@ -21,7 +21,7 @@ def fibrosis(slide, fibrosislevel):
 
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
-              is_masson=False):
+              is_masson=False, patient_id=0):
 	if is_masson is True:
 		print 'edit MASSON'
 	else:
@@ -120,9 +120,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 	wall = cv2.dilate(wall, kernel, iterations=15)
-	cv2.imshow("wall", wall)
+	# cv2.imshow("wall", wall)
 	other = cv2.dilate(other, kernel, iterations=15)
-	cv2.imshow("other", other)
+	# cv2.imshow("other", other)
 
 	image, contours, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 	image1, contours1, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -361,7 +361,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	cutting_line_points[0] = rotate_points(cutting_line_points[0], rect_wall[0], angle)
 	cutting_line_points[1] = rotate_points(cutting_line_points[1], rect_wall[0], angle)
 
-	height_line_points = [[], []]
+	# height_line_points = [[], []]
 	for i in range(0, len(y_list)):
 		pl = i - 1
 		pr = i + 1
@@ -376,32 +376,32 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			pl = pl - 1
 		while pr < len(y_list) and y_list[pr][2] == y_list[i][2]:
 			pr = pr + 1
-		# one cutting line for slide_no 4
-		x_average_list = []  # useless...
-		if pl >= 0 and pr < len(y_list):
-			x = (y_list[pl][0]) * (y_list[pr][1] - y_list[i][1]) / (y_list[pr][1] - y_list[pl][1]) + (y_list[pr][0]) * (
-					y_list[i][1] - y_list[pl][1]) / (y_list[pr][1] - y_list[pl][1])
-			height_line_points[n].append([[int((y_list[i][0] - x) / 3 + x), int(y_list[i][1])]])
-			height_line_points[m].append([[int((y_list[i][0] - x) * 2 / 3 + x), int(y_list[i][1])]])
-			x_average_list.append(int(math.fabs(y_list[i][0] - x)))
-		elif pl < 0:
-			height_line_points[n].append(
-				[[int((y_list[i][0] - y_list[pr][0]) / 3 + y_list[pr][0]), int(y_list[i][1])]])
-			height_line_points[m].append(
-				[[int((y_list[i][0] - y_list[pr][0]) * 2 / 3 + y_list[pr][0]), int(y_list[i][1])]])
-			x_average_list.append(int(math.fabs(y_list[i][0] - y_list[pr][0])))
-		else:
-			height_line_points[n].append(
-				[[int((y_list[i][0] - y_list[pl][0]) / 3 + y_list[pl][0]), int(y_list[i][1])]])
-			height_line_points[m].append(
-				[[int((y_list[i][0] - y_list[pl][0]) * 2 / 3 + y_list[pl][0]), int(y_list[i][1])]])
-			x_average_list.append(int(math.fabs(y_list[i][0] - y_list[pl][0])))
-	height_points[0] = rotate_points(height_points[0], rect_wall[0], angle)
-	height_points[1] = rotate_points(height_points[1], rect_wall[0], angle)
-	height_line_points[0] = rotate_points(height_line_points[0], rect_wall[0], angle)
-	height_line_points[1] = rotate_points(height_line_points[1], rect_wall[0], angle)
+	# one cutting line for slide_no 4
+	# 	x_average_list = []  # useless...
+	# 	if pl >= 0 and pr < len(y_list):
+	# 		x = (y_list[pl][0]) * (y_list[pr][1] - y_list[i][1]) / (y_list[pr][1] - y_list[pl][1]) + (y_list[pr][0]) * (
+	# 				y_list[i][1] - y_list[pl][1]) / (y_list[pr][1] - y_list[pl][1])
+	# 		height_line_points[n].append([[int((y_list[i][0] - x) / 3 + x), int(y_list[i][1])]])
+	# 		height_line_points[m].append([[int((y_list[i][0] - x) * 2 / 3 + x), int(y_list[i][1])]])
+	# 		x_average_list.append(int(math.fabs(y_list[i][0] - x)))
+	# 	elif pl < 0:
+	# 		height_line_points[n].append(
+	# 			[[int((y_list[i][0] - y_list[pr][0]) / 3 + y_list[pr][0]), int(y_list[i][1])]])
+	# 		height_line_points[m].append(
+	# 			[[int((y_list[i][0] - y_list[pr][0]) * 2 / 3 + y_list[pr][0]), int(y_list[i][1])]])
+	# 		x_average_list.append(int(math.fabs(y_list[i][0] - y_list[pr][0])))
+	# 	else:
+	# 		height_line_points[n].append(
+	# 			[[int((y_list[i][0] - y_list[pl][0]) / 3 + y_list[pl][0]), int(y_list[i][1])]])
+	# 		height_line_points[m].append(
+	# 			[[int((y_list[i][0] - y_list[pl][0]) * 2 / 3 + y_list[pl][0]), int(y_list[i][1])]])
+	# 		x_average_list.append(int(math.fabs(y_list[i][0] - y_list[pl][0])))
+	# height_points[0] = rotate_points(height_points[0], rect_wall[0], angle)
+	# height_points[1] = rotate_points(height_points[1], rect_wall[0], angle)
+	# height_line_points[0] = rotate_points(height_line_points[0], rect_wall[0], angle)
+	# height_line_points[1] = rotate_points(height_line_points[1], rect_wall[0], angle)
 	# update rcm_thickening
-	# rcm_thickening = np.average(x_average_list)
+	# rcm_thickening = np.average(y_average_list)
 	m = cv2.moments(np.array(width_points[1]))
 	cx1 = int(m["m10"] / m["m00"])
 	cy1 = int(m["m01"] / m["m00"])
@@ -427,16 +427,18 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	if slide_no != 4 and slide_no != 5:
 		cv2.polylines(rgbimg, second_pts, False, (0, 255, 0), 6)
 
-	height_line_points[1].reverse()
-	height_points[1].reverse()
-	# draw height measure line
-	height_first_pts = np.array([height_line_points[0]], np.int32)
-	height_second_pts = np.array([height_line_points[1]], np.int32)
-	height_first_pts.reshape(-1, 1, 2)
-	height_second_pts.reshape(-1, 1, 2)
-	cv2.polylines(rgbimg, height_first_pts, False, (255, 0, 0), 5)
-	cv2.polylines(rgbimg, height_second_pts, False, (255, 0, 0), 5)
-	cv2.imshow("img_seg_test", rgbimg)
+	# height_line_points[1].reverse()
+	# height_points[1].reverse()
+	# draw height measure line : unnecessary
+	# height_first_pts = np.array([height_line_points[0]], np.int32)
+	# height_second_pts = np.array([height_line_points[1]], np.int32)
+	# height_first_pts.reshape(-1, 1, 2)
+	# height_second_pts.reshape(-1, 1, 2)
+	# cv2.polylines(rgbimg, height_first_pts, False, (255, 0, 0), 5)
+	# cv2.polylines(rgbimg, height_second_pts, False, (255, 0, 0), 5)
+	img_name = ('HE_' + str(patient_id) + '_' + str(slide_no) + '.jpg' if (is_masson is False) else 'Masson_' + str(
+		patient_id) + '_' + str(slide_no) + '.jpg')
+	cv2.imwrite(img_name, rgbimg)  # save the img of segmentation result
 	#################################################
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	firstmask = cv2.fillPoly(i, np.array([first], np.int32), 255)  # fillPoly()对于限定轮廓的区域进行填充

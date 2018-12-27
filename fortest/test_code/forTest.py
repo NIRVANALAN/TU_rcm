@@ -225,7 +225,8 @@ def he_statics_persistence(whole_res):
 		cardiac_cells_num = whole_res[i][1]
 		non_cardiac_cells_num = whole_res[i][2]
 		region_whole_area = whole_res[i][3][0]
-		region_rcm_thickening = whole_res[i][3][1]
+		region_rcm_thickening = whole_res[i][3][1][1]
+		region_trabe_thickening = whole_res[i][3][1][0]
 		cardiac_cells_nucleus_area = [j[0] for j in whole_res[i][4]]
 		cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[i][4]]
 		# vacuole_area = res[i][5]
@@ -274,6 +275,7 @@ def he_statics_persistence(whole_res):
 		                  intensity,
 		                  cardiac_cells_nucleus_area_region_ratio,
 		                  vacuole_num,
+		                  region_trabe_thickening,
 		                  region_rcm_thickening]  # conform to the HE.XLS form now
 		whole_list_data.append(list_data_iter)
 	write_excel('HE.xls', whole_list_data)
@@ -318,14 +320,15 @@ def masson_proc(slide_no, masson_working_level=6):  # need debug and fix
 						                                      dimension=(500, 500))
 						_, fibrosis_area = masson_region_slide(slide, masson_working_level, fibrosis_threshold, (x, y),
 						                                       is_debug=False, dimension=(500, 500))
-						masson_result_iter[0] += cardiac_area
 						masson_result_iter[1] += fibrosis_area
+						masson_result_iter[0] += cardiac_area
+		masson_result_iter[1] *= (pow(2, masson_working_level) ** 2)
+		masson_result_iter[0] *= (pow(2, masson_working_level) ** 2)  # statics should be simulated at max_level
 		masson_whole_result.append(masson_result_iter)
 		masson_result_iter = [[], []]
 		print masson_mask_name[i] + " finished" + "time consumed: " + time() - masson_proc_time_start + "s"
 		i += 1
 	# fibrosis
-	# fibrosis_img = fibrosis(slide, fibrosis_level)
 	labels = measure.label(fibrosis_img, connectivity=2)
 	number = labels.max() + 1
 	total_fibrosis_block = []
@@ -338,8 +341,9 @@ def masson_proc(slide_no, masson_working_level=6):  # need debug and fix
 	fibrosis_block_mean = np.mean(total_fibrosis_block)
 	fibrosis_block_sd = np.std(total_fibrosis_block, ddof=1)
 	fibrosis_block_info = [fibrosis_block_average, fibrosis_block_mean, fibrosis_block_sd]
+	####################################################################################
 	masson_whole_result.append(fibrosis_block_info)  # fibrosis statics append
-	masson_whole_result.append(rcm_thickening) # [other_height, wall_height]
+	masson_whole_result.append(rcm_thickening)  # [other_height, wall_height]
 	write_file(masson_whole_result, str(patient_id).split('/')[1] + '_' + str(slide_no) + '_masson_whole_res.txt')
 	print "masson_proc() finished, time consumed: " + str(time() - masson_proc_time_start) + " s"
 	pass
@@ -422,7 +426,7 @@ if __name__ == '__main__':
 	# he_whole_res.append(he_test_proc())
 	# he_statics_persistence(he_whole_res)
 	# 空泡 心肌细胞核 非心肌细胞核 区域总面积 列表[编号，细胞核面积，细胞核周长]
-	cv2.waitKey(0)
+	# cv2.waitKey(0)
 	cv2.destroyAllWindows()
 
 	# print dimension
