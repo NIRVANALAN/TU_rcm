@@ -13,7 +13,7 @@ list_data = []
 
 
 def write_file(list_for_write):
-	with open('data.txt', 'w') as f:
+	with open('test/data.txt', 'w') as f:
 		f.write(str(list_for_write))
 
 
@@ -26,21 +26,27 @@ def read_file(filename, print_file=False):
 		print list_data
 
 
-read_file('data.txt', print_file=False)
+l = [1, 2, 3, 4, 5, 4, 3, 2, 1]
+# os.mkdir('test')
+print os.path.exists('test')
+# write_file(l)
 
-f = xlwt.Workbook(encoding='utf-8')
-sheet1 = f.add_sheet('HE')
-col = eval(list_data)
+
+# read_file('data.txt', print_file=False)
+
+# f = xlwt.Workbook(encoding='utf-8')
+# sheet1 = f.add_sheet('HE')
+# col = eval(list_data)
 
 
 # print type(col[0])
 
 
 #
-def write_to_xls():
-	for i, p in enumerate(col):
-		sheet1.write(i + 1, 1, p)
-	f.save('test.xls')
+# def write_to_xls():
+# 	for i, p in enumerate(col):
+# 		sheet1.write(i + 1, 1, p)
+# 	f.save('test.xls')
 
 
 def write_excel(file, data):
@@ -50,12 +56,12 @@ def write_excel(file, data):
 	# ws.write(row, col, str, styl)
 	for i, p in enumerate(data):
 		for j, q in enumerate(p):
-			ws.write(j + 1, i+1, p)
+			ws.write(j + 1, i + 1, p)
 	wb.save(file)
 
 
 # style = xlwt.easyxf('font:height 240, color-index red, bold on;align: wrap on, vert centre, horiz center');
-write_excel('test.xls', list_data)
+# write_excel('test.xls', list_data)
 
 # 心肌细胞核数量
 # 非心肌细胞核数量

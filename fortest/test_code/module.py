@@ -3,11 +3,11 @@ from math import *
 from operator import itemgetter
 import sys
 import os
+from adjust import *
 
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
-from adjust import *
 
 
 def fibrosis(slide, fibrosislevel):
@@ -26,7 +26,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		print 'edit MASSON'
 	else:
 		print "called editHE"
-	n = 21
+	# n = 21
 	print level
 	working_dimensions = slide.level_dimensions[level]
 	print working_dimensions
@@ -136,7 +136,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 
 	rect_wall = cv2.minAreaRect(points_wall)
 	rect_other = cv2.minAreaRect(points_other)
-	rect_all = cv2.minAreaRect(np.concatenate(points_wall, points_other))  # 整体的最小外接矩形，包括心肌壁和小梁
+	rect_all = cv2.minAreaRect(np.concatenate([points_wall, points_other]))  # 整体的最小外接矩形，包括心肌壁和小梁
 	# 最小外切矩形 （中心(x,y), (宽,高), 旋转角度）
 	box_wall = cv2.boxPoints(rect_wall)
 	box_wall = np.int0(box_wall)
@@ -362,20 +362,20 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	cutting_line_points[1] = rotate_points(cutting_line_points[1], rect_wall[0], angle)
 
 	# height_line_points = [[], []]
-	for i in range(0, len(y_list)):
-		pl = i - 1
-		pr = i + 1
-		if y_list[i][2] == 0:  # 一侧
-			n = 0
-			m = 1
-		else:  # 另一侧
-			n = 1
-			m = 0
-		# while找到最近的对侧的膜上的点，同侧就略过
-		while pl >= 0 and y_list[pl][2] == y_list[i][2]:
-			pl = pl - 1
-		while pr < len(y_list) and y_list[pr][2] == y_list[i][2]:
-			pr = pr + 1
+	# for i in range(0, len(y_list)):
+	# 	pl = i - 1
+	# 	pr = i + 1
+	# 	if y_list[i][2] == 0:  # 一侧
+	# 		n = 0
+	# 		m = 1
+	# 	else:  # 另一侧
+	# 		n = 1
+	# 		m = 0
+	# 	# while找到最近的对侧的膜上的点，同侧就略过
+	# 	while pl >= 0 and y_list[pl][2] == y_list[i][2]:
+	# 		pl = pl - 1
+	# 	while pr < len(y_list) and y_list[pr][2] == y_list[i][2]:
+	# 		pr = pr + 1
 	# one cutting line for slide_no 4
 	# 	x_average_list = []  # useless...
 	# 	if pl >= 0 and pr < len(y_list):
@@ -436,8 +436,13 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# height_second_pts.reshape(-1, 1, 2)
 	# cv2.polylines(rgbimg, height_first_pts, False, (255, 0, 0), 5)
 	# cv2.polylines(rgbimg, height_second_pts, False, (255, 0, 0), 5)
-	img_name = ('HE_' + str(patient_id) + '_' + str(slide_no) + '.jpg' if (is_masson is False) else 'Masson_' + str(
-		patient_id) + '_' + str(slide_no) + '.jpg')
+	if not os.path.exists("HE_image"):
+		os.mkdir("HE_image")
+	if not os.path.exists("MASSON_image"):
+		os.mkdir("MASSON_image")
+	img_name = ('HE_image/HE_' + str(patient_id) + '_' + str(slide_no) + '.jpg' if (is_masson is False)
+	            else 'MASSON_image/Masson_' +
+	                 str(patient_id) + '_' + str(slide_no) + '.jpg')
 	cv2.imwrite(img_name, rgbimg)  # save the img of segmentation result
 	#################################################
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
@@ -502,7 +507,7 @@ def detectprocess(a, hsv):
 	gray = cv2.addWeighted(s, -1, h, 1, 0)  # why?
 	# cv2.imshow("gray", gray)
 	whole_area_space = cv2.countNonZero(gray)
-	print 'myocardium space in this region: ', whole_area_space
+	# print 'myocardium space in this region: ', whole_area_space
 	kernel = np.ones((3, 3), np.uint8)
 
 	ret, nuclear0 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
@@ -596,7 +601,7 @@ def detectprocess(a, hsv):
 
 def masson_region_slide(slide, working_level, threshold=(), start_pos=(0, 0), is_debug=False, dimension=(500, 500)):
 	working_dimensions = slide.level_dimensions[working_level]
-	if is_debug is False:
+	if is_debug is True:
 		img = np.array(slide.read_region(start_pos, working_level, working_dimensions))
 	else:
 		img = np.array(slide.read_region(start_pos, working_level, dimension))
