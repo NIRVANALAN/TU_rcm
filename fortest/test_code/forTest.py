@@ -226,12 +226,14 @@ def he_statics_persistence(whole_res, slide_no, print_res=False):
 	:param whole_res: res is a list that produced by he_proc(), which stores the statics of each mask of a slide
 	:return: Calculate and store in .xls
 	"""
+	whole_res = generate_whole_res(whole_res)
 	global he_mask_name
 	whole_list_data = []
+	print len(whole_res)
 	for slide_index in xrange(len(whole_res)):
 		if slide_no is 3 and slide_index is 3:
 			continue
-		if (slide_no is 4 or 5) and slide_index is 2:
+		if (slide_no is 4 or slide_no is 5) and slide_index is 2:
 			continue
 		vacuole_num = whole_res[slide_index][0]
 		cardiac_cells_num = whole_res[slide_index][1]
@@ -239,8 +241,14 @@ def he_statics_persistence(whole_res, slide_no, print_res=False):
 		region_whole_area = whole_res[slide_index][3][0]
 		region_rcm_thickening = whole_res[slide_index][3][1][1]
 		region_trabe_thickening = whole_res[slide_index][3][1][0]
-		cardiac_cells_nucleus_area = [j[0] for j in whole_res[slide_index][4]]
-		cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[slide_index][4]]
+		cardiac_cells_nucleus_area = []
+		cardiac_cells_nucleus_perimeter = []
+		for a in [j for j in whole_res[slide_index][4] if len(j)]:
+			for b in a:
+				cardiac_cells_nucleus_area.append(b[0])
+				cardiac_cells_nucleus_perimeter.append(b[1])
+		# cardiac_cells_nucleus_area = [j[0] for j in whole_res[slide_index][4]]
+		# cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[slide_index][4]]
 		# vacuole_area = res[slide_index][5]
 		
 		cardiac_cells_ratio = non_cardiac_cells_num / float(cardiac_cells_num)
@@ -460,8 +468,8 @@ def xls_persist_slide(file_name, slide_type):  # save one slide into .xls
 		# file_name = 'HE_data/28330_slide0_he_whole_res.txt'
 		file_name = 'HE_data/' + file_name
 		res = read_file(file_name, print_file=False)
-		patient_no = file_name.split('/')[1].split('_')[0]
-		slide_no = file_name.split('/')[1].split('_')[1][-1]
+		patient_no = int(file_name.split('/')[1].split('_')[0])
+		slide_no = int(file_name.split('/')[1].split('_')[1][-1])
 		whole_list_data = he_statics_persistence(res, slide_no)
 		write_excel('HE.xls', whole_list_data, patient_no=patient_no, slide_no=slide_no)
 	else:

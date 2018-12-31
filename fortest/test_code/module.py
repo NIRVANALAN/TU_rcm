@@ -43,13 +43,18 @@ def write_excel(file_name, data, patient_no, slide_no):
 	# ws.write(row_num, 1, slide_no)
 	# this circulation writes 4(or less) mask information
 	for i, slide_data in enumerate(data):  # every mask
+		# 		# 	continue
+		# 		# if (slide_no is 4 or slide_no is 5) and i is 2:
+		# 		# 	row_num += 1
+		# 		# 	continue
+		# 		# 	row_num += 1
+		if slide_no is 3 and i is 3:
+			i += 1
+		if (slide_no is 4 or slide_no is 5) and (i is 2 or i is 3):
+			i += 1
 		ws.write(row_num, 0, patient_no)
 		ws.write(row_num, 1, slide_no)
 		ws.write(row_num, 2, mask_name[i])
-		if slide_no is 3 and i is 3:
-			continue
-		if (slide_no is 4 or 5) and i is 2:
-			continue
 		for j, slide_detail in enumerate(slide_data):
 			ws.write(row_num, j + 3, slide_detail)
 		row_num += 1
@@ -501,7 +506,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	#################################################
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	firstmask = cv2.fillPoly(i, np.array([first], np.int32), 255)  # fillPoly()对于限定轮廓的区域进行填充
-
+	
 	# print firstmask[363][154]
 	
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
