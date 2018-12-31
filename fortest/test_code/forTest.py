@@ -4,7 +4,6 @@ import os
 from time import time
 from skimage import measure
 from scipy.stats import iqr
-from simpleTest import write_excel
 from module import *
 
 curPath = os.path.abspath(os.path.dirname(__file__))
@@ -80,19 +79,6 @@ masson_erosion_iteration_time_list = [10, 10, 15, 15, 15, 13]
 he_erosion_iteration_time_list = [3, 3, 8, 3, 13, 9]  # for specifications
 
 
-def write_file(list_for_write, filename):
-	with open(filename, 'w') as f:
-		f.write(str(list_for_write))
-
-
-def read_file(filename, print_file=False):
-	list_read = []
-	with open(filename, 'r') as f:
-		list_data = f.read()
-	if print_file:
-		print list_data
-
-
 def he_test_proc():
 	# print dimension
 	# whole_level = 6
@@ -160,9 +146,6 @@ def he_test_proc():
 # print firstmask
 he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
-he_proc_iter = [0, 0, 0, [0, 0], [], []]
-he_whole_res = []
-
 
 def he_proc(he_slide_no):
 	"""
@@ -170,7 +153,8 @@ def he_proc(he_slide_no):
 	:return: the whole_result_list of this slide will be saved
 	"""
 	he_proc_start_time = time()
-	global he_proc_iter
+	he_whole_res = []
+	he_proc_iter = [0, 0, 0, [0, 0], []]
 	# he_slide_no = 0
 	mask_level = 6
 	slide_processed = openslide.open_slide(he_path[he_slide_no])
@@ -183,12 +167,12 @@ def he_proc(he_slide_no):
 	magnify = pow(2, mask_level)
 	area_length = 1000
 	# i = 0
-	max_dimension = slide_processed.dimensions
-	print "dimension working on:", max_dimension[1], max_dimension[0]
+	he_max_dimension = slide_processed.dimensions
+	print "dimension working on:", he_max_dimension[1], he_max_dimension[0]
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
-			for y in range(0, max_dimension[1] - area_length, area_length):
-				for x in range(0, max_dimension[0] - area_length, area_length):
+			for y in range(0, he_max_dimension[1] - area_length, area_length):
+				for x in range(0, he_max_dimension[0] - area_length, area_length):
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# 证明这个像素点在对应的Mask里面
@@ -211,34 +195,53 @@ def he_proc(he_slide_no):
 		print (he_mask_name[a] + "finished!")
 		# i += 1
 		he_whole_res.append(he_proc_iter)
-		he_proc_iter = [0, 0, 0, [0, 0], [], []]  # erase the he_proc_ter var
+		he_proc_iter = [0, 0, 0, [0, 0], []]  # erase the he_proc_iter var
 	if not os.path.exists('HE_data'):
 		os.mkdir('HE_data')
 	write_file(he_whole_res,
-	           'HE_data/'+str(patients[patient_id]).split('/')[1] + '_slide' + str(he_slide_no) + '_he_whole_res.txt')
+	           'HE_data/' + str(patients[patient_id]).split('/')[1] + '_slide' + str(he_slide_no) + '_he_whole_res.txt')
+	he_whole_res = []
 	print "HE patient: " + str(patients[patient_id]).split('/')[1] + ' slide no:' + str(
 		he_slide_no) + " finished.Time consumed:" + str(
 		time() - he_proc_start_time) + " s"
 
 
-def he_statics_persistence(whole_res):
+def generate_whole_res(whole_res):
+	# generate whole result
+	whole_area_data = [0, 0, 0, [0, 0], []]
+	for j in whole_res:
+		whole_area_data[0] += j[0]
+		whole_area_data[1] += j[1]
+		whole_area_data[2] += j[2]
+		whole_area_data[3][0] += j[3][0]
+		whole_area_data[3][1] = j[3][1]
+		whole_area_data[4].extend(j[4])
+	whole_res.append(whole_area_data)
+	return whole_res
+
+
+def he_statics_persistence(whole_res, slide_no, print_res=False):
 	"""
+	:param print_res: determine whether to print the res_list
 	:param whole_res: res is a list that produced by he_proc(), which stores the statics of each mask of a slide
 	:return: Calculate and store in .xls
 	"""
 	global he_mask_name
-	print len(whole_res)  # should be 6..
 	whole_list_data = []
-	for i in xrange(len(whole_res)):
-		vacuole_num = whole_res[i][0]
-		cardiac_cells_num = whole_res[i][1]
-		non_cardiac_cells_num = whole_res[i][2]
-		region_whole_area = whole_res[i][3][0]
-		region_rcm_thickening = whole_res[i][3][1][1]
-		region_trabe_thickening = whole_res[i][3][1][0]
-		cardiac_cells_nucleus_area = [j[0] for j in whole_res[i][4]]
-		cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[i][4]]
-		# vacuole_area = res[i][5]
+	for slide_index in xrange(len(whole_res)):
+		if slide_no is 3 and slide_index is 3:
+			continue
+		if (slide_no is 4 or 5) and slide_index is 2:
+			continue
+		vacuole_num = whole_res[slide_index][0]
+		cardiac_cells_num = whole_res[slide_index][1]
+		non_cardiac_cells_num = whole_res[slide_index][2]
+		region_whole_area = whole_res[slide_index][3][0]
+		region_rcm_thickening = whole_res[slide_index][3][1][1]
+		region_trabe_thickening = whole_res[slide_index][3][1][0]
+		cardiac_cells_nucleus_area = [j[0] for j in whole_res[slide_index][4]]
+		cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[slide_index][4]]
+		# vacuole_area = res[slide_index][5]
 		
 		cardiac_cells_ratio = non_cardiac_cells_num / float(cardiac_cells_num)
 		cardiac_area_num_ratio = region_whole_area / float(cardiac_cells_num)
@@ -271,11 +274,12 @@ def he_statics_persistence(whole_res):
 		# cardiac_cells_vacuole_area_median = np.median(vacuole_area)
 		# cardiac_cells_vacuole_area_sd = np.std(vacuole_area, ddof=1)
 		
-		print 'region: ' + he_mask_name[i]
-		print 'Cardiac cells num: ' + str(whole_res[i][1])
-		print 'vacuole cells num: ' + str(whole_res[i][0])
-		print 'Non-cardiac cells num: ' + str(whole_res[i][2])
-		print 'region area: ' + he_mask_name[i] + str(whole_res[i][3])
+		if print_res:
+			print 'region: ' + he_mask_name[slide_index]
+			print 'Cardiac cells num: ' + str(whole_res[slide_index][1])
+			print 'vacuole cells num: ' + str(whole_res[slide_index][0])
+			print 'Non-cardiac cells num: ' + str(whole_res[slide_index][2])
+			print 'region area: ' + he_mask_name[slide_index] + str(whole_res[slide_index][3])
 		list_data_iter = [cardiac_cells_num, non_cardiac_cells_num, cardiac_cells_ratio, cardiac_area_num_ratio,
 		                  cardiac_cells_nucleus_area_mean, cardiac_cells_nucleus_area_median,
 		                  cardiac_cells_nucleus_area_sd, cardiac_cells_nucleus_area_iqr,
@@ -287,7 +291,8 @@ def he_statics_persistence(whole_res):
 		                  region_trabe_thickening,
 		                  region_rcm_thickening]  # conform to the HE.XLS form now
 		whole_list_data.append(list_data_iter)
-	write_excel('HE.xls', whole_list_data)
+	# write_excel('HE.xls', whole_list_data)
+	return whole_list_data
 	# print
 	pass
 
@@ -350,8 +355,8 @@ def masson_proc(slide_no, masson_mask_working_level=6):  # need debug and fix
 						                                       (x, y),
 						                                       is_debug=False,
 						                                       dimension=(area_length, area_length))
-						masson_result_iter[1] += fibrosis_area * (magnify ** 2)
 						masson_result_iter[0] += cardiac_area * (magnify ** 2)
+						masson_result_iter[1] += fibrosis_area * (magnify ** 2)
 		# statics should be simulated at max_level
 		else:
 			print "area is none"
@@ -370,17 +375,19 @@ def masson_proc(slide_no, masson_mask_working_level=6):  # need debug and fix
 	if not os.path.exists('MASSON_data'):
 		os.mkdir('MASSON_data')
 	write_file(masson_whole_result,
-	           'MASSON_data/'+str(patients[patient_id]).split('/')[1] + '_slide' + str(slide_no) + '_masson_whole_res.txt')
+	           'MASSON_data/' + str(patients[patient_id]).split('/')[1] + '_slide' + str(
+		           slide_no) + '_masson_whole_res.txt')
+	masson_whole_result = []
 	print "masson patient: " + str(patients[patient_id]).split('/')[1] + " finished, time consumed: " + str(
 		time() - masson_proc_time_start) + " s"
 	pass
 
 
-def masson_test_proc(working_level=6):
+def masson_test_proc(masson_working_level=6):
 	global slide_he
 	global slide_masson
-	print 'working level', working_level
-	working_dimension = slide_masson.level_dimensions[working_level]
+	print 'working level', masson_working_level
+	working_dimension = slide_masson.level_dimensions[masson_working_level]
 	
 	# cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
 	# fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
@@ -430,7 +437,7 @@ def masson_test_proc(working_level=6):
 	# slide_he = openslide.open_slide(he_path[slide_no])
 	slide_masson = openslide.open_slide(masson_path[slide_no])
 	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img, rcm_thickening = edit_area(
-		working_level,
+		masson_working_level,
 		slide_masson,
 		masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
 		slide_no=slide_no,
@@ -438,15 +445,43 @@ def masson_test_proc(working_level=6):
 	pass
 
 
+def slide_proc(start, end, he=True, masson=True):
+	global he_path, masson_path
+	he_path, masson_path = get_image_path(0)  # the first patient's image path
+	for i in xrange(start, end):
+		if he:
+			he_proc(i)
+		if masson:
+			masson_proc(i)
+
+
+def xls_persist_slide(file_name, slide_type):  # save one slide into .xls
+	if slide_type is "HE":  # HE
+		# file_name = 'HE_data/28330_slide0_he_whole_res.txt'
+		file_name = 'HE_data/' + file_name
+		res = read_file(file_name, print_file=False)
+		patient_no = file_name.split('/')[1].split('_')[0]
+		slide_no = file_name.split('/')[1].split('_')[1][-1]
+		whole_list_data = he_statics_persistence(res, slide_no)
+		write_excel('HE.xls', whole_list_data, patient_no=patient_no, slide_no=slide_no)
+	else:
+		# masson persist
+		pass
+
+
 if __name__ == '__main__':
 	init_test_proc()
+	# slide_proc(2, 6, masson=False)
+	# test
+	for i in os.listdir(os.getcwd() + "/HE_data"):
+		# file_name = 'HE_data/' + i
+		# res = read_file(file_name, print_file=False)
+		# print len(res)
+		xls_persist_slide(i, slide_type="HE")
+	
 	# for
-	he_path, masson_path = get_image_path(0)  # the first patient's image path
-	masson_proc(5)
-	# for i in xrange(1, 6):
-	# 	he_proc(i)
-	# 	masson_proc(i)
-	#
+	# masson_proc(5)
+	
 	# masson_test_proc()
 	# cv2.waitKey(0)
 	# cv2.destroyAllWindows()

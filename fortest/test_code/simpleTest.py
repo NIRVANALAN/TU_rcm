@@ -49,15 +49,7 @@ print os.path.exists('test')
 # 	f.save('test.xls')
 
 
-def write_excel(file, data):
-	rb = xlrd.open_workbook(file, formatting_info=True)
-	wb = copy(rb)
-	ws = wb.get_sheet(0)
-	# ws.write(row, col, str, styl)
-	for i, p in enumerate(data):
-		for j, q in enumerate(p):
-			ws.write(j + 1, i + 1, p)
-	wb.save(file)
+
 
 
 # style = xlwt.easyxf('font:height 240, color-index red, bold on;align: wrap on, vert centre, horiz center');
