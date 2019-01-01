@@ -391,6 +391,16 @@ def masson_proc(slide_no, masson_mask_working_level=6):  # need debug and fix
 	pass
 
 
+def masson_persist(whole_res, slide_no, print_res=False):
+	# masson persist
+	whole_list_data = []
+	for i in whole_res:
+		for j in i:
+			whole_list_data.append(j)
+	return whole_list_data
+	pass
+
+
 def masson_test_proc(masson_working_level=6):
 	global slide_he
 	global slide_masson
@@ -453,7 +463,7 @@ def masson_test_proc(masson_working_level=6):
 	pass
 
 
-def slide_proc(start, end, he=True, masson=True):
+def slide_proc(start, end, he=False, masson=False):
 	global he_path, masson_path
 	he_path, masson_path = get_image_path(0)  # the first patient's image path
 	for i in xrange(start, end):
@@ -464,28 +474,35 @@ def slide_proc(start, end, he=True, masson=True):
 
 
 def xls_persist_slide(file_name, slide_type):  # save one slide into .xls
+	patient_no = int(file_name.split('_')[0])
+	slide_no = int(file_name.split('_')[1][-1])
 	if slide_type is "HE":  # HE
 		# file_name = 'HE_data/28330_slide0_he_whole_res.txt'
 		file_name = 'HE_data/' + file_name
 		res = read_file(file_name, print_file=False)
-		patient_no = int(file_name.split('/')[1].split('_')[0])
-		slide_no = int(file_name.split('/')[1].split('_')[1][-1])
 		whole_list_data = he_statics_persistence(res, slide_no)
 		write_excel('HE.xls', whole_list_data, patient_no=patient_no, slide_no=slide_no)
-	else:
+	elif slide_type is "MASSON":
 		# masson persist
+		file_name = 'MASSON_data/' + file_name
+		res = read_file(file_name, print_file=False)
+		whole_list_data = masson_persist(res, slide_no)
+		write_file('MASSON.xls', whole_list_data, patient_no, slide_no)
 		pass
 
 
 if __name__ == '__main__':
 	init_test_proc()
-	# slide_proc(1, 2, masson=False)
+	# slide_proc(0, 6, masson=True)
 	# test
-	for i in os.listdir(os.getcwd() + "/HE_data"):
-		file_name = 'HE_data/' + i
-		res = read_file(file_name, print_file=False)
+	he_dir = os.getcwd() + "/HE_data"
+	masson_dir = os.getcwd() + "/MASSON_data"
+	for i in os.listdir(masson_dir):
+		# file_name_he = 'HE_data/' + i
+		# file_name_masson = 'MASSON_data/' + i
+		# res = read_file(file_name_he, print_file=False)
 		# print len(res)
-		xls_persist_slide(i, slide_type="HE")
+		xls_persist_slide(i, slide_type="MASSON")
 	
 	# for
 	# masson_proc(5)

@@ -413,7 +413,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 				cutting_line_points[n].append(
 					[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 2 + x_list[pl][1])]])
 			y_average_list.append(x_list[i][1] - x_list[pl][1])
-		rcm_thickening.append(np.average(y_average_list))
+	rcm_thickening.append(np.average(y_average_list))
 	#  旋转回去
 	width_points[0] = rotate_points(width_points[0], rect_wall[0], angle)
 	width_points[1] = rotate_points(width_points[1], rect_wall[0], angle)
