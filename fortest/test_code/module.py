@@ -237,7 +237,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		# all_width = rect_all[1][0]
 		all_height = rect_all[1][1]
 		other_height = all_height - wall_height
-	rcm_thickening = [other_height]
+	rcm_thickening = [other_height if (slide_no is 1 > 0 and other_height) else min(rect_other[1])]
 	points_wall = rotate_points(points_wall, rect_wall[0], -angle)
 	# rotate the point matrix, base_angle after rotation should be 0
 	for i in avercnts:

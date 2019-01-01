@@ -83,7 +83,7 @@ def he_test_proc():
 	# print dimension
 	# whole_level = 6
 	# print "he_test_proc_dimension:", max_level
-	slide_no = 5
+	slide_no = 1
 	global slide_he
 	global slide_masson
 	slide_he = openslide.open_slide(he_path[slide_no])
@@ -479,11 +479,11 @@ def xls_persist_slide(file_name, slide_type):  # save one slide into .xls
 
 if __name__ == '__main__':
 	init_test_proc()
-	# slide_proc(2, 6, masson=False)
+	# slide_proc(1, 2, masson=False)
 	# test
 	for i in os.listdir(os.getcwd() + "/HE_data"):
-		# file_name = 'HE_data/' + i
-		# res = read_file(file_name, print_file=False)
+		file_name = 'HE_data/' + i
+		res = read_file(file_name, print_file=False)
 		# print len(res)
 		xls_persist_slide(i, slide_type="HE")
 	
