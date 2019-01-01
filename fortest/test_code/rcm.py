@@ -327,25 +327,11 @@ def masson_proc(slide_no, masson_mask_working_level=6):  # need debug and fix
 		slide_no=slide_no,
 		is_masson=True)
 	areas = [firstmask, secondmask, thirdmask, othermask]
-	masson_working_level = 2
-	second_max_dimension = slide.level_dimensions[masson_working_level]  # 把图片缩小两倍来跑
+	masson_working_level = 1  # 因为速度比较快，这里缩放一倍
+	second_max_dimension = slide.level_dimensions[masson_working_level]
 	magnify = pow(2, masson_mask_working_level) / pow(2, masson_working_level)
 	# 把图片缩小了两倍，那么就要除去相应的放大倍数
-	area_length = 250  # 这里也相应的缩小两倍
-	# fibrosis
-	print "Dealing with fibrosis now"
-	fibrosis_time = time()
-	fibrosis_level = slide.level_count - 5
-	fibrosis_img = fibrosis(slide, fibrosis_level)
-	labels = measure.label(fibrosis_img, connectivity=2)
-	number = labels.max() + 1
-	total_fibrosis_block = []
-	for x in range(1, number):
-		j = np.zeros((len(fibrosis_img), len(fibrosis_img[0])), np.uint8)
-		j[labels == x] = 255
-		print "fibrosis process:" + str(x / float(number) * 100) + "%"
-		total_fibrosis_block.append(cv2.countNonZero(j) * (pow(2, fibrosis_level) ** 2))
-	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
+	area_length = 500  # 这相比HE缩小一倍
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
 			for y in range(0, second_max_dimension[1] - area_length, area_length):
@@ -373,6 +359,20 @@ def masson_proc(slide_no, masson_mask_working_level=6):  # need debug and fix
 		print masson_mask_name[a] + " finished" + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
 	# i += 1
 	# The statics for storage should be the result at max_level : 0
+	# fibrosis
+	print "Dealing with fibrosis now"
+	fibrosis_time = time()
+	fibrosis_level = slide.level_count - 5
+	fibrosis_img = fibrosis(slide, fibrosis_level)
+	labels = measure.label(fibrosis_img, connectivity=2)
+	number = labels.max() + 1
+	total_fibrosis_block = []
+	for x in range(1, number):
+		j = np.zeros((len(fibrosis_img), len(fibrosis_img[0])), np.uint8)
+		j[labels == x] = 255
+		print "fibrosis process:" + str(x / float(number) * 100) + "%"
+		total_fibrosis_block.append(cv2.countNonZero(j) * (pow(2, fibrosis_level) ** 2))
+	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
 	fibrosis_block_sum = int(np.sum(total_fibrosis_block))
 	fibrosis_block_average = int(np.average(total_fibrosis_block) / number)
 	fibrosis_block_mean = np.mean(total_fibrosis_block)
@@ -452,7 +452,7 @@ def masson_test_proc(masson_working_level=6):
 
 	# pure_test()
 
-	slide_no = 0
+	slide_no = 2
 	# slide_he = openslide.open_slide(he_path[slide_no])
 	slide_masson = openslide.open_slide(masson_path[slide_no])
 	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img, rcm_thickening = edit_area(
@@ -467,11 +467,11 @@ def masson_test_proc(masson_working_level=6):
 def slide_proc(start, end, he=False, masson=False):
 	global he_path, masson_path
 	he_path, masson_path = get_image_path(0)  # the first patient's image path
-	for i in xrange(start, end):
+	for slide_no in xrange(start, end):
 		if he:
-			he_proc(i)
+			he_proc(slide_no)
 		if masson:
-			masson_proc(i)
+			masson_proc(slide_no)
 
 
 def xls_persist_slide(file_name, slide_type):  # save one slide into .xls
@@ -483,18 +483,20 @@ def xls_persist_slide(file_name, slide_type):  # save one slide into .xls
 		res = read_file(file_name, print_file=False)
 		whole_list_data = he_statics_persistence(res, slide_no)
 		write_excel('HE.xls', whole_list_data, patient_no=patient_no, slide_no=slide_no)
+		print 'xls_persist() for HE: slide_no ' + str(slide_no) + 'patient_no ' + str(patient_no) + "finished"
 	elif slide_type is "MASSON":
 		# masson persist
 		file_name = 'MASSON_data/' + file_name
 		res = read_file(file_name, print_file=False)
 		whole_list_data = masson_persist(res, slide_no)
 		write_excel('MASSON.xls', whole_list_data, patient_no, slide_no)
+		print 'xls_persist() for MASSON: slide_no ' + str(slide_no) + 'patient_no ' + str(patient_no) + "finished"
 		pass
 
 
 if __name__ == '__main__':
 	init_test_proc()
-	# slide_proc(0, 6, masson=True)
+	slide_proc(0, 6, masson=True)
 	# test
 	he_dir = os.getcwd() + "/HE_data"
 	masson_dir = os.getcwd() + "/MASSON_data"
@@ -508,7 +510,7 @@ if __name__ == '__main__':
 	# for
 	# masson_proc(5)
 
-	# masson_test_proc()
+	masson_test_proc()
 	# cv2.waitKey(0)
 	# cv2.destroyAllWindows()
 
