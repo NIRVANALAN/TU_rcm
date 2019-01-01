@@ -92,7 +92,7 @@ def he_test_proc():
 	                                                                        masson_erosion_iteration_time_list,
 	                                                                        slide_no,
 	                                                                        is_masson=False)
-	
+
 	def write_test_img(is_masson=False):
 		if is_masson is False:
 			path = he_path
@@ -110,30 +110,30 @@ def he_test_proc():
 			if not os.path.exists(img_path_iter):
 				os.mkdir(img_path_iter)
 			cv2.imwrite(img_path_iter + '/' + i.split('/')[-1] + '.jpg', region)
-	
+
 	# write_test_img(is_masson=True)
 	# region = np.array(slide_he.read_region((30000, 30000), 0, (1000, 1000)))
 	# region = np.array(slide.read_region((0, 0), 0, (1000, 1000)))
 	# region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 	# cv2.imshow("region", region)
 	# hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
-	
+
 	# cv2.imshow("origin", hsv)
 	# h, s, v = cv2.split(hsv)
 	# res, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY)
-	
+
 	# lower = np.array([0, 20, 100])
 	# upper = np.array([255, 180, 255])
 	# mask = cv2.inRange(hsv, lower, upper)
 	# res = cv2.bitwise_and(hsv, hsv, mask)
 	# cv2.imshow("res", res)
-	
+
 	# detect = detectprocess(region, hsv)
-	
+
 	# def getpos(event, x, y, flags, param):
 	#     if event == cv2.EVENT_LBUTTONDOWN:
 	#         print(hsv[y, x])
-	
+
 	# cv2.imshow('HSV', hsv)
 	# cv2.setMouseCallback('HSV', getpos)
 	# print detect
@@ -250,10 +250,10 @@ def he_statics_persistence(whole_res, slide_no, print_res=False):
 		# cardiac_cells_nucleus_area = [j[0] for j in whole_res[slide_index][4]]
 		# cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[slide_index][4]]
 		# vacuole_area = res[slide_index][5]
-		
+
 		cardiac_cells_ratio = non_cardiac_cells_num / float(cardiac_cells_num)
 		cardiac_area_num_ratio = region_whole_area / float(cardiac_cells_num)
-		
+
 		#  cardiac cell nucleus statics
 		# mean
 		cardiac_cells_nucleus_area_mean = np.mean(cardiac_cells_nucleus_area)
@@ -263,25 +263,25 @@ def he_statics_persistence(whole_res, slide_no, print_res=False):
 		cardiac_cells_nucleus_area_sd = np.std(cardiac_cells_nucleus_area, ddof=1)
 		# IQR
 		cardiac_cells_nucleus_area_iqr = iqr(cardiac_cells_nucleus_area, rng=(25, 75), interpolation='midpoint')
-		
+
 		# perimeter calculation
 		cardiac_cells_nucleus_perimeter_mean = np.mean(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_median = np.median(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_sd = np.std(cardiac_cells_nucleus_perimeter, ddof=1)
 		cardiac_cells_nucleus_perimeter_iqr = iqr(cardiac_cells_nucleus_perimeter, rng=(25, 75),
 		                                          interpolation='midpoint')
-		
+
 		# nucleus / whole_area 细胞核总数量/切片总面积
 		intensity = cardiac_cells_num / float(region_whole_area)
-		
+
 		# area ratio  心肌细胞核面积占心肌细胞的面积比例
 		cardiac_cells_nucleus_area_region_ratio = float(sum(cardiac_cells_nucleus_area)) / region_whole_area
-		
+
 		# vacuole calculation
 		# cardiac_cells_vacuole_area_mean = np.mean(vacuole_area)
 		# cardiac_cells_vacuole_area_median = np.median(vacuole_area)
 		# cardiac_cells_vacuole_area_sd = np.std(vacuole_area, ddof=1)
-		
+
 		if print_res:
 			print 'region: ' + he_mask_name[slide_index]
 			print 'Cardiac cells num: ' + str(whole_res[slide_index][1])
@@ -373,10 +373,11 @@ def masson_proc(slide_no, masson_mask_working_level=6):  # need debug and fix
 		print masson_mask_name[a] + " finished" + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
 	# i += 1
 	# The statics for storage should be the result at max_level : 0
+	fibrosis_block_sum = int(np.sum(total_fibrosis_block))
 	fibrosis_block_average = int(np.average(total_fibrosis_block) / number)
 	fibrosis_block_mean = np.mean(total_fibrosis_block)
 	fibrosis_block_sd = np.std(total_fibrosis_block, ddof=1)
-	fibrosis_block_info = [fibrosis_block_average, fibrosis_block_mean, fibrosis_block_sd]
+	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_average, fibrosis_block_mean, fibrosis_block_sd]
 	####################################################################################
 	masson_whole_result.append(fibrosis_block_info)  # fibrosis statics append
 	masson_whole_result.append(rcm_thickening)  # [other_height, wall_height]
@@ -406,13 +407,13 @@ def masson_test_proc(masson_working_level=6):
 	global slide_masson
 	print 'working level', masson_working_level
 	working_dimension = slide_masson.level_dimensions[masson_working_level]
-	
+
 	# cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
 	# fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
-	
+
 	# hsv = []
 	# rgb_img = []
-	
+
 	def pure_test():
 		# global hsv
 		# global rgb_img
@@ -442,15 +443,15 @@ def masson_test_proc(masson_working_level=6):
 		cv2.imshow('res_cardiac_HSV', res_cardiac_hsv)
 		cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
 		cv2.imshow('rgb_masson', bgr_img)
-		
+
 		def getpos(event, x, y, flags, param):
 			if event == cv2.EVENT_LBUTTONDOWN:
 				print(hsv[y, x])
-		
+
 		cv2.setMouseCallback('HSV', getpos)
-	
+
 	# pure_test()
-	
+
 	slide_no = 0
 	# slide_he = openslide.open_slide(he_path[slide_no])
 	slide_masson = openslide.open_slide(masson_path[slide_no])
@@ -487,7 +488,7 @@ def xls_persist_slide(file_name, slide_type):  # save one slide into .xls
 		file_name = 'MASSON_data/' + file_name
 		res = read_file(file_name, print_file=False)
 		whole_list_data = masson_persist(res, slide_no)
-		write_file('MASSON.xls', whole_list_data, patient_no, slide_no)
+		write_excel('MASSON.xls', whole_list_data, patient_no, slide_no)
 		pass
 
 
@@ -503,14 +504,14 @@ if __name__ == '__main__':
 		# res = read_file(file_name_he, print_file=False)
 		# print len(res)
 		xls_persist_slide(i, slide_type="MASSON")
-	
+
 	# for
 	# masson_proc(5)
-	
+
 	# masson_test_proc()
 	# cv2.waitKey(0)
 	# cv2.destroyAllWindows()
-	
+
 	# he test_images
 	# he_test_proc()
 	# he_whole_res.append(he_test_proc())
@@ -518,7 +519,7 @@ if __name__ == '__main__':
 	# 空泡 心肌细胞核 非心肌细胞核 区域总面积 列表[编号，细胞核面积，细胞核周长]
 	# cv2.waitKey(0)
 	cv2.destroyAllWindows()
-	
+
 	# print dimension
 	'''
 	(1, 136, 236, 919452, [[3, 355, 99.94112491607666], [8, 322, 67.4558436870575], [9, 541, 161.01219260692596], [10, 329, 73.4558436870575], [12, 911, 152.36753106117249], [14, 606, 104.66904675960541], [18, 436, 87.94112491607666], [20, 732, 107.35533845424652], [24, 435, 89.35533845424652],
