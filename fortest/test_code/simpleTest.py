@@ -13,8 +13,8 @@ list_data = []
 
 
 def write_file(list_for_write):
-	with open('test/data.txt', 'w') as f:
-		f.write(str(list_for_write))
+	with open('Row_Num/test.txt', 'w') as f:
+		f.write(str(56))
 
 
 def read_file(filename, print_file=False):
@@ -28,11 +28,11 @@ def read_file(filename, print_file=False):
 
 l = [1, 2, 3, 4, 5, 4, 3, 2, 1]
 # os.mkdir('test')
-print os.path.exists('test')
-# write_file(l)
+# print os.path.exists('test')
+write_file(l)
 
 
-# read_file('data.txt', print_file=False)
+read_file('Row_Num/test.txt', print_file=True)
 
 # f = xlwt.Workbook(encoding='utf-8')
 # sheet1 = f.add_sheet('HE')
@@ -76,7 +76,7 @@ print os.path.exists('test')
 # 心内膜厚度（RCM增厚）
 
 
-img_show = False
+# img_show = False
 # print os.path.realpath(__file__)
 # print os.path.abspath('./')
 # img = cv.imread("../test_images/HE/25845/25845-1.ndpi.jpg", 0)

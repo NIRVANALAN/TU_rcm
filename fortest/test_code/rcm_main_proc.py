@@ -1,19 +1,17 @@
+# coding=utf-8
 from rcm import *
-
 
 if __name__ == '__main__':
 	init_test_proc()
-	slide_proc(0, 6, masson=True)
+	# slide_proc(0, 6, masson=True)
 	# test
 	he_dir = os.getcwd() + "/HE_data"
 	masson_dir = os.getcwd() + "/MASSON_data"
+	# persist process begin#################
 	for i in os.listdir(masson_dir):
-		# file_name_he = 'HE_data/' + i
-		# file_name_masson = 'MASSON_data/' + i
-		# res = read_file(file_name_he, print_file=False)
-		# print len(res)
-		xls_persist_slide(i, slide_type="MASSON")
-
+		xls_persist_slide(i, slide_type="MASSON", set_start_row=False)
+	for i in os.listdir(he_dir):
+		xls_persist_slide(i, slide_type="HE", set_start_row=False)
 	# for
 	# masson_proc(5)
 

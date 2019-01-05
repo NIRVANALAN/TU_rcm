@@ -33,7 +33,29 @@ row_num = 1
 mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
-def write_excel(file_name, data, patient_no, slide_no):
+def get_row_num(slide_type="HE"):
+	if slide_type is "MASSON":
+		with open('Row_Num/masson_row_num.txt', 'r') as masson_row_file:
+			return int(masson_row_file.read())
+		pass
+	else:
+		with open('Row_Num/he_row_num.txt', 'r') as he_row_file:
+			return int(he_row_file.read())
+		pass
+
+
+def save_row_num(row_no=row_num, slide_type="HE"):
+	if slide_type is "MASSON":
+		with open('Row_Num/masson_row_num.txt', 'w') as masson_row_file:
+			masson_row_file.write(str(row_no))
+		pass
+	else:
+		with open('Row_Num/he_row_num.txt', 'w') as he_row_file:
+			he_row_file.write(str(row_no))
+		pass
+
+
+def write_excel(file_name, data, patient_no, slide_no, start_row=-1):
 	global row_num
 	rb = xlrd.open_workbook(file_name, formatting_info=False)
 	wb = copy(rb)
@@ -43,6 +65,10 @@ def write_excel(file_name, data, patient_no, slide_no):
 	# ws.write(row_num, 1, slide_no)
 	# this circulation writes 4(or less) mask information
 	if file_name[0] is "H":
+		if start_row > 0:
+			row_num = start_row
+		elif row_num is 1:
+			row_num = int(get_row_num("HE"))
 		for i, slide_data in enumerate(data):  # every mask
 			if slide_no is 3 and i is 3:
 				i += 1
@@ -53,16 +79,22 @@ def write_excel(file_name, data, patient_no, slide_no):
 			ws.write(row_num, 2, mask_name[i])
 			for j, slide_detail in enumerate(slide_data):
 				ws.write(row_num, j + 3, slide_detail)
-			row_num += 1
+			row_num += 1  # prepare for the next time write
 		wb.save(file_name)
+		save_row_num(row_num, "HE")
 	elif file_name[0] is "M":
+		if start_row > 0:
+			row_num = start_row
+		elif row_num is 1:
+			row_num = int(get_row_num("MASSON"))
 		ws.write(row_num, 0, patient_no)
 		ws.write(row_num, 1, slide_no)
 		# ws.write(row_num, 2, mask_name[row_num])
 		for i, slide_data in enumerate(data):
 			ws.write(row_num, i + 2, slide_data)
-		row_num += 1
+		row_num += 1  # prepare for the next time write
 		wb.save(file_name)
+		save_row_num(row_num, "MASSON")
 		pass
 
 
