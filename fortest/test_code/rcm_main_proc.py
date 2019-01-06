@@ -8,19 +8,19 @@ if __name__ == '__main__':
 	he_dir = os.getcwd() + "/HE_data"
 	masson_dir = os.getcwd() + "/MASSON_data"
 	# persist process begin#################
-	for i in os.listdir(masson_dir):
-		xls_persist_slide(i, slide_type="MASSON", set_start_row=False)
-	for i in os.listdir(he_dir):
-		xls_persist_slide(i, slide_type="HE", set_start_row=False)
+	# for i in os.listdir(masson_dir):
+	# 	xls_persist_slide(i, slide_type="MASSON", set_start_row=False)
+	# for i in os.listdir(he_dir):
+	# 	xls_persist_slide(i, slide_type="HE", set_start_row=False)
 	# for
 	# masson_proc(5)
 
-	masson_test_proc()
+	# masson_test_proc()
 	# cv2.waitKey(0)
 	# cv2.destroyAllWindows()
 
 	# he test_images
-	# he_test_proc()
+	he_test_proc()
 	# he_whole_res.append(he_test_proc())
 	# he_statics_persistence(he_whole_res)
 	# 空泡 心肌细胞核 非心肌细胞核 区域总面积 列表[编号，细胞核面积，细胞核周长]

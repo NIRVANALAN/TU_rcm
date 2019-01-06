@@ -83,7 +83,7 @@ def he_test_proc():
 	# print dimension
 	# whole_level = 6
 	# print "he_test_proc_dimension:", max_level
-	slide_no = 1
+	slide_no = 3
 	global slide_he
 	global slide_masson
 	slide_he = openslide.open_slide(he_path[slide_no])

@@ -114,7 +114,7 @@ def fibrosis(slide, fibrosis_level):
 
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
-              is_masson=False, patient_id=0, show_img=False):
+              is_masson=False, patient_id=0, show_img=False, set_vertical=False):
 	if is_masson is True:
 		print 'edit MASSON'
 	else:
@@ -258,8 +258,12 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# get the width & height and compute the height of 'other'
 	# if slide_no is 1:
 	# 	other_height = rect_other[1]
-	if (math.fabs(rect_wall[2] - base_angle) % 360) < 180 * atan(rect_wall[1][1] / rect_wall[1][0]) / math.pi or (
-			math.fabs(rect_wall[2] - base_angle) % 360) > 180 - 180 * atan(rect_wall[1][1] / rect_wall[1][0]) / math.pi:
+	if (slide_no is 3 and set_vertical is False) or \
+			(slide_no is not 3 and ((math.fabs(rect_wall[2] - base_angle) % 360) < 180 * atan(
+				rect_wall[1][1] / rect_wall[1][0]) / math.pi or
+			 (math.fabs(rect_wall[2] - base_angle) % 360) > 180 - 180 * atan(
+						rect_wall[1][1] / rect_wall[1][0]) / math.pi)):
+		# print "mark horizontal"
 		angle = math.fabs(rect_wall[2] - 90)
 		wall_width = rect_wall[1][1]
 		wall_height = rect_wall[1][0]
@@ -268,6 +272,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		other_height = all_height - wall_height
 
 	else:
+		if slide_no is 3 and set_vertical:
+			print "slide03 set vertical"
 		angle = rect_wall[2]
 		wall_width = rect_wall[1][0]
 		wall_height = rect_wall[1][1]

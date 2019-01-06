@@ -4,6 +4,7 @@ import numpy as np
 import os
 import sys
 import xlwt
+import openslide
 import xlrd
 from xlutils.copy import copy
 from xlwt import Style
@@ -29,10 +30,10 @@ def read_file(filename, print_file=False):
 l = [1, 2, 3, 4, 5, 4, 3, 2, 1]
 # os.mkdir('test')
 # print os.path.exists('test')
-write_file(l)
+# write_file(l)
 
 
-read_file('Row_Num/test.txt', print_file=True)
+# read_file('Row_Num/test.txt', print_file=True)
 
 # f = xlwt.Workbook(encoding='utf-8')
 # sheet1 = f.add_sheet('HE')
@@ -47,9 +48,6 @@ read_file('Row_Num/test.txt', print_file=True)
 # 	for i, p in enumerate(col):
 # 		sheet1.write(i + 1, 1, p)
 # 	f.save('test.xls')
-
-
-
 
 
 # style = xlwt.easyxf('font:height 240, color-index red, bold on;align: wrap on, vert centre, horiz center');
@@ -79,7 +77,10 @@ read_file('Row_Num/test.txt', print_file=True)
 # img_show = False
 # print os.path.realpath(__file__)
 # print os.path.abspath('./')
-# img = cv.imread("../test_images/HE/25845/25845-1.ndpi.jpg", 0)
+# slide04_test_img = cv.imread("../test_images/HE/25845/25845-4.ndpi.jpg", 0)
+# cv.imshow('slide04', slide04_test_img)
+cv.waitKey(0)
+cv.destroyAllWindows()
 # if img is not None:
 # 	# img = np.zeros((512, 512, 3), np.uint8)
 # 	# dot_list = np.array([[0, 0], [500, 500], [300, 400], [600, 400]], np.int32)
