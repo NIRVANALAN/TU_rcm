@@ -11,7 +11,6 @@ rootPath = os.path.split(curPath)[0]
 rootPath = os.path.split(rootPath)[0]
 sys.path.append(rootPath)
 
-# img_dir = 'G:\Junior\Tsinghua research\rcm_images\\'
 slide_he = []
 slide_masson = []
 max_level = 0
@@ -22,7 +21,7 @@ working_dimension = ()
 he_path = []
 masson_path = []
 
-img_dir = './../../rcm_images/'
+img_dir = '/home/zhourongchen/zrc/rcm/images'
 patients = ['/25845', '/28330', '/29708', '/30638', '/31398', '/35485']
 patient_id = 1
 

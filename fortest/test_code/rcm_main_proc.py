@@ -3,7 +3,7 @@ from rcm import *
 
 if __name__ == '__main__':
 	init_test_proc()
-	# slide_proc(0, 6, masson=True)
+	slide_proc(0, 6, masson=True)
 	# test
 	he_dir = os.getcwd() + "/HE_data"
 	masson_dir = os.getcwd() + "/MASSON_data"
