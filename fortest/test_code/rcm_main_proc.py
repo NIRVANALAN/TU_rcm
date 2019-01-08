@@ -3,7 +3,7 @@ from rcm import *
 
 if __name__ == '__main__':
 	init_test_proc()
-	slide_proc(0, 6, masson=True)
+	slide_proc(patient_no=0, start=0, end=6, masson=True)
 	# test
 	he_dir = os.getcwd() + "/HE_data"
 	masson_dir = os.getcwd() + "/MASSON_data"
@@ -14,11 +14,11 @@ if __name__ == '__main__':
 	# 	xls_persist_slide(i, slide_type="HE", set_start_row=False)
 	# for
 	# masson_proc(5)
-
+	
 	# masson_test_proc()
 	# cv2.waitKey(0)
 	# cv2.destroyAllWindows()
-
+	
 	# he test_images
 	he_test_proc()
 	# he_whole_res.append(he_test_proc())
@@ -26,7 +26,7 @@ if __name__ == '__main__':
 	# 空泡 心肌细胞核 非心肌细胞核 区域总面积 列表[编号，细胞核面积，细胞核周长]
 	# cv2.waitKey(0)
 	cv2.destroyAllWindows()
-
+	
 	# print dimension
 	'''
 	(1, 136, 236, 919452, [[3, 355, 99.94112491607666], [8, 322, 67.4558436870575], [9, 541, 161.01219260692596], [10, 329, 73.4558436870575], [12, 911, 152.36753106117249], [14, 606, 104.66904675960541], [18, 436, 87.94112491607666], [20, 732, 107.35533845424652], [24, 435, 89.35533845424652],

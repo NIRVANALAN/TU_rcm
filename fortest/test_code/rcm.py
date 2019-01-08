@@ -18,12 +18,23 @@ working_level = 0
 max_dimension = ()
 working_dimension = ()
 
-he_path = []
-masson_path = []
+he_test_path = []
+masson_test_path = []
 
-img_dir = '/home/zhourongchen/zrc/rcm/images'
+img_dir = './../../rcm_images/'
+# img_dir = '/home/zhourongchen/zrc/rcm/images'
 patients = ['/25845', '/28330', '/29708', '/30638', '/31398', '/35485']
+he_patients = []
+masson_patients = []
 patient_id = 1
+
+for i in os.listdir(img_dir + '/HE'):
+	he_patients.append('/' + i)
+	pass
+
+for i in os.listdir(img_dir + '/MASSON'):
+	masson_patients.append('/' + i)
+	pass
 
 
 def init_test_proc():
@@ -32,14 +43,14 @@ def init_test_proc():
 	# he_img_name = name + '.ndpi'
 	# patient_id = patients[0]
 	# global patient_id
-	global he_path
-	global masson_path
-	he_path, masson_path = get_image_path(0)
+	global he_test_path
+	global masson_test_path
+	he_test_path, masson_test_path = get_image_path(0)
 	global slide_he
 	global slide_masson
 	#  init
-	slide_he = openslide.open_slide(he_path[0])
-	slide_masson = openslide.open_slide(masson_path[0])
+	slide_he = openslide.open_slide(he_test_path[0])
+	slide_masson = openslide.open_slide(masson_test_path[0])
 	global max_dimension
 	global max_level
 	max_dimension = slide_he.dimensions
@@ -63,15 +74,20 @@ def get_image_path(patient_no, return_type="both"):
 	:param return_type: "both" default
 	:return: the he_path and masson_path
 	"""
-	patient_no = patients[patient_no]
+	# patient_no = patients[patient_no]
+	he_patient_no = he_patients[patient_no]
+	masson_patient_no = masson_patients[patient_no]
+	he_path_list = []
+	masson_path_list = []
 	for i in xrange(1, 7):
-		img_name = patient_no + '-' + str(i) + '.ndpi'
-		he_path_iter = img_dir + 'HE' + patient_no + img_name
-		masson_path_iter = img_dir + 'MASSON' + patient_no + img_name
-		he_path.append(he_path_iter)
-		masson_path.append(masson_path_iter)
+		he_img_name = he_patient_no + '-' + str(i) + '.ndpi'
+		masson_img_name = masson_patient_no + '-' + str(i) + '.ndpi'
+		he_path_iter = img_dir + 'HE' + he_patient_no + he_img_name
+		masson_path_iter = img_dir + 'MASSON' + masson_patient_no + masson_img_name
+		he_path_list.append(he_path_iter)
+		masson_path_list.append(masson_path_iter)
 	if return_type is "both":
-		return he_path, masson_path
+		return he_path_list, masson_path_list
 
 
 masson_erosion_iteration_time_list = [10, 10, 15, 15, 15, 13]
@@ -85,59 +101,33 @@ def he_test_proc():
 	slide_no = 3
 	global slide_he
 	global slide_masson
-	slide_he = openslide.open_slide(he_path[slide_no])
+	slide_he = openslide.open_slide(he_test_path[slide_no])
 	# slide_masson = openslide.open_slide(masson_path[slide_no])
 	firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(6, slide_he, he_erosion_iteration_time_list,
 	                                                                        masson_erosion_iteration_time_list,
 	                                                                        slide_no,
 	                                                                        is_masson=False)
-
-	def write_test_img(is_masson=False):
-		if is_masson is False:
-			path = he_path
-			img_dir_path = './../test_images/HE/'
-		else:
-			path = masson_path
-			img_dir_path = './../test_images/MASSON/'
-		for i in path:
-			slide_iter = openslide.open_slide(i)
-			whole_dimension = slide_iter.level_dimensions[working_level]
-			region = np.array((slide_iter.read_region((0, 0), working_level, whole_dimension)))
-			region = cv2.cvtColor(region, cv2.COLOR_BGR2RGB)
-			# cv2.imshow(i, region)
-			img_path_iter = img_dir_path + i.split('/')[-2]
-			if not os.path.exists(img_path_iter):
-				os.mkdir(img_path_iter)
-			cv2.imwrite(img_path_iter + '/' + i.split('/')[-1] + '.jpg', region)
-
 	# write_test_img(is_masson=True)
-	# region = np.array(slide_he.read_region((30000, 30000), 0, (1000, 1000)))
-	# region = np.array(slide.read_region((0, 0), 0, (1000, 1000)))
-	# region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
-	# cv2.imshow("region", region)
-	# hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
-
-	# cv2.imshow("origin", hsv)
-	# h, s, v = cv2.split(hsv)
-	# res, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY)
-
-	# lower = np.array([0, 20, 100])
-	# upper = np.array([255, 180, 255])
-	# mask = cv2.inRange(hsv, lower, upper)
-	# res = cv2.bitwise_and(hsv, hsv, mask)
-	# cv2.imshow("res", res)
-
-	# detect = detectprocess(region, hsv)
-
-	# def getpos(event, x, y, flags, param):
-	#     if event == cv2.EVENT_LBUTTONDOWN:
-	#         print(hsv[y, x])
-
-	# cv2.imshow('HSV', hsv)
-	# cv2.setMouseCallback('HSV', getpos)
-	# print detect
-	# return detect
 	pass
+
+
+def write_test_img(is_masson=False):
+	if is_masson is False:
+		path = he_test_path
+		img_dir_path = './../test_images/HE/'
+	else:
+		path = masson_test_path
+		img_dir_path = './../test_images/MASSON/'
+	for i in path:
+		slide_iter = openslide.open_slide(i)
+		whole_dimension = slide_iter.level_dimensions[working_level]
+		region = np.array((slide_iter.read_region((0, 0), working_level, whole_dimension)))
+		region = cv2.cvtColor(region, cv2.COLOR_BGR2RGB)
+		# cv2.imshow(i, region)
+		img_path_iter = img_dir_path + i.split('/')[-2]
+		if not os.path.exists(img_path_iter):
+			os.mkdir(img_path_iter)
+		cv2.imwrite(img_path_iter + '/' + i.split('/')[-1] + '.jpg', region)
 
 
 # whole_img = slide.read_region((0, 0), 0, dimension)
@@ -146,8 +136,9 @@ def he_test_proc():
 he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
-def he_proc(he_slide_no):
+def he_proc(he_slide_no, he_slide_path):
 	"""
+	:param he_slide_path: path of he slide
 	:param he_slide_no: the slide_no of a patient
 	:return: the whole_result_list of this slide will be saved
 	"""
@@ -156,7 +147,7 @@ def he_proc(he_slide_no):
 	he_proc_iter = [0, 0, 0, [0, 0], []]
 	# he_slide_no = 0
 	mask_level = 6
-	slide_processed = openslide.open_slide(he_path[he_slide_no])
+	slide_processed = openslide.open_slide(he_slide_path[he_slide_no])
 	firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(mask_level, slide_processed,
 	                                                                        he_erosion_iteration_time_list,
 	                                                                        masson_erosion_iteration_time_list,
@@ -249,10 +240,10 @@ def he_statics_persistence(whole_res, slide_no, print_res=False):
 		# cardiac_cells_nucleus_area = [j[0] for j in whole_res[slide_index][4]]
 		# cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[slide_index][4]]
 		# vacuole_area = res[slide_index][5]
-
+		
 		cardiac_cells_ratio = non_cardiac_cells_num / float(cardiac_cells_num)
 		cardiac_area_num_ratio = region_whole_area / float(cardiac_cells_num)
-
+		
 		#  cardiac cell nucleus statics
 		# mean
 		cardiac_cells_nucleus_area_mean = np.mean(cardiac_cells_nucleus_area)
@@ -262,25 +253,25 @@ def he_statics_persistence(whole_res, slide_no, print_res=False):
 		cardiac_cells_nucleus_area_sd = np.std(cardiac_cells_nucleus_area, ddof=1)
 		# IQR
 		cardiac_cells_nucleus_area_iqr = iqr(cardiac_cells_nucleus_area, rng=(25, 75), interpolation='midpoint')
-
+		
 		# perimeter calculation
 		cardiac_cells_nucleus_perimeter_mean = np.mean(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_median = np.median(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_sd = np.std(cardiac_cells_nucleus_perimeter, ddof=1)
 		cardiac_cells_nucleus_perimeter_iqr = iqr(cardiac_cells_nucleus_perimeter, rng=(25, 75),
 		                                          interpolation='midpoint')
-
+		
 		# nucleus / whole_area 细胞核总数量/切片总面积
 		intensity = cardiac_cells_num / float(region_whole_area)
-
+		
 		# area ratio  心肌细胞核面积占心肌细胞的面积比例
 		cardiac_cells_nucleus_area_region_ratio = float(sum(cardiac_cells_nucleus_area)) / region_whole_area
-
+		
 		# vacuole calculation
 		# cardiac_cells_vacuole_area_mean = np.mean(vacuole_area)
 		# cardiac_cells_vacuole_area_median = np.median(vacuole_area)
 		# cardiac_cells_vacuole_area_sd = np.std(vacuole_area, ddof=1)
-
+		
 		if print_res:
 			print 'region: ' + he_mask_name[slide_index]
 			print 'Cardiac cells num: ' + str(whole_res[slide_index][1])
@@ -311,11 +302,11 @@ fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
 masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
-def masson_proc(slide_no, masson_mask_working_level=6):  # need debug and fix
+def masson_proc(slide_no, he_slide_path, masson_mask_working_level=6):  # need debug and fix
 	masson_proc_time_start = time()
 	masson_whole_result = []
 	masson_result_iter = [0, 0]
-	slide = openslide.open_slide(masson_path[slide_no])
+	slide = openslide.open_slide(he_slide_path[slide_no])
 	# i = 0
 	# print working_level
 	working_dimensions = slide.level_dimensions[masson_mask_working_level]
@@ -406,13 +397,13 @@ def masson_test_proc(masson_working_level=6):
 	global slide_masson
 	print 'working level', masson_working_level
 	working_dimension = slide_masson.level_dimensions[masson_working_level]
-
+	
 	# cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
 	# fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
-
+	
 	# hsv = []
 	# rgb_img = []
-
+	
 	def pure_test():
 		# global hsv
 		# global rgb_img
@@ -442,18 +433,18 @@ def masson_test_proc(masson_working_level=6):
 		cv2.imshow('res_cardiac_HSV', res_cardiac_hsv)
 		cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
 		cv2.imshow('rgb_masson', bgr_img)
-
+		
 		def getpos(event, x, y, flags, param):
 			if event == cv2.EVENT_LBUTTONDOWN:
 				print(hsv[y, x])
-
+		
 		cv2.setMouseCallback('HSV', getpos)
-
+	
 	# pure_test()
-
+	
 	slide_no = 2
 	# slide_he = openslide.open_slide(he_path[slide_no])
-	slide_masson = openslide.open_slide(masson_path[slide_no])
+	slide_masson = openslide.open_slide(masson_test_path[slide_no])
 	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img, rcm_thickening = edit_area(
 		masson_working_level,
 		slide_masson,
@@ -463,14 +454,14 @@ def masson_test_proc(masson_working_level=6):
 	pass
 
 
-def slide_proc(start, end, he=False, masson=False):
-	global he_path, masson_path
-	he_path, masson_path = get_image_path(0)  # the first patient's image path
+def slide_proc(patient_no, start, end, he=False, masson=False):
+	# global he_test_path, masson_test_path
+	he_slide_path, masson_slide_path = get_image_path(patient_no)  # the first patient's image path
 	for slide_no in xrange(start, end):
 		if he:
-			he_proc(slide_no)
+			he_proc(slide_no, he_slide_path)
 		if masson:
-			masson_proc(slide_no)
+			masson_proc(slide_no, he_slide_path)
 
 
 def xls_persist_slide(file_name, slide_type, start_row=-1, set_start_row=False):  # save one slide into .xls
