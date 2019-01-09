@@ -21,20 +21,9 @@ working_dimension = ()
 he_test_path = []
 masson_test_path = []
 
-img_dir = './../../rcm_images/'
+
 # img_dir = '/home/zhourongchen/zrc/rcm/images'
-patients = ['/25845', '/28330', '/29708', '/30638', '/31398', '/35485']
-he_patients = []
-masson_patients = []
-patient_id = 1
-
-for i in os.listdir(img_dir + '/HE'):
-	he_patients.append('/' + i)
-	pass
-
-for i in os.listdir(img_dir + '/MASSON'):
-	masson_patients.append('/' + i)
-	pass
+# patients = ['/25845', '/28330', '/29708', '/30638', '/31398', '/35485']
 
 
 def init_test_proc():
@@ -111,12 +100,12 @@ def he_test_proc():
 	pass
 
 
-def write_test_img(is_masson=False):
+def write_test_img(path, is_masson=False):
 	if is_masson is False:
-		path = he_test_path
+		# path = he_test_path
 		img_dir_path = './../test_images/HE/'
 	else:
-		path = masson_test_path
+		# path = masson_test_path
 		img_dir_path = './../test_images/MASSON/'
 	for i in path:
 		slide_iter = openslide.open_slide(i)
@@ -136,7 +125,7 @@ def write_test_img(is_masson=False):
 he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
-def he_proc(he_slide_no, he_slide_path):
+def he_proc(he_slide_no, he_slide_path, patient_id):
 	"""
 	:param he_slide_path: path of he slide
 	:param he_slide_no: the slide_no of a patient
@@ -151,6 +140,7 @@ def he_proc(he_slide_no, he_slide_path):
 	firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(mask_level, slide_processed,
 	                                                                        he_erosion_iteration_time_list,
 	                                                                        masson_erosion_iteration_time_list,
+	                                                                        patient_id=patient_id,
 	                                                                        slide_no=he_slide_no)
 	global he_mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
@@ -166,7 +156,7 @@ def he_proc(he_slide_no, he_slide_path):
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# 证明这个像素点在对应的Mask里面
-						print str(patient_id) + " HE: " + str(he_slide_no) + he_mask_name[a] + ": " + str(
+						print str(he_patients[patient_id]) + " HE: " + str(he_slide_no) + he_mask_name[a] + ": " + str(
 							x) + " " + str(y)
 						# print x, y
 						region = np.array(slide_processed.read_region((x, y), 0, (area_length, area_length)))
@@ -185,13 +175,14 @@ def he_proc(he_slide_no, he_slide_path):
 		print (he_mask_name[a] + "finished!")
 		# i += 1
 		he_whole_res.append(he_proc_iter)
-		he_proc_iter = [0, 0, 0, [0, 0], []]  # erase the he_proc_iter var
+	he_proc_iter = [0, 0, 0, [0, 0], []]  # erase the he_proc_iter var
 	if not os.path.exists('HE_data'):
 		os.mkdir('HE_data')
 	write_file(he_whole_res,
-	           'HE_data/' + str(patients[patient_id]).split('/')[1] + '_slide' + str(he_slide_no) + '_he_whole_res.txt')
+	           'HE_data/' + str(he_patients[patient_id]).split('/')[1] + '_slide' + str(
+		           he_slide_no) + '_he_whole_res.txt')
 	he_whole_res = []
-	print "HE patient: " + str(patients[patient_id]).split('/')[1] + ' slide no:' + str(
+	print "HE patient: " + str(he_patients[patient_id]).split('/')[1] + ' slide no:' + str(
 		he_slide_no) + " finished.Time consumed:" + str(
 		time() - he_proc_start_time) + " s"
 
@@ -210,7 +201,7 @@ def generate_whole_res(whole_res):
 	return whole_res
 
 
-def he_statics_persistence(whole_res, slide_no, print_res=False):
+def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6):
 	"""
 	:param print_res: determine whether to print the res_list
 	:param whole_res: res is a list that produced by he_proc(), which stores the statics of each mask of a slide
@@ -219,6 +210,7 @@ def he_statics_persistence(whole_res, slide_no, print_res=False):
 	whole_res = generate_whole_res(whole_res)
 	global he_mask_name
 	whole_list_data = []
+	magnify = pow(2, magnify_level)
 	print len(whole_res)
 	for slide_index in xrange(len(whole_res)):
 		if slide_no is 3 and slide_index is 3:
@@ -229,8 +221,8 @@ def he_statics_persistence(whole_res, slide_no, print_res=False):
 		cardiac_cells_num = whole_res[slide_index][1]
 		non_cardiac_cells_num = whole_res[slide_index][2]
 		region_whole_area = whole_res[slide_index][3][0]
-		region_rcm_thickening = whole_res[slide_index][3][1][1]
-		region_trabe_thickening = whole_res[slide_index][3][1][0]
+		region_rcm_thickening = whole_res[slide_index][3][1][1] * magnify
+		region_trabe_thickening = whole_res[slide_index][3][1][0] * magnify
 		cardiac_cells_nucleus_area = []
 		cardiac_cells_nucleus_perimeter = []
 		for a in [j for j in whole_res[slide_index][4] if len(j)]:
@@ -302,11 +294,11 @@ fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
 masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
-def masson_proc(slide_no, he_slide_path, masson_mask_working_level=6):  # need debug and fix
+def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_level=6):  # need debug and fix
 	masson_proc_time_start = time()
 	masson_whole_result = []
 	masson_result_iter = [0, 0]
-	slide = openslide.open_slide(he_slide_path[slide_no])
+	slide = openslide.open_slide(masson_slide_path[slide_no])
 	# i = 0
 	# print working_level
 	working_dimensions = slide.level_dimensions[masson_mask_working_level]
@@ -315,6 +307,7 @@ def masson_proc(slide_no, he_slide_path, masson_mask_working_level=6):  # need d
 		masson_mask_working_level, slide,
 		masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
 		slide_no=slide_no,
+		patient_id=patient_id,
 		is_masson=True)
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	masson_working_level = 1  # 因为速度比较快，这里缩放一倍
@@ -329,7 +322,8 @@ def masson_proc(slide_no, he_slide_path, masson_mask_working_level=6):  # need d
 					# if area[int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# print x, y
-						print str(patient_id) + " MASSON: " + str(slide_no) + " " + masson_mask_name[a] + ": " + str(
+						print str(masson_patients[patient_id]) + " MASSON: " + str(slide_no) + " " + masson_mask_name[
+							a] + ": " + str(
 							x) + " " + str(y)
 						_, cardiac_area = masson_region_slide(slide, masson_working_level, cardiac_threshold,
 						                                      (x, y),
@@ -364,20 +358,21 @@ def masson_proc(slide_no, he_slide_path, masson_mask_working_level=6):  # need d
 		total_fibrosis_block.append(cv2.countNonZero(j) * (pow(2, fibrosis_level) ** 2))
 	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
 	fibrosis_block_sum = int(np.sum(total_fibrosis_block))
-	fibrosis_block_average = int(np.average(total_fibrosis_block) / number)
-	fibrosis_block_mean = np.mean(total_fibrosis_block)
-	fibrosis_block_sd = np.std(total_fibrosis_block, ddof=1)
-	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_average, fibrosis_block_mean, fibrosis_block_sd]
+	fibrosis_block_median = int(np.median(total_fibrosis_block))
+	fibrosis_block_mean = int(np.mean(total_fibrosis_block))
+	fibrosis_block_sd = int(np.std(total_fibrosis_block, ddof=1))
+	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_median, fibrosis_block_mean, fibrosis_block_sd]
 	####################################################################################
 	masson_whole_result.append(fibrosis_block_info)  # fibrosis statics append
-	masson_whole_result.append(rcm_thickening)  # [other_height, wall_height]
+	masson_whole_result.append(list(magnify * np.array(rcm_thickening)))  # [other_height, wall_height]
 	if not os.path.exists('MASSON_data'):
 		os.mkdir('MASSON_data')
 	write_file(masson_whole_result,
-	           'MASSON_data/' + str(patients[patient_id]).split('/')[1] + '_slide' + str(
+	           'MASSON_data/' + str(masson_patients[patient_id]).split('/')[1] + '_slide' + str(
 		           slide_no) + '_masson_whole_res.txt')
 	masson_whole_result = []
-	print "masson patient: " + str(patients[patient_id]).split('/')[1] + " finished, time consumed: " + str(
+	print "masson patient: " + str(masson_patients[patient_id]).split('/')[
+		1] + ' slide ' + str(slide_no) + " finished, time consumed: " + str(
 		time() - masson_proc_time_start) + " s"
 	pass
 
@@ -388,6 +383,7 @@ def masson_persist(whole_res, slide_no, print_res=False):
 	for i in whole_res:
 		for j in i:
 			whole_list_data.append(j)
+	
 	return whole_list_data
 	pass
 
@@ -454,14 +450,14 @@ def masson_test_proc(masson_working_level=6):
 	pass
 
 
-def slide_proc(patient_no, start, end, he=False, masson=False):
+def slide_proc(patient_id, start, end, he=False, masson=False):
 	# global he_test_path, masson_test_path
-	he_slide_path, masson_slide_path = get_image_path(patient_no)  # the first patient's image path
+	he_slide_path, masson_slide_path = get_image_path(patient_id)  # the first patient's image path
 	for slide_no in xrange(start, end):
 		if he:
-			he_proc(slide_no, he_slide_path)
+			he_proc(slide_no, he_slide_path, patient_id)
 		if masson:
-			masson_proc(slide_no, he_slide_path)
+			masson_proc(slide_no, masson_slide_path, patient_id)
 
 
 def xls_persist_slide(file_name, slide_type, start_row=-1, set_start_row=False):  # save one slide into .xls

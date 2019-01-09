@@ -1,12 +1,39 @@
 # coding=utf-8
 from rcm import *
 
+he_dir = os.getcwd() + "/HE_data"
+masson_dir = os.getcwd() + "/MASSON_data"
+
+
+def persist(patient_id, slide_type, set_start_row=False):
+	file_path = []
+	if slide_type is "MASSON":
+		for index in os.listdir(masson_dir):
+			if int(index.split("_")[0]) == int(patient_id.split("/")[1]):
+				file_path.append(index)
+	else:
+		for index in os.listdir(he_dir):
+			if int(index.split("_")[0]) == int(patient_id.split("/")[1]):
+				file_path.append(index)
+	for f in file_path:
+		xls_persist_slide(f, slide_type, set_start_row)
+	pass
+
+
+# write test image
+
+
 if __name__ == '__main__':
 	init_test_proc()
-	slide_proc(patient_no=0, start=0, end=6, masson=True)
+	# for i in xrange(1, 3):
+	# 	he_slide_path, masson_slide_path = get_image_path(i)
+	# 	write_test_img(masson_slide_path, is_masson=False)
+	for i in xrange(0, 2):
+		# slide_proc(patient_id=1, start=5, end=6, he=True, masson=False)
+		persist(he_patients[i], slide_type="HE")
 	# test
-	he_dir = os.getcwd() + "/HE_data"
-	masson_dir = os.getcwd() + "/MASSON_data"
+	# he_dir = os.getcwd() + "/HE_data"
+	# masson_dir = os.getcwd() + "/MASSON_data"
 	# persist process begin#################
 	# for i in os.listdir(masson_dir):
 	# 	xls_persist_slide(i, slide_type="MASSON", set_start_row=False)
@@ -20,7 +47,7 @@ if __name__ == '__main__':
 	# cv2.destroyAllWindows()
 	
 	# he test_images
-	he_test_proc()
+	# he_test_proc()
 	# he_whole_res.append(he_test_proc())
 	# he_statics_persistence(he_whole_res)
 	# 空泡 心肌细胞核 非心肌细胞核 区域总面积 列表[编号，细胞核面积，细胞核周长]
