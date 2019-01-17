@@ -28,18 +28,10 @@ if __name__ == '__main__':
 	# for i in xrange(1, 3):
 	# 	he_slide_path, masson_slide_path = get_image_path(i)
 	# 	write_test_img(masson_slide_path, is_masson=False)
-	for i in xrange(0, 2):
-		# slide_proc(patient_id=1, start=5, end=6, he=True, masson=False)
-		persist(he_patients[i], slide_type="HE")
-	# test
-	# he_dir = os.getcwd() + "/HE_data"
-	# masson_dir = os.getcwd() + "/MASSON_data"
 	# persist process begin#################
-	# for i in os.listdir(masson_dir):
-	# 	xls_persist_slide(i, slide_type="MASSON", set_start_row=False)
-	# for i in os.listdir(he_dir):
-	# 	xls_persist_slide(i, slide_type="HE", set_start_row=False)
-	# for
+	# for i in xrange(0, 2):
+	slide_proc(patient_id=1, start=0, end=1, he=True, masson=False)
+	# persist(he_patients[1], slide_type="HE")
 	# masson_proc(5)
 	
 	# masson_test_proc()

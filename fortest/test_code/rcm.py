@@ -34,7 +34,7 @@ def init_test_proc():
 	# global patient_id
 	global he_test_path
 	global masson_test_path
-	he_test_path, masson_test_path = get_image_path(0)
+	he_test_path, masson_test_path = get_image_path(1)  # test 28330
 	global slide_he
 	global slide_masson
 	#  init
@@ -175,7 +175,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 		print (he_mask_name[a] + "finished!")
 		# i += 1
 		he_whole_res.append(he_proc_iter)
-	he_proc_iter = [0, 0, 0, [0, 0], []]  # erase the he_proc_iter var
+		he_proc_iter = [0, 0, 0, [0, 0], []]  # erase the he_proc_iter var
 	if not os.path.exists('HE_data'):
 		os.mkdir('HE_data')
 	write_file(he_whole_res,
@@ -472,7 +472,7 @@ def xls_persist_slide(file_name, slide_type, start_row=-1, set_start_row=False):
 			write_excel('HE.xls', whole_list_data, patient_no=patient_no, slide_no=slide_no, start_row=start_row)
 		else:
 			write_excel('HE.xls', whole_list_data, patient_no=patient_no, slide_no=slide_no)
-		print 'xls_persist() for HE: slide_no ' + str(slide_no) + ' patient_no ' + str(patient_no) + " finished"
+		print 'xls_persist() for HE: patient_no ' + str(patient_no) + ' slide_no ' + str(slide_no) + " finished"
 	elif slide_type is "MASSON":
 		# masson persist
 		file_name = 'MASSON_data/' + file_name
@@ -482,7 +482,7 @@ def xls_persist_slide(file_name, slide_type, start_row=-1, set_start_row=False):
 			write_excel('MASSON.xls', whole_list_data, patient_no, slide_no, start_row)
 		else:
 			write_excel('MASSON.xls', whole_list_data, patient_no, slide_no)
-		print 'xls_persist() for MASSON: slide_no ' + str(slide_no) + ' patient_no ' + str(patient_no) + " finished"
+		print 'xls_persist() for MASSON: patient_no ' + str(patient_no) + ' slide_no ' + str(slide_no) + " finished"
 		pass
 
 
