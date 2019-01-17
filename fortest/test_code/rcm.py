@@ -34,7 +34,7 @@ def init_test_proc():
 	# global patient_id
 	global he_test_path
 	global masson_test_path
-	he_test_path, masson_test_path = get_image_path(1)  # test 28330
+	he_test_path, masson_test_path = get_image_path(0)  # test 28330
 	global slide_he
 	global slide_masson
 	#  init
@@ -137,6 +137,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 	# he_slide_no = 0
 	mask_level = 6
 	slide_processed = openslide.open_slide(he_slide_path[he_slide_no])
+	slide_dimension = slide_processed.dimensions
 	firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(mask_level, slide_processed,
 	                                                                        he_erosion_iteration_time_list,
 	                                                                        masson_erosion_iteration_time_list,
@@ -151,6 +152,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 	print "dimension working on:", he_max_dimension[1], he_max_dimension[0]
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
+			store_remain = 5
 			for y in range(0, he_max_dimension[1] - area_length, area_length):
 				for x in range(0, he_max_dimension[0] - area_length, area_length):
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
@@ -162,12 +164,15 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 						region = np.array(slide_processed.read_region((x, y), 0, (area_length, area_length)))
 						region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 						hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
-						detect = detectprocess(region, hsv)
+						detect = detectprocess(region, hsv, he_patients[patient_id], he_slide_no, he_mask_name[a],
+						                       store_remain)
 						he_proc_iter[0] += (detect[0])  # 空泡
 						he_proc_iter[1] += (detect[1])  # 心肌
 						he_proc_iter[2] += (detect[2])  # 非心肌
 						he_proc_iter[3][0] += (detect[3])  # 总面积
 						he_proc_iter[4].append(detect[4])  # 心肌细胞的[area, perimeter]
+						# if store_remain > 0:
+						# 	store_remain -= 1
 		else:
 			print "area is none"
 		# he_proc_iter[5].append(detect[5])  # 空泡的[area] 暂时没算出来，后面算，这里填空
@@ -232,10 +237,10 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 		# cardiac_cells_nucleus_area = [j[0] for j in whole_res[slide_index][4]]
 		# cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[slide_index][4]]
 		# vacuole_area = res[slide_index][5]
-		
+
 		cardiac_cells_ratio = non_cardiac_cells_num / float(cardiac_cells_num)
 		cardiac_area_num_ratio = region_whole_area / float(cardiac_cells_num)
-		
+
 		#  cardiac cell nucleus statics
 		# mean
 		cardiac_cells_nucleus_area_mean = np.mean(cardiac_cells_nucleus_area)
@@ -245,25 +250,25 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 		cardiac_cells_nucleus_area_sd = np.std(cardiac_cells_nucleus_area, ddof=1)
 		# IQR
 		cardiac_cells_nucleus_area_iqr = iqr(cardiac_cells_nucleus_area, rng=(25, 75), interpolation='midpoint')
-		
+
 		# perimeter calculation
 		cardiac_cells_nucleus_perimeter_mean = np.mean(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_median = np.median(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_sd = np.std(cardiac_cells_nucleus_perimeter, ddof=1)
 		cardiac_cells_nucleus_perimeter_iqr = iqr(cardiac_cells_nucleus_perimeter, rng=(25, 75),
 		                                          interpolation='midpoint')
-		
+
 		# nucleus / whole_area 细胞核总数量/切片总面积
 		intensity = cardiac_cells_num / float(region_whole_area)
-		
+
 		# area ratio  心肌细胞核面积占心肌细胞的面积比例
 		cardiac_cells_nucleus_area_region_ratio = float(sum(cardiac_cells_nucleus_area)) / region_whole_area
-		
+
 		# vacuole calculation
 		# cardiac_cells_vacuole_area_mean = np.mean(vacuole_area)
 		# cardiac_cells_vacuole_area_median = np.median(vacuole_area)
 		# cardiac_cells_vacuole_area_sd = np.std(vacuole_area, ddof=1)
-		
+
 		if print_res:
 			print 'region: ' + he_mask_name[slide_index]
 			print 'Cardiac cells num: ' + str(whole_res[slide_index][1])
@@ -317,6 +322,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	area_length = 500  # 这相比HE缩小一倍
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
+			store_remain_no = 5
 			for y in range(0, second_max_dimension[1] - area_length, area_length):
 				for x in range(0, second_max_dimension[0] - area_length, area_length):
 					# if area[int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
@@ -325,14 +331,22 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 						print str(masson_patients[patient_id]) + " MASSON: " + str(slide_no) + " " + masson_mask_name[
 							a] + ": " + str(
 							x) + " " + str(y)
-						_, cardiac_area = masson_region_slide(slide, masson_working_level, cardiac_threshold,
+						_, cardiac_area = masson_region_slide(slide, masson_working_level, "cardiac",
+						                                      masson_patients[patient_id],
+						                                      slide_no, masson_mask_name[a], cardiac_threshold,
 						                                      (x, y),
 						                                      is_debug=False,
-						                                      dimension=(area_length, area_length))
-						_, fibrosis_area = masson_region_slide(slide, masson_working_level, fibrosis_threshold,
+						                                      dimension=(area_length, area_length),
+						                                      store_remain_no=store_remain_no)
+						_, fibrosis_area = masson_region_slide(slide, masson_working_level, "fibrosis",
+						                                       masson_patients[patient_id],
+						                                       slide_no, masson_mask_name[a], fibrosis_threshold,
 						                                       (x, y),
 						                                       is_debug=False,
-						                                       dimension=(area_length, area_length))
+						                                       dimension=(area_length, area_length),
+						                                       store_remain_no=store_remain_no)
+						if store_remain_no:
+							store_remain_no -= 1
 						masson_result_iter[0] += cardiac_area * (magnify ** 2)
 						masson_result_iter[1] += fibrosis_area * (magnify ** 2)
 		# statics should be simulated at max_level
@@ -383,7 +397,7 @@ def masson_persist(whole_res, slide_no, print_res=False):
 	for i in whole_res:
 		for j in i:
 			whole_list_data.append(j)
-	
+
 	return whole_list_data
 	pass
 
@@ -393,13 +407,13 @@ def masson_test_proc(masson_working_level=6):
 	global slide_masson
 	print 'working level', masson_working_level
 	working_dimension = slide_masson.level_dimensions[masson_working_level]
-	
+
 	# cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
 	# fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
-	
+
 	# hsv = []
 	# rgb_img = []
-	
+
 	def pure_test():
 		# global hsv
 		# global rgb_img
@@ -417,36 +431,37 @@ def masson_test_proc(masson_working_level=6):
 		res_fibrosis_hsv = cv2.inRange(hsv, fibrosis_threshold[0],
 		                               fibrosis_threshold[1])  # s 50-255 in paper fibrosis
 		res_cardiac_hsv = cv2.inRange(hsv, cardiac_threshold[0], cardiac_threshold[1])  # cardiac threshold
-		# fat
-		circles1 = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1,
-		                            600, param1=100, param2=30, minRadius=50, maxRadius=97)
-		circles = np.uint16(np.around(circles1))  # 把circles包含的圆心和半径的值变成整数
-		for i in circles[0, :]:
-			cv2.circle(bgr_img, (i[0], i[1]), i[2], (0, 0, 255), 2)  # 画圆
-			cv2.circle(bgr_img, (i[0], i[1]), 2, (0, 0, 255), 2)  # 画圆心
+		# # fat
+		# circles1 = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1,
+		#                             600, param1=100, param2=30, minRadius=50, maxRadius=97)
+		# circles = np.uint16(np.around(circles1))  # 把circles包含的圆心和半径的值变成整数
+		# for i in circles[0, :]:
+		# 	cv2.circle(bgr_img, (i[0], i[1]), i[2], (0, 0, 255), 2)  # 画圆
+		# 	cv2.circle(bgr_img, (i[0], i[1]), 2, (0, 0, 255), 2)  # 画圆心
 		cv2.imshow('HSV', hsv)
 		cv2.imshow('GRAY', gray)
 		cv2.imshow('res_cardiac_HSV', res_cardiac_hsv)
 		cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
 		cv2.imshow('rgb_masson', bgr_img)
-		
+		cv2.waitKey(0)
+
 		def getpos(event, x, y, flags, param):
 			if event == cv2.EVENT_LBUTTONDOWN:
 				print(hsv[y, x])
-		
+
 		cv2.setMouseCallback('HSV', getpos)
-	
-	# pure_test()
-	
-	slide_no = 2
-	# slide_he = openslide.open_slide(he_path[slide_no])
-	slide_masson = openslide.open_slide(masson_test_path[slide_no])
-	firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img, rcm_thickening = edit_area(
-		masson_working_level,
-		slide_masson,
-		masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
-		slide_no=slide_no,
-		is_masson=True)
+
+	pure_test()
+
+	# slide_no = 2
+	# # slide_he = openslide.open_slide(he_path[slide_no])
+	# slide_masson = openslide.open_slide(masson_test_path[slide_no])
+	# firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img, rcm_thickening = edit_area(
+	# 	masson_working_level,
+	# 	slide_masson,
+	# 	masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
+	# 	slide_no=slide_no,
+	# 	is_masson=True)
 	pass
 
 

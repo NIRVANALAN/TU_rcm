@@ -153,7 +153,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	average_greyimg = cv2.blur(grey_img, (30, 30))
 	# cv2.imshow('average grey img', averagegreyimg)
 	# cv2.imwrite("test_images/HE/average_grey_img.jpg", averagegreyimg)
-	
+
 	ret, erode = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 	if is_masson is True and calculate_trabe_flag:
@@ -167,7 +167,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	if show_img:
 		cv2.imshow("after erosion", erode)
 	#  多次腐蚀，除去小梁
-	
+
 	ret, aver_image = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
 	aver_image, avercnts, averhierarchy = cv2.findContours(aver_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	# cv2.imshow("aver image", aver_image)
@@ -178,7 +178,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	rcm_object = []
 	max_area = 0
 	max_area_index = None
-	
+
 	for cnt in cnts:
 		area = cv2.contourArea(cnt)
 		if area > 100:
@@ -195,7 +195,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 				max_area_index = len(rcm_object) - 1
 	wall = rcm_object[max_area_index]
 	# 把每一个区域都分割出来，最大的心肌壁
-	
+
 	other = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	for i in range(0, len(rcm_object)):
 		if i != max_area_index:
@@ -204,12 +204,12 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	if M0["m00"] == 0.0:
 		calculate_trabe_flag = False
 	# 对于计算小梁的slide, 通过矩moments计算重心
-	
+
 	if calculate_trabe_flag:  # 小梁的计算
 		M1 = cv2.moments(wall)
 		cx1 = int(M1["m10"] / M1["m00"])
 		cy1 = int(M1["m01"] / M1["m00"])
-		
+
 		# M0 = cv2.moments(other)
 		cx0 = int((M0["m10"]) / (M0["m00"]))
 		cy0 = int((M0["m01"]) / (M0["m00"]))
@@ -226,7 +226,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 				base_angle = 180 + 180 * math.atan(-(cy0 - cy1) / (cx0 - cx1)) / math.pi
 	else:
 		base_angle = 90  # default for slide03
-	
+
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 	wall = cv2.dilate(wall, kernel, iterations=15)
 	if calculate_trabe_flag:
@@ -235,7 +235,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	if show_img:
 		cv2.imshow("wall", wall)
 		cv2.imshow("other", other)
-	
+
 	image, contours, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 	points_wall = cv2.approxPolyDP(contours[0], 15, True)
 	# 主要功能是把一个连续光滑曲线折线化，对图像轮廓点进行多边形拟合。
@@ -248,7 +248,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		rect_other = cv2.minAreaRect(points_other)
 		box_other = cv2.boxPoints(rect_other)
 		rect_all = cv2.minAreaRect(np.concatenate([points_wall, points_other]))  # 整体的最小外接矩形，包括心肌壁和小梁
-	
+
 	rect_wall = cv2.minAreaRect(points_wall)
 	# 最小外切矩形 （中心(x,y), (宽,高), 旋转角度）
 	box_wall = cv2.boxPoints(rect_wall)
@@ -272,7 +272,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			# else:
 			all_height = rect_all[1][0]
 			other_height = all_height - wall_height
-	
+
 	else:
 		if slide_no is 3 and set_vertical:
 			print "slide03 set vertical"
@@ -291,7 +291,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# rotate the point matrix, base_angle after rotation should be 0
 	for i in avercnts:
 		averpoints = rotate_points(i, rect_wall[0], -angle)
-	
+
 	width_points = [[], []]
 	for i in range(0, len(points_wall)):
 		if points_wall[i][0][1] - rect_wall[0][1] > wall_height / 6:
@@ -299,7 +299,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		else:
 			if points_wall[i][0][1] - rect_wall[0][1] < -wall_height / 6:
 				width_points[1].append(points_wall[i])
-	
+
 	height_points = [[], []]
 	for i in xrange(0, len(points_wall)):
 		if points_wall[i][0][0] - rect_wall[0][0] > wall_width / 4:
@@ -307,7 +307,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		else:
 			if points_wall[i][0][0] - rect_wall[0][0] < -wall_width / 4:
 				height_points[1].append(points_wall[i])
-	
+
 	avery0 = 0
 	for i in range(0, len(width_points[0])):
 		avery0 += width_points[0][i][0][1]  # y on base width
@@ -316,7 +316,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	for i in range(0, len(width_points[1])):
 		avery1 += width_points[1][i][0][1]
 	avery1 = avery1 / len(width_points[1])  # y on up width
-	
+
 	if calculate_trabe_flag:  # 这里代码计算内外膜，和slide03没关系
 		if (base_angle % 360) < 180:
 			if avery1 < avery0:
@@ -352,9 +352,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 					distance1 = distance
 			if distance1 < distance0 / 2:
 				origin_width_points.append(j)
-	
+
 	width_points[1] = origin_width_points  # update with origin width points [1]这里是外膜
-	
+
 	origin_height_points = []
 	for i in avercnts:
 		for j in i:
@@ -373,7 +373,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			if distance1 < distance0 / 2:
 				origin_height_points.append(j)
 	height_points[1] = origin_height_points
-	
+
 	# sort 保证是从左到右的线
 	for i in xrange(0, len(width_points[0])):
 		width_points[0][i] = [width_points[0][i][0][0], width_points[0][i][0][1]]
@@ -385,7 +385,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		width_points[0][i] = [[width_points[0][i][0], width_points[0][i][1]]]
 	for i in xrange(0, len(width_points[1])):
 		width_points[1][i] = [[width_points[1][i][0], width_points[1][i][1]]]
-	
+
 	for i in xrange(0, len(height_points[0])):
 		height_points[0][i] = [height_points[0][i][0][0], height_points[0][i][0][1]]
 	for i in xrange(0, len(height_points[1])):
@@ -396,7 +396,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		height_points[0][i] = [[height_points[0][i][0], height_points[0][i][1]]]
 	for i in xrange(0, len(height_points[1])):
 		height_points[1][i] = [[height_points[1][i][0], height_points[1][i][1]]]
-	
+
 	# m+n
 	x_list = []
 	for i in width_points[0]:
@@ -404,14 +404,14 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	for i in width_points[1]:
 		x_list.append((i[0][0], i[0][1], 1))
 	x_list.sort(key=itemgetter(0))
-	
+
 	y_list = []
 	for i in height_points[0]:
 		y_list.append((i[0][0], i[0][1], 0))
 	for i in height_points[1]:
 		y_list.append((i[0][0], i[0][1], 1))
 	y_list.sort(key=itemgetter(1))
-	
+
 	# 几等分线
 	cutting_line_points = [[], []]
 	y_average_list = []
@@ -486,11 +486,11 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	second_pts = np.array([cutting_line_points[1]], np.int32)
 	first_pts.reshape(-1, 1, 2)
 	second_pts.reshape(-1, 1, 2)
-	
+
 	cv2.polylines(rgbimg, first_pts, False, (0, 0, 255), 6)
 	if slide_no != 4 and slide_no != 5:
 		cv2.polylines(rgbimg, second_pts, False, (0, 255, 0), 6)
-	
+
 	# height_line_points[1].reverse()
 	# height_points[1].reverse()
 	# draw height measure line : unnecessary
@@ -504,17 +504,17 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		os.mkdir("HE_image")
 	if not os.path.exists("MASSON_image"):
 		os.mkdir("MASSON_image")
-	img_name = ('HE_image/' + str(he_patients[patient_id].split('/')[1]) + '_slide' + str(slide_no) + '.jpg' if (
+	img_name = ('HE_image/whole/' + str(he_patients[patient_id].split('/')[1]) + '_slide' + str(slide_no) + '.jpg' if (
 			is_masson is False)
-	            else 'MASSON_image/' +
+	            else 'MASSON_image/whole/' +
 	                 str(masson_patients[patient_id].split('/')[1]) + '_slide_' + str(slide_no) + '.jpg')
 	cv2.imwrite(img_name, rgbimg)  # save the img of segmentation result
 	#################################################
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	firstmask = cv2.fillPoly(i, np.array([first], np.int32), 255)  # fillPoly()对于限定轮廓的区域进行填充
-	
+
 	# print firstmask[363][154]
-	
+
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	secondmask = cv2.fillPoly(i, np.array([second], np.int32), 255)
 	if show_img:
@@ -541,9 +541,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			k = (box1[i][0], box1[i][1])
 			box1[i] = box1[n]
 			box1[n] = [k[0], k[1]]
-		
+
 		other_line = width_points[0]
-		
+
 		if sqrt((box1[0][0] - other_line[0][0][0]) * (box1[0][0] - other_line[0][0][0]) + (
 				box1[0][1] - other_line[0][0][1]) * (box1[0][1] - other_line[0][0][1])) > sqrt(
 			(box1[1][0] - other_line[0][0][0]) * (box1[1][0] - other_line[0][0][0]) + (
@@ -553,7 +553,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		else:
 			other_line.append([[box1[1][0], box1[1][1]]])
 			other_line.append([[box1[0][0], box1[0][1]]])
-		
+
 		i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 		othermask = cv2.fillPoly(i, np.array([other_line], np.int32), 255)
 	# otherdensity = areaaveragedensity(fibrosis, grey_img, othermask)
@@ -564,7 +564,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		return firstmask, secondmask, thirdmask, othermask, rcm_thickening
 
 
-def detectprocess(a, hsv):
+def detectprocess(a, hsv, patient_num, slide_no, processed_mask_name, store_remain_num, store_all_num=5):
 	b = len(hsv[0])
 	c = len(hsv)
 	h, s, v = cv2.split(hsv)
@@ -575,25 +575,25 @@ def detectprocess(a, hsv):
 	whole_area_space = cv2.countNonZero(gray)
 	# print 'myocardium space in this region: ', whole_area_space
 	kernel = np.ones((3, 3), np.uint8)
-	
+
 	ret, nuclear0 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
 	# cv2.imshow("nuclear", nuclear0)
-	
+
 	nuclear0 = cv2.morphologyEx(nuclear0, cv2.MORPH_OPEN, kernel, iterations=2)
 	# cv2.imshow("nuclear0", nuclear0)
 	sure_bg = cv2.dilate(nuclear0, kernel, iterations=3)
 	# cv2.imshow("sure_bg",sure_bg)
 	ret, nuclear1 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
-	
+
 	for i in range(0, len(nuclear1[0])):
 		nuclear1[0][i] = 0
-	
+
 	# cv2.imshow("nuclear1", nuclear1)
 	mask = np.zeros((c + 2, b + 2), np.uint8)
 	cv2.floodFill(nuclear1, mask, (0, 0), 100)
 	nuclear1[nuclear1 == 0] = 255
 	nuclear1[nuclear1 == 100] = 0
-	
+
 	dist_transform = cv2.distanceTransform(nuclear1, cv2.DIST_L2, 5)
 	dist_transform = np.uint8(dist_transform)
 	ret, out = cv2.threshold(dist_transform, 5, 255, cv2.THRESH_BINARY_INV)
@@ -602,7 +602,7 @@ def detectprocess(a, hsv):
 	gray1 = cv2.subtract(gray, nuclear1)
 	# cv2.imshow("gray1", gray1)  # 去掉细胞质，得到细胞的图像
 	gray1 = cv2.blur(gray1, (5, 5))
-	
+
 	dist_transform = cv2.addWeighted(dist_transform, 1, gray1, 0.1, 0)
 	# cv2.imshow("dist_transform", dist_transform)
 	max = cv2.dilate(dist_transform, kernel, iterations=10)
@@ -615,11 +615,11 @@ def detectprocess(a, hsv):
 	# sure_fg ?
 	sure_fg = np.uint8(sure_fg)
 	unknown = cv2.subtract(sure_bg, sure_fg)
-	
+
 	ret, markers = cv2.connectedComponents(sure_fg)
-	
+
 	markers = markers + 1
-	
+
 	markers[unknown == 255] = 0
 	markers = cv2.watershed(a, markers)
 	# cv2.imshow('origin', a)
@@ -627,6 +627,7 @@ def detectprocess(a, hsv):
 	#
 	#  307 need segmentation
 	# cv2.imshow('watershed', a)
+
 	# step 11 get nuclear
 	nuclear_area_space = []
 	non_nuclear_area_space = []
@@ -642,6 +643,16 @@ def detectprocess(a, hsv):
 			# get arc
 			_, contours, hierarchy = cv2.findContours(j, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 			cnt = contours[0]
+			# save cardiac img
+			img_to_save = a.copy()  # copy original rgb img
+			cv2.drawContours(img_to_save, contours, 0, (125, 15, 125), 2)
+			if store_remain_num:
+				cv2.imwrite(
+					"HE_image/cardiac_cells/" + str(patient_num) + "_slide_" + str(
+						slide_no) + "_" + mask_name + "_" + str(
+						store_remain_num) + ".jpg", img_to_save)
+
+			# save end
 			perimeter = cv2.arcLength(cnt, True)
 			nuclear_area_space.append([i, area, perimeter])
 			detect[1] += 1
@@ -658,6 +669,16 @@ def detectprocess(a, hsv):
 			if white > total / 2:  # 只有当边缘白色大于一定程度的时候，才计算为空泡
 				non_nuclear_area_space.append([i, white])
 				detect[0] = detect[0] + 1
+				# save
+				if store_remain_num:
+					cv2.imwrite(
+						"HE_image/vacuole_cells/" + str(patient_num) + "_slide_" + str(
+							slide_no) + "_" + mask_name + "_" + str(
+							store_remain_num) + ".jpg", jd) # need more test
+				# end save
+			# update store_remain
+			if store_remain_num > 0:
+				store_remain_num -= 1
 		else:
 			detect[2] += 1  # 其余非心肌细胞核
 	#  返回值空泡 心肌 非心肌 总面积 心肌细胞的面积和周长列表
@@ -665,7 +686,10 @@ def detectprocess(a, hsv):
 	       [i[1:] for i in non_nuclear_area_space]
 
 
-def masson_region_slide(slide, working_level, threshold=(), start_pos=(0, 0), is_debug=False, dimension=(500, 500)):
+def masson_region_slide(slide, working_level, threshold_type, patient_num, slide_no, processed_mask_name, threshold=(),
+                        start_pos=(0, 0), is_debug=False,
+                        dimension=(500, 500),
+                        store_remain_no=0, store_all_num=5):
 	working_dimensions = slide.level_dimensions[working_level]
 	if is_debug is True:
 		img = np.array(slide.read_region(start_pos, working_level, working_dimensions))
@@ -678,6 +702,14 @@ def masson_region_slide(slide, working_level, threshold=(), start_pos=(0, 0), is
 	# (155, 140, 50), (175, 180, 255) cardiac
 	# (90, 20, 20), (140, 255, 255) fibrosis
 	hsv = cv2.inRange(hsv, threshold[0], threshold[1])  # s 50-250 in paper
+	# store the img
+	if store_remain_no:
+		cv2.imwrite(
+			"MASSON_image/" + threshold_type + str(patient_num) + str(slide_no) + "_" + processed_mask_name + "_" + str(
+				store_all_num - store_remain_no) + ".jpg", hsv)  # threshold
+		cv2.imwrite(
+			'MASSON_image/' + threshold_type + str(patient_num) + str(slide_no) + "_" + processed_mask_name + "_" + str(
+				store_all_num - store_remain_no) + "_rgb" + ".jpg", bgr_cv_img)  # rgb
 	region_area = cv2.countNonZero(hsv)
 	# cv2.imshow('hsv_cardiac_cell', hsv)
 	return hsv, region_area
