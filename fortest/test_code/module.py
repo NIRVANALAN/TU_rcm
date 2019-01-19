@@ -564,7 +564,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		return firstmask, secondmask, thirdmask, othermask, rcm_thickening
 
 
-def detectprocess(a, hsv, patient_num, slide_no, processed_mask_name, store_remain_num, store_all_num=5):
+def detectprocess(a, hsv, patient_num, slide_no, processed_mask_name, cardiac_store_remain_num,
+                  vacuole_store_remain_num, store_all_num=2):
 	b = len(hsv[0])
 	c = len(hsv)
 	h, s, v = cv2.split(hsv)
@@ -633,6 +634,8 @@ def detectprocess(a, hsv, patient_num, slide_no, processed_mask_name, store_rema
 	non_nuclear_area_space = []
 	# detect = [0, 0]
 	detect = [0, 0, 0]
+	cardiac_cell_mask_list = []
+	vacuole_cell_contour_list = []
 	for i in range(2, markers.max() + 1):
 		j = np.zeros((c, b), np.uint8)
 		# print 'j.size:', j.size
@@ -640,26 +643,17 @@ def detectprocess(a, hsv, patient_num, slide_no, processed_mask_name, store_rema
 		area = cv2.countNonZero(j)
 		# if area > 361:
 		if area > 321:  # 心肌细胞核比较大
+			cardiac_cell_mask_list.append(i)
 			# get arc
 			_, contours, hierarchy = cv2.findContours(j, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 			cnt = contours[0]
-			# save cardiac img
-			img_to_save = a.copy()  # copy original rgb img
-			cv2.drawContours(img_to_save, contours, 0, (125, 15, 125), 2)
-			if store_remain_num:
-				cv2.imwrite(
-					"HE_image/cardiac_cells/" + str(patient_num) + "_slide_" + str(
-						slide_no) + "_" + mask_name + "_" + str(
-						store_remain_num) + ".jpg", img_to_save)
-
-			# save end
 			perimeter = cv2.arcLength(cnt, True)
 			nuclear_area_space.append([i, area, perimeter])
 			detect[1] += 1
 			if area >= 1334:  # 有可能将两个细胞核识别成一个，这里用一个简单的阈值进行处理
 				detect[1] += 1
-			jd = cv2.dilate(j, kernel, iterations=2)
-			image, lines, hier = cv2.findContours(jd, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+			j_dilated = cv2.dilate(j, kernel, iterations=2)
+			image, lines, hier = cv2.findContours(j_dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 			white = 0
 			total = 0
 			for k in lines[0]:  # why lines[0]?
@@ -669,18 +663,36 @@ def detectprocess(a, hsv, patient_num, slide_no, processed_mask_name, store_rema
 			if white > total / 2:  # 只有当边缘白色大于一定程度的时候，才计算为空泡
 				non_nuclear_area_space.append([i, white])
 				detect[0] = detect[0] + 1
-				# save
-				if store_remain_num:
-					cv2.imwrite(
-						"HE_image/vacuole_cells/" + str(patient_num) + "_slide_" + str(
-							slide_no) + "_" + mask_name + "_" + str(
-							store_remain_num) + ".jpg", jd) # need more test
-				# end save
-			# update store_remain
-			if store_remain_num > 0:
-				store_remain_num -= 1
+				vacuole_cell_contour_list.append(lines)
+
 		else:
 			detect[2] += 1  # 其余非心肌细胞核
+
+	if cardiac_cell_mask_list and cardiac_store_remain_num:  # save cardiac cell img
+		j = np.zeros((c, b), np.uint8)
+		# print 'j.size:', j.size
+		for i in cardiac_cell_mask_list:
+			j[markers == i] = 255
+		img_to_save = a.copy()  # copy original rgb img
+		# img_to_save[markers == i] = [0, 0, 255]
+		_, contours, hierarchy = cv2.findContours(j, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+		cv2.drawContours(img_to_save, contours, -1, (0, 0, 255), 2)
+		cv2.imwrite(
+			"HE_image/cardiac_cells/" + str(patient_num) + "_slide_" + str(
+				slide_no) + "_" + processed_mask_name + "_" + str(
+				cardiac_store_remain_num) + ".jpg", img_to_save)
+		cardiac_store_remain_num -= 1
+	if vacuole_cell_contour_list and vacuole_store_remain_num:
+		# save
+		vacuole_image = a.copy()
+		for contour in vacuole_cell_contour_list:
+			cv2.drawContours(vacuole_image, contour[0], -1, (0, 0, 255), 2)
+		cv2.imwrite(
+			"HE_image/vacuole_cells/" + str(patient_num) + "_slide_" + str(
+				slide_no) + "_" + processed_mask_name + "_" + str(
+				vacuole_store_remain_num) + ".jpg", vacuole_image)  # need more test
+		vacuole_store_remain_num -= 1
+	# end save
 	#  返回值空泡 心肌 非心肌 总面积 心肌细胞的面积和周长列表
 	return detect[0], detect[1], detect[2], whole_area_space, [i[1:] for i in nuclear_area_space], \
 	       [i[1:] for i in non_nuclear_area_space]
@@ -702,16 +714,21 @@ def masson_region_slide(slide, working_level, threshold_type, patient_num, slide
 	# (155, 140, 50), (175, 180, 255) cardiac
 	# (90, 20, 20), (140, 255, 255) fibrosis
 	hsv = cv2.inRange(hsv, threshold[0], threshold[1])  # s 50-250 in paper
-	# store the img
-	if store_remain_no:
-		cv2.imwrite(
-			"MASSON_image/" + threshold_type + str(patient_num) + str(slide_no) + "_" + processed_mask_name + "_" + str(
-				store_all_num - store_remain_no) + ".jpg", hsv)  # threshold
-		cv2.imwrite(
-			'MASSON_image/' + threshold_type + str(patient_num) + str(slide_no) + "_" + processed_mask_name + "_" + str(
-				store_all_num - store_remain_no) + "_rgb" + ".jpg", bgr_cv_img)  # rgb
 	region_area = cv2.countNonZero(hsv)
 	# cv2.imshow('hsv_cardiac_cell', hsv)
+	# store the img
+	if region_area > 1000:
+		if store_remain_no:
+			cv2.imwrite(
+				"MASSON_image/" + threshold_type + str(patient_num) + str(
+					slide_no) + "_" + processed_mask_name + "_" + str(
+					store_all_num - store_remain_no) + ".jpg", hsv)  # threshold
+			cv2.imwrite(
+				'MASSON_image/' + threshold_type + str(patient_num) + str(
+					slide_no) + "_" + processed_mask_name + "_" + str(
+					store_all_num - store_remain_no) + "_rgb" + ".jpg", bgr_cv_img)  # rgb\
+		store_remain_no -= 1
+
 	return hsv, region_area
 	pass
 

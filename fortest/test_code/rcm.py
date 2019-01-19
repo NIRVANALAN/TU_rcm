@@ -152,7 +152,8 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 	print "dimension working on:", he_max_dimension[1], he_max_dimension[0]
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
-			store_remain = 5
+			cardiac_store_remain = 2
+			vacuole_store_remain = 2
 			for y in range(0, he_max_dimension[1] - area_length, area_length):
 				for x in range(0, he_max_dimension[0] - area_length, area_length):
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
@@ -165,14 +166,14 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 						region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 						hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
 						detect = detectprocess(region, hsv, he_patients[patient_id], he_slide_no, he_mask_name[a],
-						                       store_remain)
+						                       cardiac_store_remain, vacuole_store_remain)
 						he_proc_iter[0] += (detect[0])  # 空泡
 						he_proc_iter[1] += (detect[1])  # 心肌
 						he_proc_iter[2] += (detect[2])  # 非心肌
 						he_proc_iter[3][0] += (detect[3])  # 总面积
 						he_proc_iter[4].append(detect[4])  # 心肌细胞的[area, perimeter]
-						# if store_remain > 0:
-						# 	store_remain -= 1
+						# if cardiac_store_remain > 0:
+						# 	cardiac_store_remain -= 1
 		else:
 			print "area is none"
 		# he_proc_iter[5].append(detect[5])  # 空泡的[area] 暂时没算出来，后面算，这里填空
@@ -322,7 +323,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	area_length = 500  # 这相比HE缩小一倍
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
-			store_remain_no = 5
+			store_remain_no = 2
 			for y in range(0, second_max_dimension[1] - area_length, area_length):
 				for x in range(0, second_max_dimension[0] - area_length, area_length):
 					# if area[int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
@@ -345,8 +346,8 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 						                                       is_debug=False,
 						                                       dimension=(area_length, area_length),
 						                                       store_remain_no=store_remain_no)
-						if store_remain_no:
-							store_remain_no -= 1
+						# if store_remain_no:
+						# 	store_remain_no -= 1
 						masson_result_iter[0] += cardiac_area * (magnify ** 2)
 						masson_result_iter[1] += fibrosis_area * (magnify ** 2)
 		# statics should be simulated at max_level
