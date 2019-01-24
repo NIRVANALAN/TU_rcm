@@ -296,7 +296,7 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 
 # for masson proc later
 cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
-fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
+fibrosis_threshold = (70, 20, 20), (140, 255, 255)  # fibrosis
 
 masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
@@ -308,6 +308,17 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	masson_whole_result = []
 	masson_result_iter = [0, 0]
 	slide = openslide.open_slide(masson_slide_path[slide_no])
+	# save global fibrosis image
+	masson_region_slide(slide, 6,
+	                    "fibrosis", masson_patients[patient_id],
+	                    slide_no, dimension=slide.level_dimensions[6],
+	                    threshold=fibrosis_threshold,
+	                    save_image=True)
+	masson_region_slide(slide, 6,
+	                    "cardiac", masson_patients[patient_id],
+	                    slide_no, dimension=slide.level_dimensions[6],
+	                    threshold=cardiac_threshold,
+	                    save_image=True)
 	#####################################################################
 	# fibrosis
 	print "Dealing with fibrosis now"

@@ -685,7 +685,7 @@ def detectprocess(a, hsv, patient_num, slide_no, processed_mask_name, cardiac_st
 		save_for_vacuole = True
 	# vacuole_store_remain_num[0] -= 1
 	if save_for_vacuole or (cardiac_cell_mask_list.__len__() > cardiac_store_remain_num[0]):  # save cardiac cell img
-
+		
 		cardiac_store_remain_num[0] = cardiac_cell_mask_list.__len__()
 		print 'cardiac'
 		print cardiac_store_remain_num[0]
@@ -714,10 +714,10 @@ def detectprocess(a, hsv, patient_num, slide_no, processed_mask_name, cardiac_st
 	       [i[1:] for i in non_nuclear_area_space]
 
 
-def masson_region_slide(slide, working_level, threshold_type, patient_num, slide_no, processed_mask_name,
-                        store_remain_no, threshold=(),
+def masson_region_slide(slide, working_level, threshold_type, patient_num, slide_no, processed_mask_nam=None,
+                        store_remain_no=0, threshold=(),
                         start_pos=(0, 0), is_debug=False,
-                        dimension=(500, 500)):
+                        dimension=(500, 500), save_image=False):
 	working_dimensions = slide.level_dimensions[working_level]
 	if is_debug is True:
 		img = np.array(slide.read_region(start_pos, working_level, working_dimensions))
@@ -732,24 +732,35 @@ def masson_region_slide(slide, working_level, threshold_type, patient_num, slide
 	hsv = cv2.inRange(hsv, threshold[0], threshold[1])  # s 50-250 in paper
 	region_area = cv2.countNonZero(hsv)
 	# cv2.imshow('hsv_cardiac_cell', hsv)
-	# store the img
-	if threshold_type is 'cardiac' and region_area > store_remain_no[0] or (
-			threshold_type is 'fibrosis' and region_area > store_remain_no[1]):
-		if threshold_type is 'cardiac':
-			store_remain_no[0] = region_area
-		else:
-			store_remain_no[1] = region_area
-		# print threshold_type
-		# print region_area
+	# just global image needed...
+	if save_image:
 		if not os.path.exists("MASSON_image/" + threshold_type + str(patient_num)):
 			os.mkdir("MASSON_image/" + threshold_type + str(patient_num))
+			# subtracted = cv2.subtract(bgr_cv_img, hsv)
+		t = cv2.subtract(bgr_cv_img, cv2.cvtColor(hsv, cv2.COLOR_GRAY2BGR))
 		cv2.imwrite(
-			"MASSON_image/" + threshold_type + str(patient_num) + "/slide_" + str(
-				slide_no) + "_" + processed_mask_name + ".jpg", hsv)  # threshold
+			"MASSON_image/" + threshold_type + str(patient_num) + "/slide" + str(
+				slide_no) + ".jpg", t)  # threshold
 		cv2.imwrite(
-			'MASSON_image/' + threshold_type + str(patient_num) + "/slide_" + str(
-				slide_no) + "_" + processed_mask_name + "_rgb.jpg", bgr_cv_img)  # rgb\
-		store_remain_no[0] -= 1
+			'MASSON_image/' + threshold_type + str(patient_num) + "/slide" + str(
+				slide_no) + "_rgb.jpg", bgr_cv_img)  # rgb
+	# if threshold_type is 'cardiac' and region_area > store_remain_no[0] or (
+	# 		threshold_type is 'fibrosis' and region_area > store_remain_no[1]):
+	# 	if threshold_type is 'cardiac':
+	# 		store_remain_no[0] = region_area
+	# 	else:
+	# 		store_remain_no[1] = region_area
+	# 	# print threshold_type
+	# 	# print region_area
+	# 	if not os.path.exists("MASSON_image/" + threshold_type + str(patient_num)):
+	# 		os.mkdir("MASSON_image/" + threshold_type + str(patient_num))
+	# 	cv2.imwrite(
+	# 		"MASSON_image/" + threshold_type + str(patient_num) + "/slide_" + str(
+	# 			slide_no) + "_" + processed_mask_name + ".jpg", hsv)  # threshold
+	# 	cv2.imwrite(
+	# 		'MASSON_image/' + threshold_type + str(patient_num) + "/slide_" + str(
+	# 			slide_no) + "_" + processed_mask_name + "_rgb.jpg", bgr_cv_img)  # rgb\
+	# 	store_remain_no[0] -= 1
 	return hsv, region_area
 	pass
 
