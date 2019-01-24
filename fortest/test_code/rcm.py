@@ -3,6 +3,7 @@ import sys
 import os
 from time import time
 from skimage import measure
+import matplotlib.pyplot as plt
 from scipy.stats import iqr
 from module import *
 
@@ -172,8 +173,8 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 						he_proc_iter[2] += (detect[2])  # 非心肌
 						he_proc_iter[3][0] += (detect[3])  # 总面积
 						he_proc_iter[4].append(detect[4])  # 心肌细胞的[area, perimeter]
-				# if cardiac_cell_num_threshold > 0:
-				# 	cardiac_cell_num_threshold -= 1
+		# if cardiac_cell_num_threshold > 0:
+		# 	cardiac_cell_num_threshold -= 1
 		else:
 			print "area is none"
 		# he_proc_iter[5].append(detect[5])  # 空泡的[area] 暂时没算出来，后面算，这里填空
@@ -299,12 +300,43 @@ fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
 
 masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
+fibrosis_group = [4000, 8000, 12000, 16000, 20000, 24000, 28000, 32000]
+
 
 def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_level=6):  # need debug and fix
 	masson_proc_time_start = time()
 	masson_whole_result = []
 	masson_result_iter = [0, 0]
 	slide = openslide.open_slide(masson_slide_path[slide_no])
+	#####################################################################
+	# fibrosis
+	print "Dealing with fibrosis now"
+	fibrosis_time = time()
+	fibrosis_level = slide.level_count - 5
+	fibrosis_img = fibrosis(slide, fibrosis_level)
+	labels = measure.label(fibrosis_img, connectivity=2)
+	number = labels.max() + 1
+	total_fibrosis_block = []
+	for x in range(1, number):
+		j = np.zeros((len(fibrosis_img), len(fibrosis_img[0])), np.uint8)
+		j[labels == x] = 255
+		print "fibrosis process:" + str(x / float(number) * 100) + "%"
+		total_fibrosis_block.append(cv2.countNonZero(j) * (pow(2, fibrosis_level) ** 2))
+	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
+	plt.hist(total_fibrosis_block, fibrosis_group, histtype='bar', rwidth=0.8)
+	plt.legend()
+	plt.xlabel('fibrosis plaques area distribution')
+	plt.ylabel('number')
+	plt.title('fibrosis plaques hist')
+	plt.savefig(
+		'MASSON_image/fibrosis' + str(masson_patients[patient_id]) + '/slide_' + str(slide_no) + '_fibrosisPlaques.png',
+		format='png')
+	fibrosis_block_sum = int(np.sum(total_fibrosis_block))
+	fibrosis_block_median = int(np.median(total_fibrosis_block))
+	fibrosis_block_mean = int(np.mean(total_fibrosis_block))
+	fibrosis_block_sd = int(np.std(total_fibrosis_block, ddof=1))
+	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_median, fibrosis_block_mean, fibrosis_block_sd]
+	####################################################################################
 	# i = 0
 	# print working_level
 	working_dimensions = slide.level_dimensions[masson_mask_working_level]
@@ -323,7 +355,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	area_length = 500  # 这相比HE缩小一倍
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
-			store_remain_no = [100000,37000]
+			store_remain_no = [100000, 37000]
 			for y in range(0, second_max_dimension[1] - area_length, area_length):
 				for x in range(0, second_max_dimension[0] - area_length, area_length):
 					# if area[int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
@@ -358,26 +390,6 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 		print masson_mask_name[a] + " finished" + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
 	# i += 1
 	# The statics for storage should be the result at max_level : 0
-	# fibrosis
-	print "Dealing with fibrosis now"
-	fibrosis_time = time()
-	fibrosis_level = slide.level_count - 5
-	fibrosis_img = fibrosis(slide, fibrosis_level)
-	labels = measure.label(fibrosis_img, connectivity=2)
-	number = labels.max() + 1
-	total_fibrosis_block = []
-	for x in range(1, number):
-		j = np.zeros((len(fibrosis_img), len(fibrosis_img[0])), np.uint8)
-		j[labels == x] = 255
-		print "fibrosis process:" + str(x / float(number) * 100) + "%"
-		total_fibrosis_block.append(cv2.countNonZero(j) * (pow(2, fibrosis_level) ** 2))
-	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
-	fibrosis_block_sum = int(np.sum(total_fibrosis_block))
-	fibrosis_block_median = int(np.median(total_fibrosis_block))
-	fibrosis_block_mean = int(np.mean(total_fibrosis_block))
-	fibrosis_block_sd = int(np.std(total_fibrosis_block, ddof=1))
-	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_median, fibrosis_block_mean, fibrosis_block_sd]
-	####################################################################################
 	masson_whole_result.append(fibrosis_block_info)  # fibrosis statics append
 	masson_whole_result.append(list(magnify * np.array(rcm_thickening)))  # [other_height, wall_height]
 	if not os.path.exists('MASSON_data'):
