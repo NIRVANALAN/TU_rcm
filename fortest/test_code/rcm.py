@@ -152,8 +152,8 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 	print "dimension working on:", he_max_dimension[1], he_max_dimension[0]
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
-			cardiac_store_remain = 2
-			vacuole_store_remain = 2
+			cardiac_cell_num_threshold = [120]
+			vacuole_cell_num_threshold = [5]
 			for y in range(0, he_max_dimension[1] - area_length, area_length):
 				for x in range(0, he_max_dimension[0] - area_length, area_length):
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
@@ -166,14 +166,14 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 						region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 						hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
 						detect = detectprocess(region, hsv, he_patients[patient_id], he_slide_no, he_mask_name[a],
-						                       cardiac_store_remain, vacuole_store_remain)
+						                       cardiac_cell_num_threshold, vacuole_cell_num_threshold)
 						he_proc_iter[0] += (detect[0])  # 空泡
 						he_proc_iter[1] += (detect[1])  # 心肌
 						he_proc_iter[2] += (detect[2])  # 非心肌
 						he_proc_iter[3][0] += (detect[3])  # 总面积
 						he_proc_iter[4].append(detect[4])  # 心肌细胞的[area, perimeter]
-						# if cardiac_store_remain > 0:
-						# 	cardiac_store_remain -= 1
+				# if cardiac_cell_num_threshold > 0:
+				# 	cardiac_cell_num_threshold -= 1
 		else:
 			print "area is none"
 		# he_proc_iter[5].append(detect[5])  # 空泡的[area] 暂时没算出来，后面算，这里填空
@@ -238,10 +238,10 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 		# cardiac_cells_nucleus_area = [j[0] for j in whole_res[slide_index][4]]
 		# cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[slide_index][4]]
 		# vacuole_area = res[slide_index][5]
-
+		
 		cardiac_cells_ratio = non_cardiac_cells_num / float(cardiac_cells_num)
 		cardiac_area_num_ratio = region_whole_area / float(cardiac_cells_num)
-
+		
 		#  cardiac cell nucleus statics
 		# mean
 		cardiac_cells_nucleus_area_mean = np.mean(cardiac_cells_nucleus_area)
@@ -251,25 +251,25 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 		cardiac_cells_nucleus_area_sd = np.std(cardiac_cells_nucleus_area, ddof=1)
 		# IQR
 		cardiac_cells_nucleus_area_iqr = iqr(cardiac_cells_nucleus_area, rng=(25, 75), interpolation='midpoint')
-
+		
 		# perimeter calculation
 		cardiac_cells_nucleus_perimeter_mean = np.mean(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_median = np.median(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_sd = np.std(cardiac_cells_nucleus_perimeter, ddof=1)
 		cardiac_cells_nucleus_perimeter_iqr = iqr(cardiac_cells_nucleus_perimeter, rng=(25, 75),
 		                                          interpolation='midpoint')
-
+		
 		# nucleus / whole_area 细胞核总数量/切片总面积
 		intensity = cardiac_cells_num / float(region_whole_area)
-
+		
 		# area ratio  心肌细胞核面积占心肌细胞的面积比例
 		cardiac_cells_nucleus_area_region_ratio = float(sum(cardiac_cells_nucleus_area)) / region_whole_area
-
+		
 		# vacuole calculation
 		# cardiac_cells_vacuole_area_mean = np.mean(vacuole_area)
 		# cardiac_cells_vacuole_area_median = np.median(vacuole_area)
 		# cardiac_cells_vacuole_area_sd = np.std(vacuole_area, ddof=1)
-
+		
 		if print_res:
 			print 'region: ' + he_mask_name[slide_index]
 			print 'Cardiac cells num: ' + str(whole_res[slide_index][1])
@@ -323,7 +323,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	area_length = 500  # 这相比HE缩小一倍
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
-			store_remain_no = 2
+			store_remain_no = [100000,37000]
 			for y in range(0, second_max_dimension[1] - area_length, area_length):
 				for x in range(0, second_max_dimension[0] - area_length, area_length):
 					# if area[int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
@@ -334,18 +334,18 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 							x) + " " + str(y)
 						_, cardiac_area = masson_region_slide(slide, masson_working_level, "cardiac",
 						                                      masson_patients[patient_id],
-						                                      slide_no, masson_mask_name[a], cardiac_threshold,
+						                                      slide_no, masson_mask_name[a], store_remain_no,
+						                                      cardiac_threshold,
 						                                      (x, y),
 						                                      is_debug=False,
-						                                      dimension=(area_length, area_length),
-						                                      store_remain_no=store_remain_no)
+						                                      dimension=(area_length, area_length))
 						_, fibrosis_area = masson_region_slide(slide, masson_working_level, "fibrosis",
 						                                       masson_patients[patient_id],
-						                                       slide_no, masson_mask_name[a], fibrosis_threshold,
+						                                       slide_no, masson_mask_name[a], store_remain_no,
+						                                       fibrosis_threshold,
 						                                       (x, y),
 						                                       is_debug=False,
-						                                       dimension=(area_length, area_length),
-						                                       store_remain_no=store_remain_no)
+						                                       dimension=(area_length, area_length))
 						# if store_remain_no:
 						# 	store_remain_no -= 1
 						masson_result_iter[0] += cardiac_area * (magnify ** 2)
@@ -398,7 +398,7 @@ def masson_persist(whole_res, slide_no, print_res=False):
 	for i in whole_res:
 		for j in i:
 			whole_list_data.append(j)
-
+	
 	return whole_list_data
 	pass
 
@@ -408,13 +408,13 @@ def masson_test_proc(masson_working_level=6):
 	global slide_masson
 	print 'working level', masson_working_level
 	working_dimension = slide_masson.level_dimensions[masson_working_level]
-
+	
 	# cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
 	# fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
-
+	
 	# hsv = []
 	# rgb_img = []
-
+	
 	def pure_test():
 		# global hsv
 		# global rgb_img
@@ -445,15 +445,15 @@ def masson_test_proc(masson_working_level=6):
 		cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
 		cv2.imshow('rgb_masson', bgr_img)
 		cv2.waitKey(0)
-
+		
 		def getpos(event, x, y, flags, param):
 			if event == cv2.EVENT_LBUTTONDOWN:
 				print(hsv[y, x])
-
+		
 		cv2.setMouseCallback('HSV', getpos)
-
+	
 	pure_test()
-
+	
 	# slide_no = 2
 	# # slide_he = openslide.open_slide(he_path[slide_no])
 	# slide_masson = openslide.open_slide(masson_test_path[slide_no])
