@@ -499,6 +499,31 @@ def slide_proc(patient_id, start, end, he=False, masson=False):
 			masson_proc(slide_no, masson_slide_path, patient_id)
 
 
+def masson_data_process(whole_res):
+	new_res = []
+	fibrosis_whole_area = 0
+	cardiac_whole_area = 0
+	tmp_s = 0
+	for x in xrange(4):
+		cardiac_whole_area += whole_res[x * 2 + 0]
+		fibrosis_whole_area += whole_res[x * 2 + 1]
+		new_res.append(whole_res[x * 2 + 0])
+		new_res.append(whole_res[x * 2 + 1])
+		tmp_s = whole_res[x * 2 + 1] + whole_res[x * 2 + 0]
+		if tmp_s:
+			new_res.append(whole_res[x * 2 + 0] / tmp_s)
+			new_res.append(whole_res[x * 2 + 1] / tmp_s)
+		else:
+			new_res.append(whole_res[x * 2 + 0])
+			new_res.append(whole_res[x * 2 + 1])
+	tmp_s = fibrosis_whole_area + cardiac_whole_area
+	new_res.append(cardiac_whole_area / tmp_s)
+	new_res.append(fibrosis_whole_area / tmp_s)
+	new_res += whole_res[-6:]
+	return new_res
+	pass
+
+
 def xls_persist_slide(file_name, slide_type, start_row=-1, set_start_row=False):  # save one slide into .xls
 	patient_no = int(file_name.split('_')[0])
 	slide_no = int(file_name.split('_')[1][-1])
@@ -517,6 +542,7 @@ def xls_persist_slide(file_name, slide_type, start_row=-1, set_start_row=False):
 		file_name = 'MASSON_data/' + file_name
 		res = read_file(file_name, print_file=False)
 		whole_list_data = masson_persist(res, slide_no)
+		whole_list_data = masson_data_process(whole_list_data)
 		if set_start_row:
 			write_excel('MASSON.xls', whole_list_data, patient_no, slide_no, start_row)
 		else:

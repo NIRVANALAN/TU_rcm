@@ -29,10 +29,11 @@ if __name__ == '__main__':
 	# 	he_slide_path, masson_slide_path = get_image_path(i)
 	# 	write_test_img(masson_slide_path, is_masson=False)
 	# persist process begin#################
-	# for i in xrange(0, 2):
-	slide_proc(patient_id=0, start=0, end=1, he=False, masson=True)
-	# persist(he_patients[1], slide_type="HE")
-
+	for i in xrange(2, 3):
+		# slide_proc(patient_id=0, start=0, end=1, he=False, masson=True)
+		# persist(he_patients[1], slide_type="HE")
+		persist(masson_patients[i], slide_type="MASSON")
+	
 	# masson_test_proc()
 	# cv2.waitKey(0)
 	# cv2.destroyAllWindows()
