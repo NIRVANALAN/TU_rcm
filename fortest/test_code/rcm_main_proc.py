@@ -8,11 +8,17 @@ masson_dir = os.getcwd() + "/MASSON_data"
 def persist(patient_id, slide_type, set_start_row=False):
 	file_path = []
 	if slide_type is "MASSON":
-		for index in os.listdir(masson_dir):
+		indexes = os.listdir(masson_dir)
+		indexes.sort(key=lambda file_name: int(file_name[:5]))
+		indexes.sort(key=lambda file_name: int(file_name[11:12]))
+		for index in indexes:
 			if int(index.split("_")[0]) == int(patient_id.split("/")[1]):
 				file_path.append(index)
 	else:
-		for index in os.listdir(he_dir):
+		indexes = os.listdir(he_dir)
+		indexes.sort(key=lambda file_name: int(file_name[:5]))
+		indexes.sort(key=lambda file_name: int(file_name[11:12]))
+		for index in indexes:
 			if int(index.split("_")[0]) == int(patient_id.split("/")[1]):
 				file_path.append(index)
 	for f in file_path:
@@ -29,10 +35,10 @@ if __name__ == '__main__':
 	# 	he_slide_path, masson_slide_path = get_image_path(i)
 	# 	write_test_img(masson_slide_path, is_masson=False)
 	# persist process begin#################
-	for i in xrange(0, 1):
-		slide_proc(patient_id=i, start=0, end=6, he=False, masson=True)
+	for i in xrange(5, 6):
+		# slide_proc(patient_id=i, start=0, end=6, he=False, masson=True)
 		# persist(he_patients[1], slide_type="HE")
-		# persist(masson_patients[i], slide_type="MASSON")
+		persist(masson_patients[i], slide_type="MASSON")
 	
 	# masson_test_proc()
 	# cv2.waitKey(0)

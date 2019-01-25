@@ -1,13 +1,13 @@
 # -*- coding:UTF-8 -*-
 from math import *
 from operator import itemgetter
-import sys
 import os
 from adjust import *
 import xlwt
 import xlrd
 from xlutils.copy import copy
 from xlwt import Style
+
 
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
