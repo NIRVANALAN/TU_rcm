@@ -88,7 +88,7 @@ def he_test_proc():
 	# print dimension
 	# whole_level = 6
 	# print "he_test_proc_dimension:", max_level
-	slide_no = 3
+	slide_no = 0
 	global slide_he
 	global slide_masson
 	slide_he = openslide.open_slide(he_test_path[slide_no])
@@ -166,8 +166,8 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 						region = np.array(slide_processed.read_region((x, y), 0, (area_length, area_length)))
 						region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 						hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
-						detect = detectprocess(region, hsv, he_patients[patient_id], he_slide_no, he_mask_name[a],
-						                       cardiac_cell_num_threshold, vacuole_cell_num_threshold)
+						detect = detect_process(region, hsv, he_patients[patient_id], he_slide_no, he_mask_name[a],
+						                        cardiac_cell_num_threshold, vacuole_cell_num_threshold)
 						he_proc_iter[0] += (detect[0])  # 空泡
 						he_proc_iter[1] += (detect[1])  # 心肌
 						he_proc_iter[2] += (detect[2])  # 非心肌
