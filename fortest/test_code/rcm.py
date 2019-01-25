@@ -296,7 +296,7 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 
 # for masson proc later
 cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
-fibrosis_threshold = (70, 20, 20), (140, 255, 255)  # fibrosis
+fibrosis_threshold = (70, 20, 20), (155, 255, 255)  # fibrosis
 
 masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
@@ -442,7 +442,7 @@ def masson_test_proc(masson_working_level=6):
 		# global hsv
 		# global rgb_img
 		# region = np.array(slide_masson.read_region((30000, 30000), 0, (1000, 1000)))
-		test_level = 2
+		test_level = 5
 		test_dimension = slide_masson.level_dimensions[test_level]
 		coord = (22000, 22000)
 		region = np.array(slide_masson.read_region(coord, test_level, (1000, 1000)))
@@ -455,25 +455,20 @@ def masson_test_proc(masson_working_level=6):
 		res_fibrosis_hsv = cv2.inRange(hsv, fibrosis_threshold[0],
 		                               fibrosis_threshold[1])  # s 50-255 in paper fibrosis
 		res_cardiac_hsv = cv2.inRange(hsv, cardiac_threshold[0], cardiac_threshold[1])  # cardiac threshold
-		# # fat
-		# circles1 = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1,
-		#                             600, param1=100, param2=30, minRadius=50, maxRadius=97)
-		# circles = np.uint16(np.around(circles1))  # 把circles包含的圆心和半径的值变成整数
-		# for i in circles[0, :]:
-		# 	cv2.circle(bgr_img, (i[0], i[1]), i[2], (0, 0, 255), 2)  # 画圆
-		# 	cv2.circle(bgr_img, (i[0], i[1]), 2, (0, 0, 255), 2)  # 画圆心
+		t = cv2.subtract(bgr_img, cv2.cvtColor(res_fibrosis_hsv, cv2.COLOR_GRAY2BGR))
 		cv2.imshow('HSV', hsv)
-		cv2.imshow('GRAY', gray)
-		cv2.imshow('res_cardiac_HSV', res_cardiac_hsv)
-		cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
-		cv2.imshow('rgb_masson', bgr_img)
-		cv2.waitKey(0)
+		cv2.imshow('black', t)
 		
 		def getpos(event, x, y, flags, param):
 			if event == cv2.EVENT_LBUTTONDOWN:
-				print(hsv[y, x])
+				print(t[y, x])
 		
-		cv2.setMouseCallback('HSV', getpos)
+		# cv2.imshow('res_cardiac_HSV', res_cardiac_hsv)
+		# cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
+		# cv2.imshow('rgb_masson', bgr_img)
+		cv2.setMouseCallback('black', getpos)
+		
+		cv2.waitKey(0)
 	
 	pure_test()
 	

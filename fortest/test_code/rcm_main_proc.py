@@ -29,10 +29,10 @@ if __name__ == '__main__':
 	# 	he_slide_path, masson_slide_path = get_image_path(i)
 	# 	write_test_img(masson_slide_path, is_masson=False)
 	# persist process begin#################
-	for i in xrange(2, 3):
-		# slide_proc(patient_id=0, start=0, end=1, he=False, masson=True)
+	for i in xrange(0, 1):
+		slide_proc(patient_id=i, start=0, end=6, he=False, masson=True)
 		# persist(he_patients[1], slide_type="HE")
-		persist(masson_patients[i], slide_type="MASSON")
+		# persist(masson_patients[i], slide_type="MASSON")
 	
 	# masson_test_proc()
 	# cv2.waitKey(0)
