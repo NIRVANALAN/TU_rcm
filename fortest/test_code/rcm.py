@@ -239,10 +239,10 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 		# cardiac_cells_nucleus_area = [j[0] for j in whole_res[slide_index][4]]
 		# cardiac_cells_nucleus_perimeter = [j[1] for j in whole_res[slide_index][4]]
 		# vacuole_area = res[slide_index][5]
-		
+
 		cardiac_cells_ratio = non_cardiac_cells_num / float(cardiac_cells_num)
 		cardiac_area_num_ratio = region_whole_area / float(cardiac_cells_num)
-		
+
 		#  cardiac cell nucleus statics
 		# mean
 		cardiac_cells_nucleus_area_mean = np.mean(cardiac_cells_nucleus_area)
@@ -252,25 +252,25 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 		cardiac_cells_nucleus_area_sd = np.std(cardiac_cells_nucleus_area, ddof=1)
 		# IQR
 		cardiac_cells_nucleus_area_iqr = iqr(cardiac_cells_nucleus_area, rng=(25, 75), interpolation='midpoint')
-		
+
 		# perimeter calculation
 		cardiac_cells_nucleus_perimeter_mean = np.mean(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_median = np.median(cardiac_cells_nucleus_perimeter)
 		cardiac_cells_nucleus_perimeter_sd = np.std(cardiac_cells_nucleus_perimeter, ddof=1)
 		cardiac_cells_nucleus_perimeter_iqr = iqr(cardiac_cells_nucleus_perimeter, rng=(25, 75),
 		                                          interpolation='midpoint')
-		
+
 		# nucleus / whole_area 细胞核总数量/切片总面积
 		intensity = cardiac_cells_num / float(region_whole_area)
-		
+
 		# area ratio  心肌细胞核面积占心肌细胞的面积比例
 		cardiac_cells_nucleus_area_region_ratio = float(sum(cardiac_cells_nucleus_area)) / region_whole_area
-		
+
 		# vacuole calculation
 		# cardiac_cells_vacuole_area_mean = np.mean(vacuole_area)
 		# cardiac_cells_vacuole_area_median = np.median(vacuole_area)
 		# cardiac_cells_vacuole_area_sd = np.std(vacuole_area, ddof=1)
-		
+
 		if print_res:
 			print 'region: ' + he_mask_name[slide_index]
 			print 'Cardiac cells num: ' + str(whole_res[slide_index][1])
@@ -340,7 +340,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	plt.ylabel('number')
 	plt.title('fibrosis plaques hist')
 	plt.savefig(
-		'MASSON_image/fibrosis' + str(masson_patients[patient_id]) + '/slide_' + str(slide_no) + '_fibrosisPlaques.png',
+		'MASSON_image' + str(masson_patients[patient_id]) + '/fibrosis/slide_' + str(slide_no) + '_fibrosisPlaques.png',
 		format='png')
 	fibrosis_block_sum = int(np.sum(total_fibrosis_block))
 	fibrosis_block_median = int(np.median(total_fibrosis_block))
@@ -421,7 +421,7 @@ def masson_persist(whole_res, slide_no, print_res=False):
 	for i in whole_res:
 		for j in i:
 			whole_list_data.append(j)
-	
+
 	return whole_list_data
 	pass
 
@@ -431,13 +431,13 @@ def masson_test_proc(masson_working_level=6):
 	global slide_masson
 	print 'working level', masson_working_level
 	working_dimension = slide_masson.level_dimensions[masson_working_level]
-	
+
 	# cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
 	# fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
-	
+
 	# hsv = []
 	# rgb_img = []
-	
+
 	def pure_test():
 		# global hsv
 		# global rgb_img
@@ -458,20 +458,20 @@ def masson_test_proc(masson_working_level=6):
 		t = cv2.subtract(bgr_img, cv2.cvtColor(res_fibrosis_hsv, cv2.COLOR_GRAY2BGR))
 		cv2.imshow('HSV', hsv)
 		cv2.imshow('black', t)
-		
+
 		def getpos(event, x, y, flags, param):
 			if event == cv2.EVENT_LBUTTONDOWN:
 				print(t[y, x])
-		
+
 		# cv2.imshow('res_cardiac_HSV', res_cardiac_hsv)
 		# cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
 		# cv2.imshow('rgb_masson', bgr_img)
 		cv2.setMouseCallback('black', getpos)
-		
+
 		cv2.waitKey(0)
-	
+
 	pure_test()
-	
+
 	# slide_no = 2
 	# # slide_he = openslide.open_slide(he_path[slide_no])
 	# slide_masson = openslide.open_slide(masson_test_path[slide_no])
@@ -489,9 +489,19 @@ def slide_proc(patient_id, start, end, he=False, masson=False):
 	he_slide_path, masson_slide_path = get_image_path(patient_id)  # the first patient's image path
 	for slide_no in xrange(start, end):
 		if he:
-			he_proc(slide_no, he_slide_path, patient_id)
+			try:
+				he_proc(slide_no, he_slide_path, patient_id)
+			except:
+				with open('he_error_slide_log.txt', 'a') as f:
+					f.writelines(he_slide_path[slide_no] + '\n')
+				continue
 		if masson:
-			masson_proc(slide_no, masson_slide_path, patient_id)
+			try:
+				masson_proc(slide_no, masson_slide_path, patient_id)
+			except:
+				with open('masson_error_slide_log.txt', 'a') as f:
+					f.writelines(masson_slide_path[slide_no] + '\n')
+					continue
 
 
 def masson_data_process(whole_res):

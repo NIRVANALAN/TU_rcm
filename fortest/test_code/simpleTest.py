@@ -37,15 +37,23 @@ def gray_test():
 	gray = cv.imread('tmp/0_Endocardium.jpg', 0)
 	# ret, gray = cv.threshold(gray, 60, 255, cv.THRESH_BINARY)
 	cv.imshow('gray', gray)
-	
+
 	def getpos(event, x, y, flags, param):
 		if event == cv.EVENT_LBUTTONDOWN:
 			print(gray[y, x])
-	
+
 	cv.setMouseCallback('gray', getpos)
 
 
-gray_test()
+# gray_test()
+
+for i in xrange(7):
+	try:
+		slide_test = openslide.open_slide('./../../rcm_images/HE/28330/28330-' + str(i+1) + '.ndpi')
+		print slide_test.dimensions
+	except:
+		continue
+
 # cv2.imshow('res_cardiac_HSV', res_cardiac_hsv)
 # cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
 # cv2.imshow('rgb_masson', bgr_img)

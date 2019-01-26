@@ -503,14 +503,13 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# height_second_pts.reshape(-1, 1, 2)
 	# cv2.polylines(rgbimg, height_first_pts, False, (255, 0, 0), 5)
 	# cv2.polylines(rgbimg, height_second_pts, False, (255, 0, 0), 5)
-	if not os.path.exists("HE_image"):
-		os.mkdir("HE_image")
-	if not os.path.exists("MASSON_image"):
-		os.mkdir("MASSON_image")
-	img_name = ('HE_image/whole/' + str(he_patients[patient_id].split('/')[1]) + '_slide' + str(slide_no) + '.jpg' if (
+	if not os.path.exists('HE_image' + str(he_patients[patient_id])+'/whole'):
+		os.makedirs('HE_image' + str(he_patients[patient_id])+'/whole')
+	if not os.path.exists('MASSON_image' + str(masson_patients[patient_id])+'/whole'):
+		os.makedirs('MASSON_image' + str(masson_patients[patient_id])+'/whole')
+	img_name = ('HE_image' + str(he_patients[patient_id])+'/whole/slide' + str(slide_no) + '.jpg' if (
 			is_masson is False)
-	            else 'MASSON_image/whole/' +
-	                 str(masson_patients[patient_id].split('/')[1]) + '_slide_' + str(slide_no) + '.jpg')
+	            else 'HE_image' + str(masson_patients[patient_id])+'/whole/slide' + str(slide_no) + '.jpg')
 	cv2.imwrite(img_name, rgbimg)  # save the img of segmentation result
 	#################################################
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
@@ -699,8 +698,8 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 		save_for_vacuole = True
 	# vacuole_store_remain_num[0] -= 1
 	if save_for_vacuole or (cardiac_cell_mask_list.__len__() > cardiac_store_remain_num[0]):  # save cardiac cell img
-		
-		cardiac_store_remain_num[0] = cardiac_cell_mask_list.__len__()
+		if not save_for_vacuole:
+			cardiac_store_remain_num[0] = cardiac_cell_mask_list.__len__()
 		print 'cardiac'
 		print cardiac_store_remain_num[0]
 		j = np.zeros((c, b), np.uint8)
