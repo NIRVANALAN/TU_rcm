@@ -154,7 +154,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
 			cardiac_cell_num_threshold = [120]
-			vacuole_cell_num_threshold = [5]
+			vacuole_cell_num_threshold = [2]
 			for y in range(0, he_max_dimension[1] - area_length, area_length):
 				for x in range(0, he_max_dimension[0] - area_length, area_length):
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
@@ -167,7 +167,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 						region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 						hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
 						detect = detect_process(region, hsv, he_patients[patient_id], he_slide_no, he_mask_name[a],
-						                        cardiac_cell_num_threshold, vacuole_cell_num_threshold)
+						                        cardiac_cell_num_threshold, vacuole_cell_num_threshold, True)
 						he_proc_iter[0] += (detect[0])  # 空泡
 						he_proc_iter[1] += (detect[1])  # 心肌
 						he_proc_iter[2] += (detect[2])  # 非心肌

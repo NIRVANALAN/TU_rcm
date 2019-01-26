@@ -569,44 +569,42 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 
 def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, cardiac_store_remain_num,
                    vacuole_store_remain_num, write_test_image=False):
-	cv2.imwrite("tmp/rgb.jpg", region)
-	cv2.imwrite("tmp/hsv.jpg", hsv)
+	# cv2.imwrite("tmp/hsv.jpg", hsv)
 	b = len(hsv[0])
 	c = len(hsv)
 	h, s, v = cv2.split(hsv)
 	h = cv2.subtract(180, h)
 	ret, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY_INV)
 	gray = cv2.addWeighted(s, -1, h, 1, 0)  # why?
-	cv2.imwrite("tmp/gray.jpg", gray)
+	# cv2.imwrite("tmp/gray.jpg", gray)
 	whole_area_space = cv2.countNonZero(gray)
 	# print 'myocardium space in this region: ', whole_area_space
 	kernel = np.ones((3, 3), np.uint8)
 	
-	ret, nuclear0 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
-	cv2.imwrite("tmp/nuclear.jpg", nuclear0)
+	ret, nuclear0 = cv2.threshold(gray, 45, 255, cv2.THRESH_BINARY)
 	
 	nuclear0 = cv2.morphologyEx(nuclear0, cv2.MORPH_OPEN, kernel, iterations=2)
-	cv2.imwrite("tmp/nuclear0.jpg", nuclear0)
+	
 	sure_bg = cv2.dilate(nuclear0, kernel, iterations=3)
-	cv2.imwrite("tmp/sure_bg.jpg", sure_bg)
-	ret, nuclear1 = cv2.threshold(gray, 35, 255, cv2.THRESH_BINARY)
+	# sure background area
+	ret, nuclear1 = cv2.threshold(gray, 45, 255, cv2.THRESH_BINARY)
 	
 	for i in range(0, len(nuclear1[0])):
 		nuclear1[0][i] = 0
 	
 	# cv2.imshow("nuclear1", nuclear1)
 	mask = np.zeros((c + 2, b + 2), np.uint8)
-	cv2.floodFill(nuclear1, mask, (0, 0), 100)
+	cv2.floodFill(nuclear1, mask, (0, 0), 100)  # 把细胞核内不均匀的浅色填充回细胞和区域
 	nuclear1[nuclear1 == 0] = 255
 	nuclear1[nuclear1 == 100] = 0
 	
 	dist_transform = cv2.distanceTransform(nuclear1, cv2.DIST_L2, 5)
 	dist_transform = np.uint8(dist_transform)
 	ret, out = cv2.threshold(dist_transform, 5, 255, cv2.THRESH_BINARY_INV)
-	# cv2.imshow('out', out)
+	
 	nuclear1 = 255 - nuclear1
 	gray1 = cv2.subtract(gray, nuclear1)
-	# cv2.imshow("gray1", gray1)  # 去掉细胞质，得到细胞的图像
+	# cv2.imshow("gray1", gray1)  # 去掉细胞质，得到细胞核的图像
 	gray1 = cv2.blur(gray1, (5, 5))
 	
 	dist_transform = cv2.addWeighted(dist_transform, 1, gray1, 0.1, 0)
@@ -616,10 +614,14 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 	max = cv2.multiply(max, 0.90)
 	sure_fg = cv2.subtract(dist_transform, max)
 	sure_fg = cv2.subtract(sure_fg, out)
-	# cv2.imshow('sure_fg', sure_fg)
 	ret, sure_fg = cv2.threshold(sure_fg, 0, 255, cv2.THRESH_BINARY)
-	# sure_fg ?
 	sure_fg = np.uint8(sure_fg)
+	if write_test_image:
+		cv2.imwrite("tmp/rgb.jpg", region)
+		cv2.imwrite("tmp/nuclear0.jpg", nuclear0)
+		cv2.imwrite("tmp/sure_bg.jpg", sure_bg)
+		cv2.imwrite('tmp/out.jpg', out)
+		cv2.imwrite('tmp/sure_fg.jpg', sure_fg)
 	unknown = cv2.subtract(sure_bg, sure_fg)
 	
 	ret, markers = cv2.connectedComponents(sure_fg)
@@ -687,6 +689,10 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 		cv2.imwrite(
 			"HE_image/vacuole_cells/" + str(patient_num) + "/slide_" + str(
 				slide_no) + "_" + processed_mask_name + ".jpg", vacuole_image)  # need more test
+		if write_test_image:
+			cv2.imwrite(
+				"tmp/" + str(
+					slide_no) + "_vacuole_" + processed_mask_name + ".jpg", vacuole_image)  # need more test
 		save_for_vacuole = True
 	# vacuole_store_remain_num[0] -= 1
 	if save_for_vacuole or (cardiac_cell_mask_list.__len__() > cardiac_store_remain_num[0]):  # save cardiac cell img
@@ -712,6 +718,10 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 		cv2.imwrite(
 			"HE_image/cardiac_cells/" + str(patient_num) + "/slide_" + str(
 				slide_no) + "_" + processed_mask_name + ".jpg", img_to_save)
+		if write_test_image:
+			cv2.imwrite(
+				"tmp/" + str(
+					slide_no) + "_" + processed_mask_name + ".jpg", img_to_save)
 	# cardiac_store_remain_num[0] -= 1
 	# end save
 	#  返回值空泡 心肌 非心肌 总面积 心肌细胞的面积和周长列表
