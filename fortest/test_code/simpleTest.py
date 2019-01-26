@@ -28,10 +28,27 @@ def read_file(filename, print_file=False):
 
 
 l = [1, 2, 3, 4, 5, 4, 3, 2, 1]
+
+
 # os.mkdir('test')
 # print os.path.exists('test')
 # write_file(l)
+def gray_test():
+	gray = cv.imread('tmp/0_Endocardium.jpg', 0)
+	# ret, gray = cv.threshold(gray, 60, 255, cv.THRESH_BINARY)
+	cv.imshow('gray', gray)
+	
+	def getpos(event, x, y, flags, param):
+		if event == cv.EVENT_LBUTTONDOWN:
+			print(gray[y, x])
+	
+	cv.setMouseCallback('gray', getpos)
 
+
+gray_test()
+# cv2.imshow('res_cardiac_HSV', res_cardiac_hsv)
+# cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
+# cv2.imshow('rgb_masson', bgr_img)
 
 # read_file('Row_Num/test.txt', print_file=True)
 

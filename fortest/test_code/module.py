@@ -581,13 +581,13 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 	# print 'myocardium space in this region: ', whole_area_space
 	kernel = np.ones((3, 3), np.uint8)
 	
-	ret, nuclear0 = cv2.threshold(gray, 45, 255, cv2.THRESH_BINARY)
+	ret, nuclear0 = cv2.threshold(gray, 43, 255, cv2.THRESH_BINARY)
 	
 	nuclear0 = cv2.morphologyEx(nuclear0, cv2.MORPH_OPEN, kernel, iterations=2)
 	
 	sure_bg = cv2.dilate(nuclear0, kernel, iterations=3)
 	# sure background area
-	ret, nuclear1 = cv2.threshold(gray, 45, 255, cv2.THRESH_BINARY)
+	ret, nuclear1 = cv2.threshold(gray, 43, 255, cv2.THRESH_BINARY)
 	
 	for i in range(0, len(nuclear1[0])):
 		nuclear1[0][i] = 0
@@ -617,6 +617,7 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 	ret, sure_fg = cv2.threshold(sure_fg, 0, 255, cv2.THRESH_BINARY)
 	sure_fg = np.uint8(sure_fg)
 	if write_test_image:
+		cv2.imwrite('tmp/gray.jpg', gray)
 		cv2.imwrite("tmp/rgb.jpg", region)
 		cv2.imwrite("tmp/nuclear0.jpg", nuclear0)
 		cv2.imwrite("tmp/sure_bg.jpg", sure_bg)
@@ -684,10 +685,12 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 		vacuole_image = region.copy()
 		for contour in vacuole_cell_contour_list:
 			cv2.drawContours(vacuole_image, contour[0], -1, (0, 0, 255), 2)
-		if not os.path.exists('HE_image/vacuole_cells/' + str(patient_num)):
-			os.mkdir('HE_image/vacuole_cells/' + str(patient_num))
+		# if not os.path.exists('HE_image/' + str(patient_num)):
+		# 	os.mkdir()
+		if not os.path.exists('HE_image/' + str(patient_num) + '/vacuole_cells'):
+			os.makedirs('HE_image' + str(patient_num) + '/vacuole_cells')
 		cv2.imwrite(
-			"HE_image/vacuole_cells/" + str(patient_num) + "/slide_" + str(
+			'HE_image' + str(patient_num) + '/vacuole_cells' + "/slide_" + str(
 				slide_no) + "_" + processed_mask_name + ".jpg", vacuole_image)  # need more test
 		if write_test_image:
 			cv2.imwrite(
@@ -708,15 +711,15 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 		# img_to_save[markers == i] = [0, 0, 255]
 		_, contours, hierarchy = cv2.findContours(j, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 		cv2.drawContours(img_to_save, contours, -1, (0, 0, 255), 2)
-		if not os.path.exists('HE_image/cardiac_cells/' + str(patient_num)):
-			os.mkdir('HE_image/cardiac_cells/' + str(patient_num))
+		if not os.path.exists('HE_image' + str(patient_num) + '/cardiac_cells'):
+			os.makedirs('HE_image' + str(patient_num) + '/cardiac_cells')
 		if save_for_vacuole:
 			cv2.imwrite(
-				"HE_image/vacuole_cells/" + str(patient_num) + "/slide_" + str(
+				'HE_image' + str(patient_num) + '/vacuole_cells' + "/slide_" + str(
 					slide_no) + "_" + processed_mask_name + "_contrast.jpg", img_to_save)
 			save_for_vacuole = False
 		cv2.imwrite(
-			"HE_image/cardiac_cells/" + str(patient_num) + "/slide_" + str(
+			'HE_image' + str(patient_num) + '/cardiac_cells' + "/slide_" + str(
 				slide_no) + "_" + processed_mask_name + ".jpg", img_to_save)
 		if write_test_image:
 			cv2.imwrite(
@@ -749,15 +752,15 @@ def masson_region_slide(slide, working_level, threshold_type, patient_num, slide
 	# cv2.imshow('hsv_cardiac_cell', hsv)
 	# just global image needed...
 	if save_image:
-		if not os.path.exists("MASSON_image/" + threshold_type + str(patient_num)):
-			os.mkdir("MASSON_image/" + threshold_type + str(patient_num))
+		if not os.path.exists("MASSON_image" + str(patient_num) + '/' + threshold_type):
+			os.makedirs("MASSON_image" + str(patient_num) + '/' + threshold_type)
 		# subtracted = cv2.subtract(bgr_cv_img, hsv)
 		t = cv2.subtract(bgr_cv_img, cv2.cvtColor(hsv, cv2.COLOR_GRAY2BGR))
 		cv2.imwrite(
-			"MASSON_image/" + threshold_type + str(patient_num) + "/slide" + str(
+			"MASSON_image" + str(patient_num) + '/' + threshold_type + "/slide" + str(
 				slide_no) + ".jpg", t)  # threshold
 		cv2.imwrite(
-			'MASSON_image/' + threshold_type + str(patient_num) + "/slide" + str(
+			"MASSON_image" + str(patient_num) + '/' + threshold_type + "/slide" + str(
 				slide_no) + "_rgb.jpg", bgr_cv_img)  # rgb
 	# if threshold_type is 'cardiac' and region_area > store_remain_no[0] or (
 	# 		threshold_type is 'fibrosis' and region_area > store_remain_no[1]):
