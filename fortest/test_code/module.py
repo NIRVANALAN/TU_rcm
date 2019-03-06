@@ -503,13 +503,13 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# height_second_pts.reshape(-1, 1, 2)
 	# cv2.polylines(rgbimg, height_first_pts, False, (255, 0, 0), 5)
 	# cv2.polylines(rgbimg, height_second_pts, False, (255, 0, 0), 5)
-	if not os.path.exists('HE_image' + str(he_patients[patient_id])+'/whole'):
-		os.makedirs('HE_image' + str(he_patients[patient_id])+'/whole')
-	if not os.path.exists('MASSON_image' + str(masson_patients[patient_id])+'/whole'):
-		os.makedirs('MASSON_image' + str(masson_patients[patient_id])+'/whole')
-	img_name = ('HE_image' + str(he_patients[patient_id])+'/whole/slide' + str(slide_no) + '.jpg' if (
+	if not os.path.exists('HE_image' + str(he_patients[patient_id]) + '/whole'):
+		os.makedirs('HE_image' + str(he_patients[patient_id]) + '/whole')
+	if not os.path.exists('MASSON_image' + str(masson_patients[patient_id]) + '/whole'):
+		os.makedirs('MASSON_image' + str(masson_patients[patient_id]) + '/whole')
+	img_name = ('HE_image' + str(he_patients[patient_id]) + '/whole/slide' + str(slide_no) + '.jpg' if (
 			is_masson is False)
-	            else 'HE_image' + str(masson_patients[patient_id])+'/whole/slide' + str(slide_no) + '.jpg')
+	            else 'HE_image' + str(masson_patients[patient_id]) + '/whole/slide' + str(slide_no) + '.jpg')
 	cv2.imwrite(img_name, rgbimg)  # save the img of segmentation result
 	#################################################
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
@@ -746,7 +746,8 @@ def masson_region_slide(slide, working_level, threshold_type, patient_num, slide
 	hsv = cv2.cvtColor(bgr_cv_img, cv2.COLOR_BGR2HSV)
 	# (155, 140, 50), (175, 180, 255) cardiac
 	# (90, 20, 20), (140, 255, 255) fibrosis
-	hsv = cv2.inRange(hsv, threshold[0], threshold[1])  # s 50-250 in paper
+	# calculate threshold
+	mask = cv2.inRange(hsv, threshold[0], threshold[1])  # s 50-250 in paper
 	region_area = cv2.countNonZero(hsv)
 	# cv2.imshow('hsv_cardiac_cell', hsv)
 	# just global image needed...
@@ -754,7 +755,7 @@ def masson_region_slide(slide, working_level, threshold_type, patient_num, slide
 		if not os.path.exists("MASSON_image" + str(patient_num) + '/' + threshold_type):
 			os.makedirs("MASSON_image" + str(patient_num) + '/' + threshold_type)
 		# subtracted = cv2.subtract(bgr_cv_img, hsv)
-		t = cv2.subtract(bgr_cv_img, cv2.cvtColor(hsv, cv2.COLOR_GRAY2BGR))
+		t = cv2.subtract(bgr_cv_img, cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR))
 		cv2.imwrite(
 			"MASSON_image" + str(patient_num) + '/' + threshold_type + "/slide" + str(
 				slide_no) + ".jpg", t)  # threshold
