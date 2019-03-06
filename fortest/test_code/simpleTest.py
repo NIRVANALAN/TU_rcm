@@ -59,7 +59,7 @@ def gray_test():
 # cv2.imshow('res_fibrosis_hsv', res_fibrosis_hsv)
 # cv2.imshow('rgb_masson', bgr_img)
 
-cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
+cardiac_threshold = (155, 43, 46), (175, 255, 255)  # cardiac
 fibrosis_threshold = (100, 43, 46), (134, 255, 255)  # fibrosis
 
 
@@ -72,15 +72,16 @@ def imgshow(img):
 
 if __name__ == '__main__':
 	# normalization test
-	for i in range(5,6):
-		slide_masson = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/MASSON/31398/31398-' + str(i) + '.ndpi')
+	for i in range(2, 3):
+		slide_masson = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/MASSON/28330/28330-' + str(i) + '.ndpi')
 		# print slide_masson.dimensions
 		img = np.array(slide_masson.read_region((0, 0), 5, slide_masson.level_dimensions[5]))
 		r, g, b, a = cv.split(img)
 		bgr_img = cv.merge((b, g, r))
 		hsv = cv.cvtColor(bgr_img, cv.COLOR_BGR2HSV)
 		mean = cv.mean(hsv)
-		mask = cv.inRange(hsv, fibrosis_threshold[0], fibrosis_threshold[1])
+		# mask = cv.inRange(hsv, fibrosis_threshold[0], fibrosis_threshold[1])
+		mask = cv.inRange(hsv, cardiac_threshold[0], cardiac_threshold[1])
 		imgshow(bgr_img)
 		t = cv.subtract(bgr_img, cv.cvtColor(mask, cv.COLOR_GRAY2BGR))
 		imgshow(t)

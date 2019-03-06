@@ -295,7 +295,7 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 
 
 # for masson proc later
-cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
+cardiac_threshold = (155, 43, 46), (175, 255, 255)  # cardiac
 fibrosis_threshold = (100, 43, 46), (134, 255, 255)  # fibrosis
 
 masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
