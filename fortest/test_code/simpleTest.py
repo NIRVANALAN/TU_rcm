@@ -99,7 +99,7 @@ def hand_draw_split_test():
 	# slide_he = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/MASSON/30638/28330-.ndpi')
 	he_image = cv.imread(
 		'/home/zhourongchen/lys/rcm_project/fortest/test_code/HE_image/30638/whole/slide4.jpg')
-	# imgshow(he_image)
+	imgshow(he_image)
 	hsv = cv.cvtColor(he_image, cv.COLOR_BGR2HSV)
 	mask = cv.inRange(hsv, (166, 43, 43), (180, 255, 255))
 	# mask = cv.inRange(hsv, np.array([170, 43, 43]), np.array([180, 255, 255]))
@@ -109,15 +109,25 @@ def hand_draw_split_test():
 	_, contours, hierarchy = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 	points = contours[0]
 	for i in contours[1:]:
-		points = np.append(points, i, axis=0)
+		if len(i) > 10:
+			points = np.append(points, i, axis=0)
 	points = np.unique(points, axis=0)  # get unique points
-	points = np.array([points], np.int32)
-	print len(points)
+	points = np.array([points], np.int32)  # convert to np.int32 works well
+	print points.size
 	# sort by x
 	# points = points[points[:, 0].argsort()]
 	cv.polylines(dst, points, False, color=(0, 255, 0), thickness=5)
 	# draw_img0 = cv.drawContours(dst.copy(), contours, -1, (0, 255, 0), 3)
 	imgshow(dst)
+	print dst.shape
+	he_slide = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/HE/30638/30638-5.ndpi')
+	print he_slide.dimensions
+	slide_img = np.array(he_slide.read_region((0, 0), 6, he_slide.level_dimensions[6]))
+	print slide_img.shape
+	slide_img = cv.cvtColor(slide_img, cv.COLOR_RGBA2BGR)
+	cv.polylines(slide_img, points, False, color=(0, 255, 0), thickness=5)
+	imgshow(slide_img)
+	# print he_slide.dimensions[0]/dst.shape[0]
 	pass
 
 
