@@ -63,15 +63,21 @@ cardiac_threshold = (155, 43, 46), (175, 255, 255)  # cardiac
 fibrosis_threshold = (100, 43, 46), (134, 255, 255)  # fibrosis
 
 
-def imgshow(img):
-	# npimg = img.numpy()
-	img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-	plt.imshow(img)
+def imgshow(img, read_from_cv=True, cmap=None):
+	# b, g, r = cv.split(img)
+	# he_image = cv.merge((r, g, b))
+	if read_from_cv:
+		img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+	else:
+		pass
+	if cmap is not None:
+		plt.imshow(img, cmap=cmap)
+	else:
+		plt.imshow(img)
 	plt.show()
 
 
-if __name__ == '__main__':
-	# normalization test
+def test_threshold():
 	for i in range(2, 3):
 		slide_masson = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/MASSON/28330/28330-' + str(i) + '.ndpi')
 		# print slide_masson.dimensions
@@ -87,4 +93,24 @@ if __name__ == '__main__':
 		imgshow(t)
 		print mean
 	pass
+
+
+def hand_draw_split_test():
+	# slide_he = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/MASSON/30638/28330-.ndpi')
+	he_image = cv.imread(
+		'/home/zhourongchen/lys/rcm_project/fortest/test_code/HE_image/30638/whole/slide4.jpg')
+	# imgshow(he_image)
+	hsv = cv.cvtColor(he_image, cv.COLOR_BGR2HSV)
+	mask = cv.inRange(hsv, (170, 43, 43), (180, 255, 255))
+	# mask = cv.inRange(hsv, np.array([170, 43, 43]), np.array([180, 255, 255]))
+	dst = cv.bitwise_and(he_image, he_image, mask=mask)
+	imgshow(dst)
+	pass
+
+
+if __name__ == '__main__':
+	# normalization test
+	hand_draw_split_test()
+	pass
+
 cv.destroyAllWindows()

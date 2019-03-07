@@ -129,7 +129,7 @@ def fibrosis(slide, fibrosis_level):
 
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
-              is_masson=False, patient_id=0, show_img=False, set_vertical=False):
+              is_masson=False, patient_id=0, show_img=False, set_vertical=False, hand_drawn=False):
 	calculate_trabe_flag = True
 	if slide_no is 3:
 		calculate_trabe_flag = False
@@ -149,7 +149,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# cv2.imshow("rgb_img", rgbimg)
 	if is_masson is True:
 		grey_img = cv2.inRange(hsv, (0, 20, 0), (180, 255, 180))
-		fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (140, 255, 255))  # can be returned
+		# fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (140, 255, 255))  # can be returned
 	# cv2.imshow("fibrosis", fibrosis_img)
 	else:
 		grey_img = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
@@ -475,14 +475,15 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	cutting_line_points[1].reverse()
 	width_points[1].reverse()
 	#######################################
-	if slide_no != 4 and slide_no != 5:
-		first = width_points[0] + cutting_line_points[1]
-		second = cutting_line_points[0] + cutting_line_points[1]
-		third = cutting_line_points[0] + width_points[1]
-	else:
-		first = width_points[0] + cutting_line_points[0]
-		second = cutting_line_points[0] + width_points[1]
-		third = []
+	if not hand_drawn:
+		if slide_no != 4 and slide_no != 5:
+			first = width_points[0] + cutting_line_points[1]
+			second = cutting_line_points[0] + cutting_line_points[1]
+			third = cutting_line_points[0] + width_points[1]
+		else:
+			first = width_points[0] + cutting_line_points[0]
+			second = cutting_line_points[0] + width_points[1]
+			third = []
 	#######################################
 	# draw the segmentation lines
 	first_pts = np.array([cutting_line_points[0]], np.int32)
@@ -561,7 +562,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# otherdensity = areaaveragedensity(fibrosis, grey_img, othermask)
 	cv2.destroyAllWindows()
 	if is_masson is True:
-		return firstmask, secondmask, thirdmask, othermask, grey_img, hsv, fibrosis_img, rcm_thickening  # [other_height, wall_height]
+		return firstmask, secondmask, thirdmask, othermask, grey_img, hsv, rcm_thickening  # [other_height, wall_height]
 	else:
 		return firstmask, secondmask, thirdmask, othermask, rcm_thickening
 
