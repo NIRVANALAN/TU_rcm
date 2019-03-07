@@ -101,9 +101,22 @@ def hand_draw_split_test():
 		'/home/zhourongchen/lys/rcm_project/fortest/test_code/HE_image/30638/whole/slide4.jpg')
 	# imgshow(he_image)
 	hsv = cv.cvtColor(he_image, cv.COLOR_BGR2HSV)
-	mask = cv.inRange(hsv, (170, 43, 43), (180, 255, 255))
+	mask = cv.inRange(hsv, (166, 43, 43), (180, 255, 255))
 	# mask = cv.inRange(hsv, np.array([170, 43, 43]), np.array([180, 255, 255]))
 	dst = cv.bitwise_and(he_image, he_image, mask=mask)
+	# imgshow(dst)
+	# get points on the contours
+	_, contours, hierarchy = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+	points = contours[0]
+	for i in contours[1:]:
+		points = np.append(points, i, axis=0)
+	points = np.unique(points, axis=0)  # get unique points
+	points = np.array([points], np.int32)
+	print len(points)
+	# sort by x
+	# points = points[points[:, 0].argsort()]
+	cv.polylines(dst, points, False, color=(0, 255, 0), thickness=5)
+	# draw_img0 = cv.drawContours(dst.copy(), contours, -1, (0, 255, 0), 3)
 	imgshow(dst)
 	pass
 
