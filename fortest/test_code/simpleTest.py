@@ -122,9 +122,12 @@ def hand_draw_split_test():
 	print dst.shape
 	he_slide = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/HE/30638/30638-5.ndpi')
 	print he_slide.dimensions
-	slide_img = np.array(he_slide.read_region((0, 0), 6, he_slide.level_dimensions[6]))
+	level = 5
+	origin_level = 6
+	slide_img = np.array(he_slide.read_region((0, 0), level, he_slide.level_dimensions[level]))
 	print slide_img.shape
 	slide_img = cv.cvtColor(slide_img, cv.COLOR_RGBA2BGR)
+	points *= pow(2, origin_level - level)  # cvt points in different dimensions
 	cv.polylines(slide_img, points, False, color=(0, 255, 0), thickness=5)
 	imgshow(slide_img)
 	# print he_slide.dimensions[0]/dst.shape[0]
