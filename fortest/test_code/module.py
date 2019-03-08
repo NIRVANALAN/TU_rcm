@@ -123,6 +123,68 @@ def fibrosis(slide, fibrosis_level):
 	return hsv_fibrosis
 
 
+def imgshow(img, read_from_cv=True, cmap=None):
+	# b, g, r = cv.split(img)
+	# he_image = cv.merge((r, g, b))
+	if read_from_cv:
+		img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+	else:
+		pass
+	if cmap is not None:
+		plt.imshow(img, cmap=cmap)
+	else:
+		plt.imshow(img)
+	plt.show()
+
+
+def hand_draw_split_test(level, threshes, image_path, slide_path):
+	# slide_he = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/MASSON/30638/28330-.ndpi')
+	he_image = cv2.imread(image_path)
+	imgshow(he_image)
+	hsv = cv2.cvtColor(he_image, cv2.COLOR_BGR2HSV)
+	slide = openslide.open_slide(slide_path)
+	# print he_slide.dimensions
+	# level = 5
+	origin_level = 6
+	slide_img = np.array(slide.read_region((0, 0), level, slide.level_dimensions[level]))
+	print slide_img.shape
+	slide_img = cv2.cvtColor(slide_img, cv2.COLOR_RGBA2BGR)
+	for t in threshes:
+		mask = cv2.inRange(hsv, t[0], t[1])
+		# mask = cv.inRange(hsv, np.array([170, 43, 43]), np.array([180, 255, 255]))
+		# dst = cv.bitwise_and(he_image, he_image, mask=mask)
+		# imgshow(dst)
+		# get points on the contours
+		_, contours, hierarchy = cv2.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+		points = contours[0]
+		for i in contours[1:]:
+			if len(i) > 10:
+				points = np.append(points, i, axis=0)
+		points = np.unique(points, axis=0)  # get unique points
+		points = np.array([points], np.int32)  # convert to np.int32 works well
+		# sort by distance
+		num = 100
+		# dist = (points[0][-1][0][0] - points[0][0][0][0]) / 100
+		# print dist
+		print points.size
+		# sort by x
+		# points = points[points[:, 0].argsort()]
+		# draw_img0 = cv.drawContours(dst.copy(), contours, -1, (0, 255, 0), 3)
+		# imgshow(dst)
+		# print dst.shape
+		points *= pow(2, origin_level - level)  # cvt points in different dimensions
+		if threshes.index(t) is 0:  # outer
+			# cv.polylines(dst, points, False, color=(0, 0, 255), thickness=4)
+			cv2.polylines(slide_img, points, False, color=(0, 0, 255), thickness=5)
+		else:  # inner
+			# cv.polylines(dst, points, False, color=(0, 255, 0), thickness=4)
+			cv2.polylines(slide_img, points, False, color=(0, 255, 0), thickness=5)
+	
+	imgshow(slide_img)
+	# print he_slide.dimensions[0]/dst.shape[0]
+	pass
+
+
 '''
 -1/2/3是一共四层（包含肌小梁）；-4分3层（忽略肌小梁）；-5/6分3层（含1层肌小梁）
 '''
@@ -161,287 +223,305 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	average_greyimg = cv2.blur(grey_img, (30, 30))  # blur using filter
 	# cv2.imshow('average grey img', averagegreyimg)
 	# cv2.imwrite("test_images/HE/average_grey_img.jpg", averagegreyimg)
-	'''
-	erode grey image, iteration time is specified
-	多次腐蚀，除去小梁
-	'''
-	ret, erode = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
-	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-	if is_masson is True and calculate_trabe_flag:
-		masson_erosion_iteration_time = masson_erosion_iteration_time_list[slide_no]
-		erode = cv2.erode(erode, kernel, iterations=masson_erosion_iteration_time)
-	elif calculate_trabe_flag:  # for HE
-		# slide 04 do not need to ...
-		he_erosion_iteration_time = he_erosion_iteration_time_list[slide_no]
-		erode = cv2.erode(erode, kernel, iterations=he_erosion_iteration_time)
-		pass
-	if show_img:
-		cv2.imshow("after erosion", erode)
-	
-	'''
-	get boundary of whole and img_after_erosion
-	'''
-	ret, aver_image = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
-	aver_image, avercnts, averhierarchy = cv2.findContours(aver_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-	# cv2.imshow("aver image", aver_image)
-	# 得到整体的边界
-	image, cnts, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-	# cv2.imshow("contour after erosion", erode)
-	# 腐蚀后的边界
-	
-	rcm_object = []
-	max_area = 0
-	max_area_index = None
-	'''
-	get all objects in the contour, the largest if the wall
-	'''
-	for cnt in cnts:
-		area = cv2.contourArea(cnt)
-		if area > 100:
-			points_wall = []
-			for i in cnt:
-				x = i[0][0]
-				y = i[0][1]
-				points_wall.append([x, y])
-			i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-			cv2.fillPoly(i, np.array([points_wall], np.int32), 255)
-			rcm_object.append(i)
-			if area > max_area:
-				max_area = area
-				max_area_index = len(rcm_object) - 1
-	wall = rcm_object[max_area_index]
-	# 把每一个区域都分割出来，最大的心肌壁
-	
-	'''
-	get all other objects -> calculate trabe
-	'''
-	other = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-	for i in range(0, len(rcm_object)):
-		if i != max_area_index:
-			other = cv2.add(other, rcm_object[i])
-	M0 = cv2.moments(other)
-	if M0["m00"] == 0.0:
-		calculate_trabe_flag = False  # no trabe
-	# 对于计算小梁的slide, 通过矩moments计算重心
-	
-	'''
-	calculate trabe position via angle
-	'''
-	if calculate_trabe_flag:  # 小梁的计算
-		M1 = cv2.moments(wall)
-		cx1 = int(M1["m10"] / M1["m00"])
-		cy1 = int(M1["m01"] / M1["m00"])
+	if not hand_drawn:
+		'''
+		erode grey image, iteration time is specified
+		多次腐蚀，除去小梁
+		'''
+		ret, erode = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
+		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
+		if is_masson is True and calculate_trabe_flag:
+			masson_erosion_iteration_time = masson_erosion_iteration_time_list[slide_no]
+			erode = cv2.erode(erode, kernel, iterations=masson_erosion_iteration_time)
+		elif calculate_trabe_flag:  # for HE
+			# slide 04 do not need to ...
+			he_erosion_iteration_time = he_erosion_iteration_time_list[slide_no]
+			erode = cv2.erode(erode, kernel, iterations=he_erosion_iteration_time)
+			pass
+		if show_img:
+			cv2.imshow("after erosion", erode)
 		
-		# M0 = cv2.moments(other)
-		cx0 = int((M0["m10"]) / (M0["m00"]))
-		cy0 = int((M0["m01"]) / (M0["m00"]))
-		# base angle is like: other->left wall->right x0<x1 y0==y1 attention: The origin point of opencv is at top left corner
-		if cx0 - cx1 == 0:
-			if cy0 - cy1 > 0:
-				base_angle = 90
+		'''
+		get boundary of whole and img_after_erosion
+		'''
+		ret, aver_image = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
+		aver_image, avercnts, averhierarchy = cv2.findContours(aver_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+		# cv2.imshow("aver image", aver_image)
+		# 得到整体的边界
+		image, cnts, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+		# cv2.imshow("contour after erosion", erode)
+		# 腐蚀后的边界
+		
+		rcm_object = []
+		max_area = 0
+		max_area_index = None
+		'''
+		get all objects in the contour, the largest is the wall
+		'''
+		for cnt in cnts:
+			area = cv2.contourArea(cnt)
+			if area > 100:
+				points_wall = []
+				for i in cnt:
+					x = i[0][0]
+					y = i[0][1]
+					points_wall.append([x, y])
+				i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+				cv2.fillPoly(i, np.array([points_wall], np.int32), 255)
+				rcm_object.append(i)
+				if area > max_area:
+					max_area = area
+					max_area_index = len(rcm_object) - 1
+		wall = rcm_object[max_area_index]
+		# 把每一个区域都分割出来，最大的心肌壁
+		
+		'''
+		get all other objects -> calculate trabe
+		'''
+		other = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+		for i in range(0, len(rcm_object)):
+			if i != max_area_index:
+				other = cv2.add(other, rcm_object[i])
+		M0 = cv2.moments(other)
+		if M0["m00"] == 0.0:
+			calculate_trabe_flag = False  # no trabe
+		# 对于计算小梁的slide, 通过矩moments计算重心
+		
+		'''
+		calculate trabe position via angle
+		'''
+		if calculate_trabe_flag:  # 小梁的计算
+			M1 = cv2.moments(wall)
+			cx1 = int(M1["m10"] / M1["m00"])
+			cy1 = int(M1["m01"] / M1["m00"])
+			
+			# M0 = cv2.moments(other)
+			cx0 = int((M0["m10"]) / (M0["m00"]))
+			cy0 = int((M0["m01"]) / (M0["m00"]))
+			# base angle is like: other->left wall->right x0<x1 y0==y1 attention: The origin point of opencv is at top left corner
+			if cx0 - cx1 == 0:
+				if cy0 - cy1 > 0:
+					base_angle = 90
+				else:
+					base_angle = -90
 			else:
-				base_angle = -90
+				if cx0 - cx1 > 0:
+					base_angle = 180 * math.atan(-(cy0 - cy1) / (cx0 - cx1)) / math.pi
+				else:
+					base_angle = 180 + 180 * math.atan(-(cy0 - cy1) / (cx0 - cx1)) / math.pi
 		else:
-			if cx0 - cx1 > 0:
-				base_angle = 180 * math.atan(-(cy0 - cy1) / (cx0 - cx1)) / math.pi
+			base_angle = 90  # default for slide03
+		
+		kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
+		wall = cv2.dilate(wall, kernel, iterations=15)  # dilate wall
+		'''
+		find contours of other
+		'''
+		if calculate_trabe_flag:
+			other = cv2.dilate(other, kernel, iterations=15)
+			image1, contours_other, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		if show_img:
+			cv2.imshow("wall", wall)
+			cv2.imshow("other", other)
+		
+		image, contours_wall, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		points_wall = cv2.approxPolyDP(contours_wall[0], 15, True)
+		# 主要功能是把一个连续光滑曲线折线化，对图像轮廓点进行多边形拟合。
+		
+		'''
+		get rect of other, wall and all
+		'''
+		if calculate_trabe_flag:
+			points_other = []
+			for i in contours_other:  # contours1 : other
+				for j in i:
+					points_other.append(j)
+			points_other = np.array(points_other)
+			rect_other = cv2.minAreaRect(points_other)
+			box_other = cv2.boxPoints(rect_other)
+			rect_all = cv2.minAreaRect(np.concatenate([points_wall, points_other]))  # 整体的最小外接矩形，包括心肌壁和小梁
+		
+		rect_wall = cv2.minAreaRect(points_wall)
+		# 最小外切矩形 （中心(x,y), (宽,高), 旋转角度）
+		box_wall = cv2.boxPoints(rect_wall)
+		rect_wall = (rect_wall[0], rect_wall[1], -rect_wall[2])  # minAreaRect 旋转角度小于0
+		# get the width & height and compute the height of 'other'
+		# if slide_no is 1:
+		# 	other_height = rect_other[1]
+		'''
+		start calculation
+		'''
+		if (slide_no is 3 and set_vertical is False) or \
+				(calculate_trabe_flag and ((math.fabs(rect_wall[2] - base_angle) % 360) < 180 * atan(
+					rect_wall[1][1] / rect_wall[1][0]) / math.pi or
+				                           (math.fabs(rect_wall[2] - base_angle) % 360) > 180 - 180 * atan(
+							rect_wall[1][1] / rect_wall[1][0]) / math.pi)):
+			# print "mark horizontal"
+			'''
+			calculate wall/other's width and height
+			'''
+			angle = math.fabs(rect_wall[2] - 90)
+			wall_width = rect_wall[1][1]
+			wall_height = rect_wall[1][0]
+			# all_width = rect_all[1][1]
+			if calculate_trabe_flag:
+				# 	all_height = wall_height
+				# 	other_height = 0
+				# else:
+				all_height = rect_all[1][0]
+				other_height = all_height - wall_height
+		
+		else:
+			if slide_no is 3 and set_vertical:
+				print "slide03 set vertical"
+			angle = rect_wall[2]
+			wall_width = rect_wall[1][0]
+			wall_height = rect_wall[1][1]
+			# all_width = rect_all[1][0]
+			if calculate_trabe_flag:
+				all_height = rect_all[1][1]
+				other_height = all_height - wall_height
+		'''
+		get rcm_thickening
+		'''
+		if calculate_trabe_flag:
+			rcm_thickening = [other_height if (slide_no is 1 > 0 and other_height) else min(rect_other[1])]
+		else:
+			rcm_thickening = [0]  # no trabe
+		points_wall = rotate_points(points_wall, rect_wall[0], -angle)
+		# rotate the point matrix, base_angle after rotation should be 0
+		for i in avercnts:
+			averpoints = rotate_points(i, rect_wall[0], -angle)
+		'''
+		get width_points and height_points
+		'''
+		width_points = [[], []]
+		for i in range(0, len(points_wall)):
+			if points_wall[i][0][1] - rect_wall[0][1] > wall_height / 6:
+				width_points[0].append(points_wall[i])
 			else:
-				base_angle = 180 + 180 * math.atan(-(cy0 - cy1) / (cx0 - cx1)) / math.pi
-	else:
-		base_angle = 90  # default for slide03
-	
-	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-	wall = cv2.dilate(wall, kernel, iterations=15)  # dilate wall
-	'''
-	find contours of other
-	'''
-	if calculate_trabe_flag:
-		other = cv2.dilate(other, kernel, iterations=15)
-		image1, contours_other, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	if show_img:
-		cv2.imshow("wall", wall)
-		cv2.imshow("other", other)
-	
-	image, contours_wall, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	points_wall = cv2.approxPolyDP(contours_wall[0], 15, True)
-	# 主要功能是把一个连续光滑曲线折线化，对图像轮廓点进行多边形拟合。
-	
-	'''
-	get rect of other, wall and all
-	'''
-	if calculate_trabe_flag:
-		points_other = []
-		for i in contours_other:  # contours1 : other
+				if points_wall[i][0][1] - rect_wall[0][1] < -wall_height / 6:
+					width_points[1].append(points_wall[i])
+		
+		height_points = [[], []]
+		for i in xrange(0, len(points_wall)):
+			if points_wall[i][0][0] - rect_wall[0][0] > wall_width / 4:
+				height_points[0].append(points_wall[i])
+			else:
+				if points_wall[i][0][0] - rect_wall[0][0] < -wall_width / 4:
+					height_points[1].append(points_wall[i])
+		'''
+		distinguish outer/inner via average y
+		'''
+		avery0 = 0
+		for i in range(0, len(width_points[0])):
+			avery0 += width_points[0][i][0][1]  # y on base width
+		avery0 = avery0 / len(width_points[0])
+		avery1 = 0
+		for i in range(0, len(width_points[1])):
+			avery1 += width_points[1][i][0][1]
+		avery1 = avery1 / len(width_points[1])  # y on up width
+		
+		if calculate_trabe_flag:  # 这里代码计算内外膜，和slide03没关系
+			if (base_angle % 360) < 180:
+				if avery1 < avery0:
+					# abc = width_points[0]
+					# width_points[0] = width_points[1]
+					# width_points[1] = abc
+					width_points[0], width_points[1] = width_points[1], width_points[0]
+			else:
+				if avery1 > avery0:
+					width_points[0], width_points[1] = width_points[1], width_points[0]
+		origin_width_points = []
+		'''
+		貌似是找外模和内膜的线的
+		因为腐蚀加膨胀
+		不再是原来的边界了
+		现在通过找最近的方式
+		用原来的边界来替换
+		下面代码：
+		'''
+		for i in avercnts:
 			for j in i:
-				points_other.append(j)
-		points_other = np.array(points_other)
-		rect_other = cv2.minAreaRect(points_other)
-		box_other = cv2.boxPoints(rect_other)
-		rect_all = cv2.minAreaRect(np.concatenate([points_wall, points_other]))  # 整体的最小外接矩形，包括心肌壁和小梁
-	
-	rect_wall = cv2.minAreaRect(points_wall)
-	# 最小外切矩形 （中心(x,y), (宽,高), 旋转角度）
-	box_wall = cv2.boxPoints(rect_wall)
-	rect_wall = (rect_wall[0], rect_wall[1], -rect_wall[2])  # minAreaRect 旋转角度小于0
-	# get the width & height and compute the height of 'other'
-	# if slide_no is 1:
-	# 	other_height = rect_other[1]
-	
-	if (slide_no is 3 and set_vertical is False) or \
-			(calculate_trabe_flag and ((math.fabs(rect_wall[2] - base_angle) % 360) < 180 * atan(
-				rect_wall[1][1] / rect_wall[1][0]) / math.pi or
-			                           (math.fabs(rect_wall[2] - base_angle) % 360) > 180 - 180 * atan(
-						rect_wall[1][1] / rect_wall[1][0]) / math.pi)):
-		# print "mark horizontal"
-		angle = math.fabs(rect_wall[2] - 90)
-		wall_width = rect_wall[1][1]
-		wall_height = rect_wall[1][0]
-		# all_width = rect_all[1][1]
-		if calculate_trabe_flag:
-			# 	all_height = wall_height
-			# 	other_height = 0
-			# else:
-			all_height = rect_all[1][0]
-			other_height = all_height - wall_height
-	
-	else:
-		if slide_no is 3 and set_vertical:
-			print "slide03 set vertical"
-		angle = rect_wall[2]
-		wall_width = rect_wall[1][0]
-		wall_height = rect_wall[1][1]
-		# all_width = rect_all[1][0]
-		if calculate_trabe_flag:
-			all_height = rect_all[1][1]
-			other_height = all_height - wall_height
-	if calculate_trabe_flag:
-		rcm_thickening = [other_height if (slide_no is 1 > 0 and other_height) else min(rect_other[1])]
-	else:
-		rcm_thickening = [0]  # no trabe
-	points_wall = rotate_points(points_wall, rect_wall[0], -angle)
-	# rotate the point matrix, base_angle after rotation should be 0
-	for i in avercnts:
-		averpoints = rotate_points(i, rect_wall[0], -angle)
-	
-	width_points = [[], []]
-	for i in range(0, len(points_wall)):
-		if points_wall[i][0][1] - rect_wall[0][1] > wall_height / 6:
-			width_points[0].append(points_wall[i])
-		else:
-			if points_wall[i][0][1] - rect_wall[0][1] < -wall_height / 6:
-				width_points[1].append(points_wall[i])
-	
-	height_points = [[], []]
-	for i in xrange(0, len(points_wall)):
-		if points_wall[i][0][0] - rect_wall[0][0] > wall_width / 4:
-			height_points[0].append(points_wall[i])
-		else:
-			if points_wall[i][0][0] - rect_wall[0][0] < -wall_width / 4:
-				height_points[1].append(points_wall[i])
-	
-	avery0 = 0
-	for i in range(0, len(width_points[0])):
-		avery0 += width_points[0][i][0][1]  # y on base width
-	avery0 = avery0 / len(width_points[0])
-	avery1 = 0
-	for i in range(0, len(width_points[1])):
-		avery1 += width_points[1][i][0][1]
-	avery1 = avery1 / len(width_points[1])  # y on up width
-	
-	if calculate_trabe_flag:  # 这里代码计算内外膜，和slide03没关系
-		if (base_angle % 360) < 180:
-			if avery1 < avery0:
-				# abc = width_points[0]
-				# width_points[0] = width_points[1]
-				# width_points[1] = abc
-				width_points[0], width_points[1] = width_points[1], width_points[0]
-		else:
-			if avery1 > avery0:
-				width_points[0], width_points[1] = width_points[1], width_points[0]
-	origin_width_points = []
+				distance0 = 100000
+				for k in width_points[0]:
+					distance = math.sqrt(
+						(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
+					if distance < distance0:
+						distance0 = distance
+				distance1 = 100000
+				for k in width_points[1]:
+					distance = math.sqrt(
+						(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
+					if distance < distance1:
+						distance1 = distance
+				if distance1 < distance0 / 2:
+					origin_width_points.append(j)
+		
+		width_points[1] = origin_width_points  # update with origin width points [1]这里是外膜
+		
+		origin_height_points = []
+		for i in avercnts:
+			for j in i:
+				distance0 = 100000
+				for k in height_points[0]:
+					distance = math.sqrt(
+						(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
+					if distance < distance0:
+						distance0 = distance
+				distance1 = 100000
+				for k in height_points[1]:
+					distance = math.sqrt(
+						(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
+					if distance < distance1:
+						distance1 = distance
+				if distance1 < distance0 / 2:
+					origin_height_points.append(j)
+		height_points[1] = origin_height_points
+		'''
+		# sort 保证是从左到右的线
+		'''
+		for i in xrange(0, len(width_points[0])):
+			width_points[0][i] = [width_points[0][i][0][0], width_points[0][i][0][1]]
+		for i in xrange(0, len(width_points[1])):
+			width_points[1][i] = [width_points[1][i][0][0], width_points[1][i][0][1]]
+		width_points[0].sort()
+		width_points[1].sort()
+		for i in xrange(0, len(width_points[0])):
+			width_points[0][i] = [[width_points[0][i][0], width_points[0][i][1]]]
+		for i in xrange(0, len(width_points[1])):
+			width_points[1][i] = [[width_points[1][i][0], width_points[1][i][1]]]
+		
+		for i in xrange(0, len(height_points[0])):
+			height_points[0][i] = [height_points[0][i][0][0], height_points[0][i][0][1]]
+		for i in xrange(0, len(height_points[1])):
+			height_points[1][i] = [height_points[1][i][0][0], height_points[1][i][0][1]]
+		height_points[0].sort()
+		height_points[1].sort()
+		for i in xrange(0, len(height_points[0])):
+			height_points[0][i] = [[height_points[0][i][0], height_points[0][i][1]]]
+		for i in xrange(0, len(height_points[1])):
+			height_points[1][i] = [[height_points[1][i][0], height_points[1][i][1]]]
+		
+		# m+n
+		x_list = []
+		for i in width_points[0]:
+			x_list.append((i[0][0], i[0][1], 0))
+		for i in width_points[1]:
+			x_list.append((i[0][0], i[0][1], 1))
+		x_list.sort(key=itemgetter(0))
+		
+		y_list = []
+		for i in height_points[0]:
+			y_list.append((i[0][0], i[0][1], 0))
+		for i in height_points[1]:
+			y_list.append((i[0][0], i[0][1], 1))
+		y_list.sort(key=itemgetter(1))
 	'''
-	貌似是找外模和内膜的线的
-	因为腐蚀加膨胀
-	不再是原来的边界了
-	现在通过找最近的方式
-	用原来的边界来替换
-	下面代码：
+	finish automatically segmentation calculation
 	'''
-	for i in avercnts:
-		for j in i:
-			distance0 = 100000
-			for k in width_points[0]:
-				distance = math.sqrt(
-					(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
-				if distance < distance0:
-					distance0 = distance
-			distance1 = 100000
-			for k in width_points[1]:
-				distance = math.sqrt(
-					(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
-				if distance < distance1:
-					distance1 = distance
-			if distance1 < distance0 / 2:
-				origin_width_points.append(j)
-	
-	width_points[1] = origin_width_points  # update with origin width points [1]这里是外膜
-	
-	origin_height_points = []
-	for i in avercnts:
-		for j in i:
-			distance0 = 100000
-			for k in height_points[0]:
-				distance = math.sqrt(
-					(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
-				if distance < distance0:
-					distance0 = distance
-			distance1 = 100000
-			for k in height_points[1]:
-				distance = math.sqrt(
-					(j[0][0] - k[0][0]) * (j[0][0] - k[0][0]) + (j[0][1] - k[0][1]) * (j[0][1] - k[0][1]))
-				if distance < distance1:
-					distance1 = distance
-			if distance1 < distance0 / 2:
-				origin_height_points.append(j)
-	height_points[1] = origin_height_points
-	
-	# sort 保证是从左到右的线
-	for i in xrange(0, len(width_points[0])):
-		width_points[0][i] = [width_points[0][i][0][0], width_points[0][i][0][1]]
-	for i in xrange(0, len(width_points[1])):
-		width_points[1][i] = [width_points[1][i][0][0], width_points[1][i][0][1]]
-	width_points[0].sort()
-	width_points[1].sort()
-	for i in xrange(0, len(width_points[0])):
-		width_points[0][i] = [[width_points[0][i][0], width_points[0][i][1]]]
-	for i in xrange(0, len(width_points[1])):
-		width_points[1][i] = [[width_points[1][i][0], width_points[1][i][1]]]
-	
-	for i in xrange(0, len(height_points[0])):
-		height_points[0][i] = [height_points[0][i][0][0], height_points[0][i][0][1]]
-	for i in xrange(0, len(height_points[1])):
-		height_points[1][i] = [height_points[1][i][0][0], height_points[1][i][0][1]]
-	height_points[0].sort()
-	height_points[1].sort()
-	for i in xrange(0, len(height_points[0])):
-		height_points[0][i] = [[height_points[0][i][0], height_points[0][i][1]]]
-	for i in xrange(0, len(height_points[1])):
-		height_points[1][i] = [[height_points[1][i][0], height_points[1][i][1]]]
-	
-	# m+n
-	x_list = []
-	for i in width_points[0]:
-		x_list.append((i[0][0], i[0][1], 0))
-	for i in width_points[1]:
-		x_list.append((i[0][0], i[0][1], 1))
-	x_list.sort(key=itemgetter(0))
-	
-	y_list = []
-	for i in height_points[0]:
-		y_list.append((i[0][0], i[0][1], 0))
-	for i in height_points[1]:
-		y_list.append((i[0][0], i[0][1], 1))
-	y_list.sort(key=itemgetter(1))
-	
+	if hand_drawn:
+		pass
 	# 几等分线
 	cutting_line_points = [[], []]
 	y_average_list = []
