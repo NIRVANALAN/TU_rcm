@@ -128,6 +128,10 @@ def hand_draw_split_test(level):
 				points = np.append(points, i, axis=0)
 		points = np.unique(points, axis=0)  # get unique points
 		points = np.array([points], np.int32)  # convert to np.int32 works well
+		# sort by distance
+		num = 100
+		# dist = (points[0][-1][0][0] - points[0][0][0][0]) / 100
+		# print dist
 		print points.size
 		# sort by x
 		# points = points[points[:, 0].argsort()]
@@ -141,7 +145,7 @@ def hand_draw_split_test(level):
 		else:  # inner
 			# cv.polylines(dst, points, False, color=(0, 255, 0), thickness=4)
 			cv.polylines(slide_img, points, False, color=(0, 255, 0), thickness=5)
-		
+	
 	imgshow(slide_img)
 	# print he_slide.dimensions[0]/dst.shape[0]
 	pass

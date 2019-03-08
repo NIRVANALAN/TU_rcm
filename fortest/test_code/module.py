@@ -136,27 +136,35 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	if is_masson is True:
 		print 'edit MASSON'
 	else:
-		print "called editHE"
+		print "edit HE"
 	# n = 21
 	print level
 	working_dimensions = slide.level_dimensions[level]
 	print working_dimensions
 	img = np.array(slide.read_region((0, 0), level, working_dimensions))
 	# cv2.imshow('img', img)
-	b, g, r, a = cv2.split(img)
-	rgbimg = cv2.merge((r, g, b))
+	# b, g, r, a = cv2.split(img)
+	# rgbimg = cv2.merge((r, g, b))
+	rgbimg = cv2.cvtColor(img, cv2.COLOR_BGRA2RGB)
 	hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
 	# cv2.imshow("rgb_img", rgbimg)
+	
+	'''
+	convert hsv to grey image
+	'''
 	if is_masson is True:
 		grey_img = cv2.inRange(hsv, (0, 20, 0), (180, 255, 180))
-		# fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (140, 255, 255))  # can be returned
+	# fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (140, 255, 255))  # can be returned
 	# cv2.imshow("fibrosis", fibrosis_img)
 	else:
 		grey_img = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
-	average_greyimg = cv2.blur(grey_img, (30, 30))
+	average_greyimg = cv2.blur(grey_img, (30, 30))  # blur using filter
 	# cv2.imshow('average grey img', averagegreyimg)
 	# cv2.imwrite("test_images/HE/average_grey_img.jpg", averagegreyimg)
-	
+	'''
+	erode grey image, iteration time is specified
+	多次腐蚀，除去小梁
+	'''
 	ret, erode = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
 	if is_masson is True and calculate_trabe_flag:
@@ -169,8 +177,10 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		pass
 	if show_img:
 		cv2.imshow("after erosion", erode)
-	#  多次腐蚀，除去小梁
 	
+	'''
+	get boundary of whole and img_after_erosion
+	'''
 	ret, aver_image = cv2.threshold(average_greyimg, 120, 255, cv2.THRESH_BINARY)
 	aver_image, avercnts, averhierarchy = cv2.findContours(aver_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	# cv2.imshow("aver image", aver_image)
@@ -178,10 +188,13 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	image, cnts, hierarchy = cv2.findContours(erode, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	# cv2.imshow("contour after erosion", erode)
 	# 腐蚀后的边界
+	
 	rcm_object = []
 	max_area = 0
 	max_area_index = None
-	
+	'''
+	get all objects in the contour, the largest if the wall
+	'''
 	for cnt in cnts:
 		area = cv2.contourArea(cnt)
 		if area > 100:
@@ -199,15 +212,21 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	wall = rcm_object[max_area_index]
 	# 把每一个区域都分割出来，最大的心肌壁
 	
+	'''
+	get all other objects -> calculate trabe
+	'''
 	other = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	for i in range(0, len(rcm_object)):
 		if i != max_area_index:
 			other = cv2.add(other, rcm_object[i])
 	M0 = cv2.moments(other)
 	if M0["m00"] == 0.0:
-		calculate_trabe_flag = False
+		calculate_trabe_flag = False  # no trabe
 	# 对于计算小梁的slide, 通过矩moments计算重心
 	
+	'''
+	calculate trabe position via angle
+	'''
 	if calculate_trabe_flag:  # 小梁的计算
 		M1 = cv2.moments(wall)
 		cx1 = int(M1["m10"] / M1["m00"])
@@ -231,20 +250,27 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		base_angle = 90  # default for slide03
 	
 	kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-	wall = cv2.dilate(wall, kernel, iterations=15)
+	wall = cv2.dilate(wall, kernel, iterations=15)  # dilate wall
+	'''
+	find contours of other
+	'''
 	if calculate_trabe_flag:
 		other = cv2.dilate(other, kernel, iterations=15)
-		image1, contours1, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		image1, contours_other, hierarchy1 = cv2.findContours(other, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 	if show_img:
 		cv2.imshow("wall", wall)
 		cv2.imshow("other", other)
 	
-	image, contours, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	points_wall = cv2.approxPolyDP(contours[0], 15, True)
+	image, contours_wall, hierarchy = cv2.findContours(wall, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	points_wall = cv2.approxPolyDP(contours_wall[0], 15, True)
 	# 主要功能是把一个连续光滑曲线折线化，对图像轮廓点进行多边形拟合。
+	
+	'''
+	get rect of other, wall and all
+	'''
 	if calculate_trabe_flag:
 		points_other = []
-		for i in contours1:  # contours1 : other
+		for i in contours_other:  # contours1 : other
 			for j in i:
 				points_other.append(j)
 		points_other = np.array(points_other)
@@ -259,6 +285,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# get the width & height and compute the height of 'other'
 	# if slide_no is 1:
 	# 	other_height = rect_other[1]
+	
 	if (slide_no is 3 and set_vertical is False) or \
 			(calculate_trabe_flag and ((math.fabs(rect_wall[2] - base_angle) % 360) < 180 * atan(
 				rect_wall[1][1] / rect_wall[1][0]) / math.pi or
