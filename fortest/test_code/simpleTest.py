@@ -10,7 +10,7 @@ import xlrd
 from xlutils.copy import copy
 from xlwt import Style
 from module import imgshow
-from module import hand_draw_split_test
+from module import hand_draw_split_test, thresh
 
 # list_data = [1.0, 2, 3, 4, [5.0, 6], 7]
 list_data = []
@@ -63,7 +63,6 @@ def gray_test():
 
 cardiac_threshold = (155, 43, 46), (175, 255, 255)  # cardiac
 fibrosis_threshold = (100, 43, 46), (134, 255, 255)  # fibrosis
-
 
 # def imgshow(img, read_from_cv=True, cmap=None):
 # 	# b, g, r = cv.split(img)
@@ -147,12 +146,10 @@ fibrosis_threshold = (100, 43, 46), (134, 255, 255)  # fibrosis
 
 if __name__ == '__main__':
 	# normalization test
-	outer_thresh = (166, 43, 43), (180, 255, 255)
-	inner_thresh = (35, 43, 43), (77, 255, 255)
 	slide_path = '/home/zhourongchen/zrc/rcm/images/HE/25845/25845-1.ndpi'
 	image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_code/HE_image/25845/whole/25845_slide0.jpg'
-	thresh = (outer_thresh, inner_thresh)
-	hand_draw_split_test(5, thresh, slide_path, image_path)
+	slide_for_test = openslide.open_slide(slide_path)
+	hand_draw_split_test(5, thresh, image_path=image_path, slide=slide_for_test)
 	pass
 
 cv2.destroyAllWindows()

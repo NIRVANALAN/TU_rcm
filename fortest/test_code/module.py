@@ -7,6 +7,7 @@ import xlwt
 import xlrd
 from xlutils.copy import copy
 from xlwt import Style
+import matplotlib.pyplot as plt
 
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
@@ -127,7 +128,7 @@ def imgshow(img, read_from_cv=True, cmap=None):
 	# b, g, r = cv.split(img)
 	# he_image = cv.merge((r, g, b))
 	if read_from_cv:
-		img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+		img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 	else:
 		pass
 	if cmap is not None:
@@ -137,30 +138,41 @@ def imgshow(img, read_from_cv=True, cmap=None):
 	plt.show()
 
 
-def hand_draw_split_test(level, threshes, image_path, slide_path):
+def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
+	"""
+	:param level: level the slide will be working on
+	:param threshes: (outer_thresh, inner_thresh)
+	:param image_path:  specify the path to the image
+	:param slide_path:  path to the slide
+	:param show_image: denote whether to show the image
+	:return: width_points, x_list
+	"""
 	# slide_he = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/MASSON/30638/28330-.ndpi')
 	he_image = cv2.imread(image_path)
-	imgshow(he_image)
+	if show_image:
+		imgshow(he_image)
 	hsv = cv2.cvtColor(he_image, cv2.COLOR_BGR2HSV)
-	slide = openslide.open_slide(slide_path)
+	# slide = openslide.open_slide(slide_path)
 	# print he_slide.dimensions
 	# level = 5
 	origin_level = 6
 	slide_img = np.array(slide.read_region((0, 0), level, slide.level_dimensions[level]))
 	print slide_img.shape
 	slide_img = cv2.cvtColor(slide_img, cv2.COLOR_RGBA2BGR)
+	width_points = [[], []]
 	for t in threshes:
 		mask = cv2.inRange(hsv, t[0], t[1])
 		# mask = cv.inRange(hsv, np.array([170, 43, 43]), np.array([180, 255, 255]))
 		# dst = cv.bitwise_and(he_image, he_image, mask=mask)
 		# imgshow(dst)
 		# get points on the contours
-		_, contours, hierarchy = cv2.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+		_, contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		points = contours[0]
 		for i in contours[1:]:
 			if len(i) > 10:
 				points = np.append(points, i, axis=0)
 		points = np.unique(points, axis=0)  # get unique points
+		# draw points in the original image
 		points = np.array([points], np.int32)  # convert to np.int32 works well
 		# sort by distance
 		num = 100
@@ -172,16 +184,30 @@ def hand_draw_split_test(level, threshes, image_path, slide_path):
 		# draw_img0 = cv.drawContours(dst.copy(), contours, -1, (0, 255, 0), 3)
 		# imgshow(dst)
 		# print dst.shape
-		points *= pow(2, origin_level - level)  # cvt points in different dimensions
+		points *= int(pow(2, origin_level - level))  # cvt points in different dimensions
 		if threshes.index(t) is 0:  # outer
 			# cv.polylines(dst, points, False, color=(0, 0, 255), thickness=4)
-			cv2.polylines(slide_img, points, False, color=(0, 0, 255), thickness=5)
+			# cv2.polylines(slide_img, points, False, color=(0, 0, 255), thickness=5)
+			for p in points[0]:
+				width_points[0].append([p[0][0], p[0][1]])  # outer line
+			width_points[0].sort()
+			pass
 		else:  # inner
 			# cv.polylines(dst, points, False, color=(0, 255, 0), thickness=4)
-			cv2.polylines(slide_img, points, False, color=(0, 255, 0), thickness=5)
-	
-	imgshow(slide_img)
+			# cv2.polylines(slide_img, points, False, color=(0, 255, 0), thickness=5)
+			for p in points[0]:
+				width_points[1].append([p[0][0], p[0][1]])  # inner line
+			width_points[1].sort()
+			pass
+	if show_image:
+		imgshow(slide_img)
 	# print he_slide.dimensions[0]/dst.shape[0]
+	x_list = []
+	for i in width_points:
+		for j in i:
+			x_list.append((j[0], j[1], width_points.index(i)))
+	x_list.sort(key=itemgetter(0))
+	return width_points, x_list
 	pass
 
 
@@ -189,9 +215,16 @@ def hand_draw_split_test(level, threshes, image_path, slide_path):
 -1/2/3是一共四层（包含肌小梁）；-4分3层（忽略肌小梁）；-5/6分3层（含1层肌小梁）
 '''
 
+'''
+thresh for hand_drawn line extraction
+'''
+outer_thresh = (166, 43, 43), (180, 255, 255)
+inner_thresh = (35, 43, 43), (77, 255, 255)
+thresh = (outer_thresh, inner_thresh)
+
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
-              is_masson=False, patient_id=0, show_img=False, set_vertical=False, hand_drawn=False):
+              is_masson=False, patient_id=0, show_img=False, set_vertical=False, hand_drawn=False, image_path=None):
 	calculate_trabe_flag = True
 	if slide_no is 3:
 		calculate_trabe_flag = False
@@ -432,7 +465,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			else:
 				if avery1 > avery0:
 					width_points[0], width_points[1] = width_points[1], width_points[0]
-		origin_width_points = []
+		
 		'''
 		貌似是找外模和内膜的线的
 		因为腐蚀加膨胀
@@ -441,6 +474,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		用原来的边界来替换
 		下面代码：
 		'''
+		origin_width_points = []
 		for i in avercnts:
 			for j in i:
 				distance0 = 100000
@@ -478,8 +512,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 				if distance1 < distance0 / 2:
 					origin_height_points.append(j)
 		height_points[1] = origin_height_points
+		
 		'''
-		# sort 保证是从左到右的线
+		简化width_points，sort 保证是从左到右的线
 		'''
 		for i in xrange(0, len(width_points[0])):
 			width_points[0][i] = [width_points[0][i][0][0], width_points[0][i][0][1]]
@@ -521,6 +556,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	finish automatically segmentation calculation
 	'''
 	if hand_drawn:
+		width_points, x_list = hand_draw_split_test(level=level, image_path=image_path, threshes=thresh, slide=slide)
 		pass
 	# 几等分线
 	cutting_line_points = [[], []]
@@ -571,7 +607,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 					[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 2 + x_list[pl][1])]])
 			y_average_list.append(x_list[i][1] - x_list[pl][1])
 	rcm_thickening.append(abs(np.average(y_average_list)))
-	#  旋转回去
+	'''
+	rotation
+	'''
 	width_points[0] = rotate_points(width_points[0], rect_wall[0], angle)
 	width_points[1] = rotate_points(width_points[1], rect_wall[0], angle)
 	cutting_line_points[0] = rotate_points(cutting_line_points[0], rect_wall[0], angle)
