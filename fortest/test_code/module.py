@@ -140,6 +140,7 @@ def imgshow(img, read_from_cv=True, cmap=None):
 
 def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	"""
+	:type threshes: ((),())
 	:param level: level the slide will be working on
 	:param threshes: (outer_thresh, inner_thresh)
 	:param image_path:  specify the path to the image
@@ -175,10 +176,9 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		# draw points in the original image
 		points = np.array([points], np.int32)  # convert to np.int32 works well
 		# sort by distance
-		num = 100
 		# dist = (points[0][-1][0][0] - points[0][0][0][0]) / 100
 		# print dist
-		print points.size
+		# print points.size
 		# sort by x
 		# points = points[points[:, 0].argsort()]
 		# draw_img0 = cv.drawContours(dst.copy(), contours, -1, (0, 255, 0), 3)
@@ -202,6 +202,19 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	if show_image:
 		imgshow(slide_img)
 	# print he_slide.dimensions[0]/dst.shape[0]
+	'''
+	select some points
+	'''
+	percentage = 5
+	smaller_index = 1 if width_points[0].__len__() > width_points[1].__len__() else 0
+	num = int(width_points[smaller_index].__len__() / percentage)  # 1/5 from original points
+	arg0 = np.linspace(0, width_points[0].__len__(), num, endpoint=False, dtype=int)
+	arg1 = np.linspace(0, width_points[1].__len__(), num, endpoint=False, dtype=int)
+	width_points[0] = [width_points[0][i] for i in arg0]
+	width_points[1] = [width_points[1][i] for i in arg1]
+	'''
+	m+n
+	'''
 	x_list = []
 	for i in width_points:
 		for j in i:
