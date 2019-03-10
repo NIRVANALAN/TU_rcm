@@ -126,8 +126,10 @@ def write_test_img(path, is_masson=False):
 he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
-def he_proc(he_slide_no, he_slide_path, patient_id):
+def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_drawn_img=None):
 	"""
+	:param hand_drawn_img: set if it's hand_drawn
+	:param set_hand_drawn: hand_drawn_img path
 	:param he_slide_path: path of he slide
 	:param he_slide_no: the slide_no of a patient
 	:return: the whole_result_list of this slide will be saved
@@ -143,7 +145,9 @@ def he_proc(he_slide_no, he_slide_path, patient_id):
 	                                                                        he_erosion_iteration_time_list,
 	                                                                        masson_erosion_iteration_time_list,
 	                                                                        patient_id=patient_id,
-	                                                                        slide_no=he_slide_no)
+	                                                                        slide_no=he_slide_no,
+	                                                                        hand_drawn=set_hand_drawn,
+	                                                                        image_path=hand_drawn_img)
 	global he_mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	magnify = pow(2, mask_level)
@@ -484,13 +488,13 @@ def masson_test_proc(masson_working_level=6):
 	pass
 
 
-def slide_proc(patient_id, start, end, he=False, masson=False):
+def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=False, hand_drawn_img=None):
 	# global he_test_path, masson_test_path
 	he_slide_path, masson_slide_path = get_image_path(patient_id)  # the first patient's image path
 	for slide_no in xrange(start, end):
 		if he:
 			try:
-				he_proc(slide_no, he_slide_path, patient_id)
+				he_proc(slide_no, he_slide_path, patient_id, set_hand_drawn, hand_drawn_img)
 			except:
 				with open('he_error_slide_log.txt', 'a') as f:
 					f.writelines(he_slide_path[slide_no] + '\n')

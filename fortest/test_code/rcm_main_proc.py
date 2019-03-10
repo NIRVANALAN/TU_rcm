@@ -35,9 +35,15 @@ if __name__ == '__main__':
 	# 	he_slide_path, masson_slide_path = get_image_path(i)
 	# 	write_test_img(masson_slide_path, is_masson=False)
 	# persist process begin#################
-	for i in xrange(0, 6):
-		slide_proc(patient_id=i, start=0, end=6, he=True, masson=False)
-
+	# for i in xrange(0, 1):
+	# 	slide_proc(patient_id=i, start=1, end=2, he=True, masson=False)
+	'''
+	deal with hand_drawn pics
+	'''
+	image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_code/HE_image/25845/whole/25845_slide0.jpg'
+	for i in xrange(0, 1):
+		slide_proc(patient_id=i, start=0, end=1, he=True, masson=False,set_hand_drawn=True,hand_drawn_img=image_path)
+		
 		# persist(he_patients[1], slide_type="HE")
 		# persist(masson_patients[i], slide_type="MASSON")
 	
