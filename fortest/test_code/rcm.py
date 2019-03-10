@@ -495,16 +495,18 @@ def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=Fa
 		if he:
 			try:
 				he_proc(slide_no, he_slide_path, patient_id, set_hand_drawn, hand_drawn_img)
-			except:
+			except BaseException, e:
+				print e.message
 				with open('he_error_slide_log.txt', 'a') as f:
-					f.writelines(he_slide_path[slide_no] + '\n')
+					f.writelines(he_slide_path[slide_no] + '\n' + e.message)
 				continue
 		if masson:
 			try:
 				masson_proc(slide_no, masson_slide_path, patient_id)
-			except:
+			except BaseException,e:
+				print e.message
 				with open('masson_error_slide_log.txt', 'a') as f:
-					f.writelines(masson_slide_path[slide_no] + '\n')
+					f.writelines(masson_slide_path[slide_no] + '\n' + e.message)
 					continue
 
 

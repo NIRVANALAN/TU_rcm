@@ -127,10 +127,8 @@ def fibrosis(slide, fibrosis_level):
 def imgshow(img, read_from_cv=True, cmap=None):
 	# b, g, r = cv.split(img)
 	# he_image = cv.merge((r, g, b))
-	if read_from_cv:
+	if read_from_cv and cmap is None:
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-	else:
-		pass
 	if cmap is not None:
 		plt.imshow(img, cmap=cmap)
 	else:
@@ -189,14 +187,14 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 			# cv.polylines(dst, points, False, color=(0, 0, 255), thickness=4)
 			# cv2.polylines(slide_img, points, False, color=(0, 0, 255), thickness=5)
 			for p in points[0]:
-				width_points[0].append([p[0][0], p[0][1]])  # outer line
+				width_points[0].append([[p[0][0], p[0][1]]])  # outer line
 			width_points[0].sort()
 			pass
 		else:  # inner
 			# cv.polylines(dst, points, False, color=(0, 255, 0), thickness=4)
 			# cv2.polylines(slide_img, points, False, color=(0, 255, 0), thickness=5)
 			for p in points[0]:
-				width_points[1].append([p[0][0], p[0][1]])  # inner line
+				width_points[1].append([[p[0][0], p[0][1]]])  # inner line
 			width_points[1].sort()
 			pass
 	if show_image:
@@ -218,7 +216,7 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	x_list = []
 	for i in width_points:
 		for j in i:
-			x_list.append((j[0], j[1], width_points.index(i)))
+			x_list.append((j[0][0], j[0][1], width_points.index(i)))
 	x_list.sort(key=itemgetter(0))
 	return width_points, x_list
 	pass
@@ -642,12 +640,12 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	if hand_drawn:
 		if slide_no != 4 and slide_no != 5:
 			for point_index in xrange(width_points[0].__len__()):
-				div_point_0 = [width_points[0][point_index][0] / 3 * 2 + width_points[1][point_index][0] / 3,
-				               width_points[0][point_index][1] / 3 * 2 + width_points[1][point_index][1] / 3]
-				div_point_1 = [width_points[0][point_index][0] / 3 + width_points[1][point_index][0] / 3 * 2,
-				               width_points[0][point_index][1] / 3 + width_points[1][point_index][1] / 3 * 2]
-				cutting_line_points[0].append([div_point_0])
-				cutting_line_points[1].append([div_point_1])
+				div_point_0 = [width_points[0][point_index][0][0] / 3 + width_points[1][point_index][0][0] / 3 * 2,
+				               width_points[0][point_index][0][1] / 3 + width_points[1][point_index][0][1] / 3 * 2]
+				div_point_1 = [width_points[0][point_index][0][0] / 3 * 2 + width_points[1][point_index][0][0] / 3,
+				               width_points[0][point_index][0][1] / 3 * 2 + width_points[1][point_index][0][1] / 3]
+				cutting_line_points[0].append([div_point_0])  # near inner
+				cutting_line_points[1].append([div_point_1])  # near outer
 				#  euclidean distance
 				#  use np to do subtraction
 				sub_res = np.array(width_points[0][point_index]) - np.array(width_points[1][point_index])
@@ -655,8 +653,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		else:
 			for point_index in xrange(width_points[0].__len__()):
 				cutting_line_points[0].append(
-					[width_points[0][point_index][0] / 2 + width_points[1][point_index][0] / 2,
-					 width_points[0][point_index][1] / 2 + width_points[1][point_index][1] / 2])
+					[width_points[0][point_index][0][0] / 2 + width_points[1][point_index][0][0] / 2,
+					 width_points[0][point_index][0][1] / 2 + width_points[1][point_index][0][1] / 2])
 				#  euclidean distance
 				y_average_list.append(np.sqrt(np.sum(width_points[0][point_index] - width_points[1][point_index])))
 		'''
@@ -678,8 +676,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		third = []
 	#######################################
 	# draw the segmentation lines
-	first_pts = np.array([cutting_line_points[0]], np.int32)
-	second_pts = np.array([cutting_line_points[1]], np.int32)
+	first_pts = np.array([cutting_line_points[1]], np.int32)
+	second_pts = np.array([cutting_line_points[0]], np.int32)
 	first_pts.reshape(-1, 1, 2)
 	second_pts.reshape(-1, 1, 2)
 	'''
@@ -693,7 +691,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		cv2.polylines(rgbimg, first_pts, False, (0, 255, 255), 6)  # yellow line
 		if slide_no != 4 and slide_no != 5:
 			cv2.polylines(rgbimg, second_pts, False, (255, 255, 0), 6)  # light blue
-		imgshow(rgbimg)
+		# imgshow(rgbimg)
 		pass
 	
 	# height_line_points[1].reverse()
@@ -770,7 +768,12 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	elif hand_drawn:
 		# othermask = cv2.fillPoly()
 		# i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-		othermask = average_greyimg - firstmask - secondmask - thirdmask
+		othermask = grey_img - firstmask - secondmask - thirdmask
+		imgshow(rgbimg)
+		# imgshow(firstmask, cmap='gray')
+		# imgshow(secondmask, cmap='gray')
+		# imgshow(thirdmask, cmap='gray')
+		imgshow(othermask, cmap='gray')
 		pass
 	cv2.destroyAllWindows()
 	if is_masson is True:
