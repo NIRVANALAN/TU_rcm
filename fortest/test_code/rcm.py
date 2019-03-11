@@ -1,6 +1,6 @@
 # coding=utf-8
-import sys
 import os
+import sys
 from time import time
 from skimage import measure
 import matplotlib.pyplot as plt
@@ -78,6 +78,10 @@ def get_image_path(patient_no, return_type="both"):
 		masson_path_list.append(masson_path_iter)
 	if return_type is "both":
 		return he_path_list, masson_path_list
+	elif return_type is "HE":
+		return he_path_list
+	else:
+		return masson_path_list
 
 
 masson_erosion_iteration_time_list = [10, 10, 15, 15, 15, 13]
@@ -101,7 +105,7 @@ def he_test_proc():
 	pass
 
 
-def write_test_img(path, is_masson=False):
+def write_test_img(path, saved_img_level, is_masson=False):
 	if is_masson is False:
 		# path = he_test_path
 		img_dir_path = './../test_images/HE/'
@@ -110,14 +114,15 @@ def write_test_img(path, is_masson=False):
 		img_dir_path = './../test_images/MASSON/'
 	for i in path:
 		slide_iter = openslide.open_slide(i)
-		whole_dimension = slide_iter.level_dimensions[working_level]
-		region = np.array((slide_iter.read_region((0, 0), working_level, whole_dimension)))
+		whole_dimension = slide_iter.level_dimensions[saved_img_level]
+		region = np.array((slide_iter.read_region((0, 0), saved_img_level, whole_dimension)))
 		region = cv2.cvtColor(region, cv2.COLOR_BGR2RGB)
 		# cv2.imshow(i, region)
 		img_path_iter = img_dir_path + i.split('/')[-2]
 		if not os.path.exists(img_path_iter):
 			os.mkdir(img_path_iter)
-		cv2.imwrite(img_path_iter + '/' + i.split('/')[-1] + '.jpg', region)
+		cv2.imwrite(img_path_iter + '/' + i.split('/')[-1].split('.')[0] + '.jpg', region)
+		print 'write images' + img_path_iter + '/' + i.split('/')[-1].split('.')[0] + '.jpg'
 
 
 # whole_img = slide.read_region((0, 0), 0, dimension)
@@ -490,7 +495,7 @@ def masson_test_proc(masson_working_level=6):
 
 def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=False, hand_drawn_img=None):
 	# global he_test_path, masson_test_path
-	he_slide_path, masson_slide_path = get_image_path(patient_id)  # the first patient's image path
+	he_slide_path, masson_slide_path = get_image_path(patient_id)  # patient's image path
 	for slide_no in xrange(start, end):
 		if he:
 			try:
@@ -498,15 +503,15 @@ def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=Fa
 			except BaseException, e:
 				print e.message
 				with open('he_error_slide_log.txt', 'a') as f:
-					f.writelines(he_slide_path[slide_no] + '\n' + e.message)
+					f.writelines(he_slide_path[slide_no] + '：' + e.message + '\n')
 				continue
 		if masson:
 			try:
 				masson_proc(slide_no, masson_slide_path, patient_id)
-			except BaseException,e:
+			except BaseException, e:
 				print e.message
 				with open('masson_error_slide_log.txt', 'a') as f:
-					f.writelines(masson_slide_path[slide_no] + '\n' + e.message)
+					f.writelines(masson_slide_path[slide_no] + '：' + e.message + '\n')
 					continue
 
 

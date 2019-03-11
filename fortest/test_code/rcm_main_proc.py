@@ -40,12 +40,15 @@ if __name__ == '__main__':
 	'''
 	deal with hand_drawn pics
 	'''
-	image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_code/HE_image/25845/whole/25845_slide0.jpg'
-	for i in xrange(0, 1):
-		slide_proc(patient_id=i, start=0, end=1, he=True, masson=False,set_hand_drawn=True,hand_drawn_img=image_path)
-		
-		# persist(he_patients[1], slide_type="HE")
-		# persist(masson_patients[i], slide_type="MASSON")
+	# image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_code/HE_image/25845/whole/25845_slide0.jpg'
+	image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_images/HE/35730/test_35730-2_LI.jpg'
+	for i in xrange(6, 7):
+		slide_proc(patient_id=i, start=1, end=2, he=True, masson=False, set_hand_drawn=True, hand_drawn_img=image_path)
+		# he_slide_path, masson_slide_path = get_image_path(i)
+		# write_test_img(he_slide_path, saved_img_level=6)
+	
+	# persist(he_patients[1], slide_type="HE")
+	# persist(masson_patients[i], slide_type="MASSON")
 	
 	# masson_test_proc()
 	# cv2.waitKey(0)

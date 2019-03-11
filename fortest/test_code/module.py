@@ -138,6 +138,7 @@ def imgshow(img, read_from_cv=True, cmap=None):
 
 def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	"""
+	:param slide: the pathological slide
 	:type threshes: ((),())
 	:param level: level the slide will be working on
 	:param threshes: (outer_thresh, inner_thresh)
@@ -154,7 +155,7 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	# slide = openslide.open_slide(slide_path)
 	# print he_slide.dimensions
 	# level = 5
-	origin_level = 6
+	origin_level = 6  # level of the hand_drawn slides
 	slide_img = np.array(slide.read_region((0, 0), level, slide.level_dimensions[level]))
 	print slide_img.shape
 	slide_img = cv2.cvtColor(slide_img, cv2.COLOR_RGBA2BGR)
@@ -264,6 +265,14 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# cv2.imshow("fibrosis", fibrosis_img)
 	else:
 		grey_img = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
+	
+	kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+	g_img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+	g_img = cv2.cvtColor(g_img, cv2.COLOR_BGR2GRAY)
+	g_img = cv2.adaptiveThreshold(g_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 5)
+	g_img = cv2.morphologyEx(g_img, cv2.MORPH_CLOSE, kernel, iterations=3)
+	g_img = cv2.morphologyEx(g_img, cv2.MORPH_OPEN, kernel, iterations=5)
+	imgshow(g_img, cmap='gray')
 	average_greyimg = cv2.blur(grey_img, (30, 30))  # blur using filter
 	# cv2.imshow('average grey img', averagegreyimg)
 	# cv2.imwrite("test_images/HE/average_grey_img.jpg", averagegreyimg)
@@ -387,7 +396,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			rect_all = cv2.minAreaRect(np.concatenate([points_wall, points_other]))  # 整体的最小外接矩形，包括心肌壁和小梁
 		
 		rect_wall = cv2.minAreaRect(points_wall)
-		# 最小外切矩形 （中心(x,y), (宽,高), 旋转角度）
+		# 最小外切矩形 （中心(x,y), (宽,高), 旋转角度） angle -> [-90,0)
 		box_wall = cv2.boxPoints(rect_wall)
 		rect_wall = (rect_wall[0], rect_wall[1], -rect_wall[2])  # minAreaRect 旋转角度小于0
 		# get the width & height and compute the height of 'other'
@@ -768,12 +777,31 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	elif hand_drawn:
 		# othermask = cv2.fillPoly()
 		# i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-		othermask = grey_img - firstmask - secondmask - thirdmask
+		othermask = g_img - firstmask - secondmask - thirdmask
+		'''
+		add MORPH_OPEN calculation
+		'''
+		othermask = cv2.morphologyEx(othermask, cv2.MORPH_OPEN, kernel, iterations=8)
+		'''
+		calculate thickness of trabe if hand_drawn, not needed now..
+		'''
+		# img, other_cnts, _ = cv2.findContours(othermask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		# points_other = cv2.approxPolyDP(other_cnts[0], 15, True)
+		# rect_other = cv2.minAreaRect(points_other)
+		# slop_of_other_01 = tan((-rect_other[2] + 90) / 180 * pi)
+		# slope_of_wall = (np.mean(x_list[:x_list.__len__() / 2][0]) - np.mean(x_list[x_list.__len__() / 2:][0]))
+		'''
+		show and save images
+		'''
 		imgshow(rgbimg)
 		# imgshow(firstmask, cmap='gray')
 		# imgshow(secondmask, cmap='gray')
 		# imgshow(thirdmask, cmap='gray')
 		imgshow(othermask, cmap='gray')
+		img_name = ('HE_image' + str(he_patients[patient_id]) + '/whole/slide' + str(slide_no) + '_other_mask.jpg' if (
+				is_masson is False)
+		            else 'HE_image' + str(masson_patients[patient_id]) + '/whole/slide' + str(slide_no) + '.jpg')
+		cv2.imwrite(img_name, othermask)  # save the img of segmentation result
 		pass
 	cv2.destroyAllWindows()
 	if is_masson is True:
