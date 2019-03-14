@@ -800,9 +800,11 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	elif hand_drawn:
 		# othermask = cv2.fillPoly()
 		# i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-		othermask = g_img - firstmask - secondmask - thirdmask
-		# i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-		# othermask = cv2.fillPoly(i, np.array([trabe_points], np.int32), 255)
+		if width_points[2].__len__() is 0:
+			othermask = g_img - firstmask - secondmask - thirdmask
+		else:
+			i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+			othermask = cv2.fillPoly(i, np.array([trabe_points], np.int32), 255)
 		'''
 		add MORPH_OPEN calculation, eliminate areas on the outer side, deprecated in this branch
 		'''
