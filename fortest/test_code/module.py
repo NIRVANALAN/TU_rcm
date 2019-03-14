@@ -30,6 +30,18 @@ for i in masson_filename:
 	pass
 
 
+def distance_between_point_line(line, point):
+	"""
+	:param line: np.array(vx,vy,x,y) line[0][0] line[1][0] ...
+	:param point: np.array([x,y]) x-> point[0] y->point[1]
+	:return: distance(int)
+	"""
+	point_on_line = (point[0], (point[0] - line[2][0]) * line[1][0] / line[0][0] + line[3][0])
+	dist = (point_on_line[0] - point[1]) * cos(math.atan(abs(line[1][0] / line[0][0])))
+	dist = abs(dist)
+	return dist
+
+
 def write_file(list_for_write, filename):
 	with open(filename, 'w') as f:
 		f.write(str(list_for_write))
@@ -159,7 +171,8 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	slide_img = np.array(slide.read_region((0, 0), level, slide.level_dimensions[level]))
 	print slide_img.shape
 	slide_img = cv2.cvtColor(slide_img, cv2.COLOR_RGBA2BGR)
-	width_points = [[], []]
+	width_points = [[], [], []]  # add BLUE line for trabe segmentation
+	colors = ((0, 0, 255), (0, 255, 0), (255, 0, 0))
 	for t in threshes:
 		mask = cv2.inRange(hsv, t[0], t[1])
 		# mask = cv.inRange(hsv, np.array([170, 43, 43]), np.array([180, 255, 255]))
@@ -167,6 +180,8 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		# imgshow(dst)
 		# get points on the contours
 		_, contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		if contours.__len__() is 0:  # now trabe line(blue)
+			continue
 		points = contours[0]
 		for i in contours[1:]:
 			if len(i) > 10:
@@ -184,27 +199,33 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		# imgshow(dst)
 		# print dst.shape
 		points *= int(pow(2, origin_level - level))  # cvt points in different dimensions
-		if threshes.index(t) is 0:  # outer
-			# cv.polylines(dst, points, False, color=(0, 0, 255), thickness=4)
-			# cv2.polylines(slide_img, points, False, color=(0, 0, 255), thickness=5)
-			for p in points[0]:
-				width_points[0].append([[p[0][0], p[0][1]]])  # outer line
-			width_points[0].sort()
-			pass
-		else:  # inner
-			# cv.polylines(dst, points, False, color=(0, 255, 0), thickness=4)
-			# cv2.polylines(slide_img, points, False, color=(0, 255, 0), thickness=5)
-			for p in points[0]:
-				width_points[1].append([[p[0][0], p[0][1]]])  # inner line
-			width_points[1].sort()
-			pass
+		# if threshes.index(t) is 0:  # outer
+		# 	# cv.polylines(dst, points, False, color=(0, 0, 255), thickness=4)
+		# 	# cv2.polylines(slide_img, points, False, color=(0, 0, 255), thickness=5)
+		# 	for p in points[0]:
+		# 		width_points[0].append([[p[0][0], p[0][1]]])  # outer line
+		# 	width_points[0].sort()
+		# 	pass
+		# else:  # inner
+		# 	# cv.polylines(dst, points, False, color=(0, 255, 0), thickness=4)
+		# 	# cv2.polylines(slide_img, points, False, color=(0, 255, 0), thickness=5)
+		# 	for p in points[0]:
+		# 		width_points[1].append([[p[0][0], p[0][1]]])  # inner line
+		# 	width_points[1].sort()
+		# 	pass
+		index = threshes.index(t)
+		for p in points[0]:
+			width_points[index].append([[p[0][0], p[0][1]]])  # outer line
+		width_points[index].sort()
+		pass
+	
 	if show_image:
 		imgshow(slide_img)
 	# print he_slide.dimensions[0]/dst.shape[0]
 	'''
 	select some points
 	'''
-	percentage = 10
+	percentage = 5
 	smaller_index = 1 if width_points[0].__len__() > width_points[1].__len__() else 0
 	num = int(width_points[smaller_index].__len__() / percentage)  # 1/percentage from original points
 	arg0 = np.linspace(0, width_points[0].__len__(), num, endpoint=False, dtype=int)
@@ -230,9 +251,10 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 '''
 thresh for hand_drawn line extraction
 '''
-outer_thresh = (166, 43, 43), (180, 255, 255)
-inner_thresh = (35, 43, 43), (77, 255, 255)
-thresh = (outer_thresh, inner_thresh)
+outer_thresh = (166, 43, 46), (180, 255, 255)  # RED
+inner_thresh = (35, 43, 46), (77, 255, 255)  # GREEN
+trabe_thresh = (100, 43, 46), (124, 255, 255)  # BLUE
+thresh = (outer_thresh, inner_thresh, trabe_thresh)
 
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
@@ -257,18 +279,17 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# cv2.imshow("rgb_img", rgbimg)
 	
 	'''
-	convert hsv to grey image
+	convert hsv to grey image, get rid of white area
 	'''
 	if is_masson is True:
-		grey_img = cv2.inRange(hsv, (0, 20, 0), (180, 255, 180))
+		grey_img = cv2.inRange(hsv, (0, 30, 0), (180, 255, 180))
 	# fibrosis_img = cv2.inRange(hsv, (90, 20, 0), (140, 255, 255))  # can be returned
 	# cv2.imshow("fibrosis", fibrosis_img)
 	else:
-		grey_img = cv2.inRange(hsv, (0, 20, 0), (180, 255, 220))
+		grey_img = cv2.inRange(hsv, (0, 30, 0), (180, 255, 220))
 	
 	kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-	g_img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-	g_img = cv2.cvtColor(g_img, cv2.COLOR_BGR2GRAY)
+	g_img = grey_img.copy()
 	g_img = cv2.adaptiveThreshold(g_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 5)
 	g_img = cv2.morphologyEx(g_img, cv2.MORPH_CLOSE, kernel, iterations=3)
 	g_img = cv2.morphologyEx(g_img, cv2.MORPH_OPEN, kernel, iterations=5)
@@ -450,7 +471,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		'''
 		get width_points and height_points
 		'''
-		width_points = [[], []]
+		width_points = [[], [], []]
 		for i in range(0, len(points_wall)):
 			if points_wall[i][0][1] - rect_wall[0][1] > wall_height / 6:
 				width_points[0].append(points_wall[i])
@@ -683,6 +704,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		first = width_points[0] + cutting_line_points[0]
 		second = cutting_line_points[0] + width_points[1]
 		third = []
+	if hand_drawn and width_points[2].__len__() is not 0:
+		trabe_points = width_points[1] + width_points[2]
 	#######################################
 	# draw the segmentation lines
 	first_pts = np.array([cutting_line_points[1]], np.int32)
@@ -778,10 +801,53 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		# othermask = cv2.fillPoly()
 		# i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 		othermask = g_img - firstmask - secondmask - thirdmask
+		# i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+		# othermask = cv2.fillPoly(i, np.array([trabe_points], np.int32), 255)
 		'''
-		add MORPH_OPEN calculation
+		add MORPH_OPEN calculation, eliminate areas on the outer side, deprecated in this branch
 		'''
-		othermask = cv2.morphologyEx(othermask, cv2.MORPH_OPEN, kernel, iterations=8)
+		othermask = cv2.morphologyEx(othermask, cv2.MORPH_OPEN, kernel, iterations=5)
+		img, other_counters, _ = cv2.findContours(othermask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+		#  get mean_point of outer/inner layer
+		outer_mean_point = (np.mean([i[0] for i in x_list[:x_list.__len__() / 2]]),
+		                    np.mean([i[1] for i in x_list[:x_list.__len__() / 2]]))
+		inner_mean_point = (np.mean([i[0] for i in x_list[x_list.__len__() / 2:]]),
+		                    np.mean([i[1] for i in x_list[x_list.__len__() / 2:]]))
+		#  reconstruct with_point_lines
+		# for i in width_points:  # (vx,vy,x,y)
+		line_outer = cv2.fitLine(np.array(width_points[0]), cv2.DIST_L2, 0, 0.01, 0.01)
+		k_outer = line_outer[1] / line_outer[0]
+		line_inner = cv2.fitLine(np.array(width_points[1]), cv2.DIST_L2, 0, 0.01, 0.01)
+		k_inner = line_inner[1] / line_inner[0]
+		
+		length = 300
+		point_out = (line_outer[2] - length, line_outer[3] - k_outer * length), \
+		            (line_outer[2] + length, line_outer[3] + k_outer * length)
+		point_in = (line_inner[2] - length, line_inner[3] - k_inner * length), \
+		           (line_inner[2] + length, line_inner[3] + k_inner * length)
+		
+		cv2.line(rgbimg, point_out[0], point_out[1], (0, 0, 0), 3)
+		cv2.line(rgbimg, point_in[0], point_in[1], (255, 255, 255), 3)
+		
+		# for i in other_counters:
+		# 	mean_point = np.array((np.mean([j[0][0] for j in i]),
+		# 	                       np.mean([j[0][1] for j in i])), float)
+		# 	# if np.sqrt(np.square(np.sum(mean_point - outer_mean_point))) < np.sqrt(
+		# 	# 		np.square(np.sum(mean_point - inner_mean_point))):
+		# 	if distance_between_point_line(line_outer, mean_point) < \
+		# 			distance_between_point_line(line_inner, mean_point):
+		# 		# cv2.drawContours(othermask, [i], 0, 0, -1)  # eliminate extra areas
+		# 		# cv2.drawContours(othermask, [i], 0, 0, 3)  # eliminate extra areas
+		# 		cv2.drawContours(rgbimg, [i], 0, (0, 255, 0), 3)  # eliminate extra areas
+		# 		pass
+		# points = other_counters[0]
+		# for i in other_counters[1:]:
+		# 	if len(i) > 10:
+		# 		points = np.append(points, i, axis=0)
+		# points = np.unique(points, axis=0)  # get unique points
+		# draw points in the original image
+		# points = np.array([points], np.int32)  # convert to np.int32 works well
+		
 		'''
 		calculate thickness of trabe if hand_drawn, not needed now..
 		'''

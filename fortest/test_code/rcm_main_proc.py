@@ -41,9 +41,10 @@ if __name__ == '__main__':
 	deal with hand_drawn pics
 	'''
 	# image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_code/HE_image/25845/whole/25845_slide0.jpg'
-	image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_images/HE/35730/test_35730-2_LI.jpg'
-	for i in xrange(6, 7):
-		slide_proc(patient_id=i, start=1, end=2, he=True, masson=False, set_hand_drawn=True, hand_drawn_img=image_path)
+	# image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_images/HE/29708/test_35730-2_LI.jpg'
+	image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_images/HE/29708/test_29708-1_LI.jpg'
+	for i in xrange(2, 3):
+		slide_proc(patient_id=i, start=0, end=1, he=True, masson=False, set_hand_drawn=True, hand_drawn_img=image_path)
 		# he_slide_path, masson_slide_path = get_image_path(i)
 		# write_test_img(he_slide_path, saved_img_level=6)
 	
