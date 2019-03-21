@@ -861,11 +861,11 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		'''
 		show and save images
 		'''
-		imgshow(rgbimg)
+		# imgshow(rgbimg)
 		# imgshow(firstmask, cmap='gray')
 		# imgshow(secondmask, cmap='gray')
 		# imgshow(thirdmask, cmap='gray')
-		imgshow(othermask, cmap='gray')
+		# imgshow(othermask, cmap='gray')
 		img_name = ('HE_image' + str(he_patients[patient_id]) + '/whole/slide' + str(slide_no) + '_other_mask.jpg' if (
 				is_masson is False)
 		            else 'HE_image' + str(masson_patients[patient_id]) + '/whole/slide' + str(slide_no) + '.jpg')
@@ -879,67 +879,76 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 
 
 def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, cardiac_store_remain_num,
-                   vacuole_store_remain_num, write_test_image=False):
+                   vacuole_store_remain_num, write_test_image=False, debug_mod=False,extract_mod=False):
+	"""
+
+	:rtype: object
+	"""
 	# cv2.imwrite("tmp/hsv.jpg", hsv)
 	b = len(hsv[0])
 	c = len(hsv)
 	h, s, v = cv2.split(hsv)
 	h = cv2.subtract(180, h)
 	ret, s = cv2.threshold(s, 20, 255, cv2.THRESH_BINARY_INV)
-	gray = cv2.addWeighted(s, -1, h, 1, 0)  # why?
+	gray = cv2.addWeighted(s, -1, h, 1, 0)  # 色调，饱和度相加得到灰度图 S1
 	# cv2.imwrite("tmp/gray.jpg", gray)
 	whole_area_space = cv2.countNonZero(gray)
 	# print 'myocardium space in this region: ', whole_area_space
 	kernel = np.ones((3, 3), np.uint8)
 	
-	ret, nuclear0 = cv2.threshold(gray, 43, 255, cv2.THRESH_BINARY)
+	ret, nuclear0 = cv2.threshold(gray, 43, 255, cv2.THRESH_BINARY)  # S2 TODO modify the gray threshold
 	
-	nuclear0 = cv2.morphologyEx(nuclear0, cv2.MORPH_OPEN, kernel, iterations=2)
+	nuclear0 = cv2.morphologyEx(nuclear0, cv2.MORPH_OPEN, kernel, iterations=2)  # S3 OPEN消除极小区域
 	
-	sure_bg = cv2.dilate(nuclear0, kernel, iterations=3)
-	# sure background area
-	ret, nuclear1 = cv2.threshold(gray, 43, 255, cv2.THRESH_BINARY)
+	sure_bg = cv2.dilate(nuclear0, kernel, iterations=3)  # S4 sure background area
+	
+	ret, nuclear1 = cv2.threshold(gray, 43, 255, cv2.THRESH_BINARY)  # extract sg todo
 	
 	for i in range(0, len(nuclear1[0])):
 		nuclear1[0][i] = 0
 	
 	# cv2.imshow("nuclear1", nuclear1)
 	mask = np.zeros((c + 2, b + 2), np.uint8)
-	cv2.floodFill(nuclear1, mask, (0, 0), 100)  # 把细胞核内不均匀的浅色填充回细胞和区域
+	cv2.floodFill(nuclear1, mask, (0, 0), 100)  # S5 把细胞核内不均匀的浅色填充回细胞和区域
 	nuclear1[nuclear1 == 0] = 255
 	nuclear1[nuclear1 == 100] = 0
 	
-	dist_transform = cv2.distanceTransform(nuclear1, cv2.DIST_L2, 5)
-	dist_transform = np.uint8(dist_transform)
-	ret, out = cv2.threshold(dist_transform, 5, 255, cv2.THRESH_BINARY_INV)
+	# dist_transform = cv2.distanceTransform(nuclear1, cv2.DIST_L2, 5)  # S6
+	# dist_transform = np.uint8(dist_transform)
+	# ret, out = cv2.threshold(dist_transform, 5, 255, cv2.THRESH_BINARY_INV)  # todo
 	
-	nuclear1 = 255 - nuclear1
+	nuclear1 = 255 - nuclear1  # 得到的nuclear1此时是细胞质区域
 	gray1 = cv2.subtract(gray, nuclear1)
 	# cv2.imshow("gray1", gray1)  # 去掉细胞质，得到细胞核的图像
 	gray1 = cv2.blur(gray1, (5, 5))
 	
-	dist_transform = cv2.addWeighted(dist_transform, 1, gray1, 0.1, 0)
+	# dist_transform = cv2.addWeighted(dist_transform, 1, gray1, 0.1, 0)
 	# cv2.imshow("dist_transform", dist_transform)
-	max = cv2.dilate(dist_transform, kernel, iterations=10)
-	# max = cv2.multiply(max, 0.75)
-	max = cv2.multiply(max, 0.90)
-	sure_fg = cv2.subtract(dist_transform, max)
-	sure_fg = cv2.subtract(sure_fg, out)
+	dilation_num = 10
+	max = cv2.dilate(gray1, kernel, iterations=dilation_num)
+	
+	max -= dilation_num
+	# max = cv2.multiply(max, 0.90)
+	
+	# =========get sure ff=============#
+	sure_fg = cv2.subtract(gray1, max)
+	# sure_fg = cv2.subtract(sure_fg, out)
 	ret, sure_fg = cv2.threshold(sure_fg, 0, 255, cv2.THRESH_BINARY)
 	sure_fg = np.uint8(sure_fg)
-	if write_test_image:
-		cv2.imwrite('tmp/gray.jpg', gray)
-		cv2.imwrite("tmp/rgb.jpg", region)
-		cv2.imwrite("tmp/nuclear0.jpg", nuclear0)
-		cv2.imwrite("tmp/sure_bg.jpg", sure_bg)
-		cv2.imwrite('tmp/out.jpg', out)
-		cv2.imwrite('tmp/sure_fg.jpg', sure_fg)
+	# if write_test_image:
+	imgshow(region)
+	imgshow(sure_fg, cmap='gray')
+	imgshow(sure_bg, cmap='gray')
+	# cv2.imwrite('tmp/gray.jpg', gray)
+	# cv2.imwrite("tmp/rgb.jpg", region)
+	# cv2.imwrite("tmp/nuclear0.jpg", nuclear0)
+	# cv2.imwrite("tmp/sure_bg.jpg", sure_bg)
+	# cv2.imwrite('tmp/sure_fg.jpg', sure_fg)
+	
+	# ============= get unknown area ============#
 	unknown = cv2.subtract(sure_bg, sure_fg)
-	
 	ret, markers = cv2.connectedComponents(sure_fg)
-	
 	markers = markers + 1
-	
 	markers[unknown == 255] = 0
 	markers = cv2.watershed(region, markers)
 	# cv2.imshow('origin', a)
@@ -961,7 +970,7 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 		j[markers == i] = 255  # why?
 		area = cv2.countNonZero(j)
 		# if area > 361:
-		if area > 321:  # 心肌细胞核比较大
+		if area > 100:  # 心肌细胞核比较大
 			cardiac_cell_mask_list.append(i)
 			# get arc
 			_, contours, hierarchy = cv2.findContours(j, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -1000,6 +1009,8 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 		# 	os.mkdir()
 		if not os.path.exists('HE_image/' + str(patient_num) + '/vacuole_cells'):
 			os.makedirs('HE_image' + str(patient_num) + '/vacuole_cells')
+		if debug_mod:
+			imgshow(vacuole_image)
 		cv2.imwrite(
 			'HE_image' + str(patient_num) + '/vacuole_cells' + "/slide_" + str(
 				slide_no) + "_" + processed_mask_name + ".jpg", vacuole_image)  # need more test
@@ -1029,6 +1040,8 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 				'HE_image' + str(patient_num) + '/vacuole_cells' + "/slide_" + str(
 					slide_no) + "_" + processed_mask_name + "_contrast.jpg", img_to_save)
 			save_for_vacuole = False
+		if debug_mod:
+			imgshow(img_to_save)
 		cv2.imwrite(
 			'HE_image' + str(patient_num) + '/cardiac_cells' + "/slide_" + str(
 				slide_no) + "_" + processed_mask_name + ".jpg", img_to_save)

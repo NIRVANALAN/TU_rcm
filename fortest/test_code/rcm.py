@@ -88,6 +88,41 @@ masson_erosion_iteration_time_list = [10, 10, 15, 15, 15, 13]
 he_erosion_iteration_time_list = [3, 3, 8, 3, 13, 9]  # for specifications
 
 
+def get_test_tif():
+	#  img_dir = './../../rcm_images/'
+	test_image_dir = os.path.join(img_dir, 'TEST/nucleus')
+	image_list = []
+	for i in os.listdir(test_image_dir):
+		if i.split('.')[1] == 'tif':
+			image_list.append(os.path.join(test_image_dir, i))
+	return image_list
+	pass
+
+
+def get_he_detect_result(image_list):
+	detect_result = []
+	for i in image_list:
+		slide_test = openslide.open_slide(i)
+		test_dimension = slide_test.dimensions
+		# x, y = 21000, 21000
+		x, y = 0, 0
+		cardiac_cell_num_threshold = [50]
+		vacuole_cell_num_threshold = [2]
+		# region = np.array(slide_he.read_region((x, y), 0, (area_length, area_length)))
+		region = np.array(slide_test.read_region((x, y), 0, test_dimension))
+		region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
+		hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+		detect = detect_process(region, hsv, he_patients[0], 0, he_mask_name[0],
+		                        cardiac_cell_num_threshold, vacuole_cell_num_threshold, False, debug_mod=True,
+		                        extract_mod=True)
+		detect_result.append([i[0] for i in detect[-2:-1][0]])  # cardiac cell area
+		'''
+		detect : 空泡 心肌 非心肌 总面积 心肌细胞的面积和周长列表
+		'''
+	return detect_result
+	pass
+
+
 def he_test_proc():
 	# print dimension
 	# whole_level = 6
@@ -96,11 +131,30 @@ def he_test_proc():
 	global slide_he
 	global slide_masson
 	slide_he = openslide.open_slide(he_test_path[slide_no])
+	test_image_list = get_test_tif()  # [1.tif,2.tif...]
+	cardiac_res = get_he_detect_result(test_image_list)
+	all_res = reduce(lambda l1, l2: l1 + l2, cardiac_res)
+	print np.average(all_res)
 	# slide_masson = openslide.open_slide(masson_path[slide_no])
-	firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(6, slide_he, he_erosion_iteration_time_list,
-	                                                                        masson_erosion_iteration_time_list,
-	                                                                        slide_no,
-	                                                                        is_masson=False)
+	# area_length = 1000
+	# test_dimension = slide_he.dimensions
+	# # x, y = 21000, 21000
+	# x, y = 0, 0
+	# cardiac_cell_num_threshold = [50]
+	# vacuole_cell_num_threshold = [2]
+	# # region = np.array(slide_he.read_region((x, y), 0, (area_length, area_length)))
+	# region = np.array(slide_he.read_region((x, y), 0, test_dimension))
+	# region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
+	# hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+	# detect = detect_process(region, hsv, he_patients[0], slide_no, he_mask_name[0],
+	#                         cardiac_cell_num_threshold, vacuole_cell_num_threshold, False, debug_mod=True)
+	'''
+	detect : 空泡 心肌 非心肌 总面积 心肌细胞的面积和周长列表
+	'''
+	# firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(6, slide_he, he_erosion_iteration_time_list,
+	#                                                                         masson_erosion_iteration_time_list,
+	#                                                                         slide_no,
+	#                                                                         is_masson=False)
 	# write_test_img(is_masson=True)
 	pass
 
