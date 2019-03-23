@@ -46,7 +46,7 @@ if __name__ == '__main__':
 	# for test only
 	he_test_proc()
 	# for i in xrange(2, 3):
-	# 	slide_proc(patient_id=i, start=0, end=1, he=True, masson=False, set_hand_drawn=True, hand_drawn_img=image_path)
+		# slide_proc(patient_id=i, start=0, end=1, he=True, masson=False, set_hand_drawn=True, hand_drawn_img=image_path)
 		# he_slide_path, masson_slide_path = get_image_path(i)
 		# write_test_img(he_slide_path, saved_img_level=6)
 	

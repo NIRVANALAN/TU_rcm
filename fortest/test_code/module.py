@@ -879,7 +879,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 
 
 def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, cardiac_store_remain_num,
-                   vacuole_store_remain_num, write_test_image=False, debug_mod=False,extract_mod=False):
+                   vacuole_store_remain_num, write_test_image=False, debug_mod=False, extract_mod=False):
 	"""
 
 	:rtype: object
@@ -936,9 +936,9 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 	ret, sure_fg = cv2.threshold(sure_fg, 0, 255, cv2.THRESH_BINARY)
 	sure_fg = np.uint8(sure_fg)
 	# if write_test_image:
-	imgshow(region)
-	imgshow(sure_fg, cmap='gray')
-	imgshow(sure_bg, cmap='gray')
+	# imgshow(region)
+	# imgshow(sure_fg, cmap='gray')
+	# imgshow(sure_bg, cmap='gray')
 	# cv2.imwrite('tmp/gray.jpg', gray)
 	# cv2.imwrite("tmp/rgb.jpg", region)
 	# cv2.imwrite("tmp/nuclear0.jpg", nuclear0)
@@ -970,7 +970,7 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 		j[markers == i] = 255  # why?
 		area = cv2.countNonZero(j)
 		# if area > 361:
-		if area > 100:  # 心肌细胞核比较大
+		if area > 400:  # 心肌细胞核比较大,19/3/23设置成400
 			cardiac_cell_mask_list.append(i)
 			# get arc
 			_, contours, hierarchy = cv2.findContours(j, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -987,11 +987,23 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 			for k in lines[0]:  # why lines[0]?
 				total = total + 1
 				if hsv[k[0][1]][k[0][0]][1] < 80:  # 空泡的hsv阈值
-					white = white + 1
+					white += 1
 			if white > total / 2:  # 只有当边缘白色大于一定程度的时候，才计算为空泡
-				non_nuclear_area_space.append([i, white])
-				detect[0] = detect[0] + 1
-				vacuole_cell_contour_list.append(lines)
+				j_white_dilated = cv2.dilate(j_dilated, kernel, iterations=15)  # 找到更外围一圈的点，判断是不是被心肌包围，去除边界细胞核背景的影响
+				_image, dil_lines, _ = cv2.findContours(j_white_dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+				_image = region.copy()
+				cv2.drawContours(_image, dil_lines, -1, (0, 255, 255), 2)
+				imgshow(_image)
+				not_white = 0
+				cardiac_area_total = 0
+				for k in dil_lines[0]:  # why lines[0]?
+					cardiac_area_total = cardiac_area_total + 1
+					if hsv[k[0][1]][k[0][0]][1] > 80:  # 空泡的hsv阈值
+						not_white += 1
+				if not_white > cardiac_area_total/2:  # h: 139-158 s:36-192
+					non_nuclear_area_space.append([i, white])
+					detect[0] = detect[0] + 1
+					vacuole_cell_contour_list.append(lines)
 		
 		else:
 			detect[2] += 1  # 其余非心肌细胞核

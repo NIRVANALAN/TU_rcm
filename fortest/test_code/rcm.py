@@ -129,25 +129,27 @@ def he_test_proc():
 	# print "he_test_proc_dimension:", max_level
 	slide_no = 0
 	global slide_he
-	global slide_masson
+	# global slide_masson
 	slide_he = openslide.open_slide(he_test_path[slide_no])
-	test_image_list = get_test_tif()  # [1.tif,2.tif...]
-	cardiac_res = get_he_detect_result(test_image_list)
-	all_res = reduce(lambda l1, l2: l1 + l2, cardiac_res)
-	print np.average(all_res)
+	# test_image_list = get_test_tif()  # [1.tif,2.tif...]
+	# cardiac_res = get_he_detect_result(test_image_list)
+	# all_res = reduce(lambda l1, l2: l1 + l2, cardiac_res)
+	# print np.average(all_res)
 	# slide_masson = openslide.open_slide(masson_path[slide_no])
-	# area_length = 1000
+	area_length = 1000
 	# test_dimension = slide_he.dimensions
-	# # x, y = 21000, 21000
+	test_dimension = (area_length, area_length)
+	x, y = 32000, 21000
 	# x, y = 0, 0
-	# cardiac_cell_num_threshold = [50]
-	# vacuole_cell_num_threshold = [2]
-	# # region = np.array(slide_he.read_region((x, y), 0, (area_length, area_length)))
-	# region = np.array(slide_he.read_region((x, y), 0, test_dimension))
-	# region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
-	# hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
-	# detect = detect_process(region, hsv, he_patients[0], slide_no, he_mask_name[0],
-	#                         cardiac_cell_num_threshold, vacuole_cell_num_threshold, False, debug_mod=True)
+	cardiac_cell_num_threshold = [80]
+	vacuole_cell_num_threshold = [1]
+	# region = np.array(slide_he.read_region((x, y), 0, (area_length, area_length)))
+	region = np.array(slide_he.read_region((x, y), 0, test_dimension))
+	region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
+	hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+	detect = detect_process(region, hsv, he_patients[0], slide_no, he_mask_name[0],
+	                        cardiac_cell_num_threshold, vacuole_cell_num_threshold, False, debug_mod=True)
+	detect_cardiac_area_res = [i[0] for i in detect[-2:-1][0]]
 	'''
 	detect : 空泡 心肌 非心肌 总面积 心肌细胞的面积和周长列表
 	'''
