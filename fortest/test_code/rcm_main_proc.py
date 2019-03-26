@@ -35,8 +35,8 @@ if __name__ == '__main__':
 	# 	he_slide_path, masson_slide_path = get_image_path(i)
 	# 	write_test_img(masson_slide_path, is_masson=False)
 	# persist process begin#################
-	# for i in xrange(0, 1):
-	# 	slide_proc(patient_id=i, start=1, end=2, he=True, masson=False)
+	for i in xrange(0, 1):
+		slide_proc(patient_id=i, start=1, end=2, he=True, masson=False,set_hand_drawn=True)
 	'''
 	deal with hand_drawn pics
 	'''
@@ -44,7 +44,7 @@ if __name__ == '__main__':
 	# image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_images/HE/29708/test_35730-2_LI.jpg'
 	image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_images/HE/29708/test_29708-1_LI2.jpg'
 	# for test only
-	he_test_proc()
+	# he_test_proc()
 	# for i in xrange(2, 3):
 		# slide_proc(patient_id=i, start=0, end=1, he=True, masson=False, set_hand_drawn=True, hand_drawn_img=image_path)
 		# he_slide_path, masson_slide_path = get_image_path(i)

@@ -293,7 +293,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	g_img = cv2.adaptiveThreshold(g_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 5)
 	g_img = cv2.morphologyEx(g_img, cv2.MORPH_CLOSE, kernel, iterations=3)
 	g_img = cv2.morphologyEx(g_img, cv2.MORPH_OPEN, kernel, iterations=5)
-	imgshow(g_img, cmap='gray')
+	# imgshow(g_img, cmap='gray')
 	average_greyimg = cv2.blur(grey_img, (30, 30))  # blur using filter
 	# cv2.imshow('average grey img', averagegreyimg)
 	# cv2.imwrite("test_images/HE/average_grey_img.jpg", averagegreyimg)
@@ -862,10 +862,10 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		show and save images
 		'''
 		# imgshow(rgbimg)
-		# imgshow(firstmask, cmap='gray')
-		# imgshow(secondmask, cmap='gray')
-		# imgshow(thirdmask, cmap='gray')
-		# imgshow(othermask, cmap='gray')
+		imgshow(firstmask, cmap='gray')
+		imgshow(secondmask, cmap='gray')
+		imgshow(thirdmask, cmap='gray')
+		imgshow(othermask, cmap='gray')
 		img_name = ('HE_image' + str(he_patients[patient_id]) + '/whole/slide' + str(slide_no) + '_other_mask.jpg' if (
 				is_masson is False)
 		            else 'HE_image' + str(masson_patients[patient_id]) + '/whole/slide' + str(slide_no) + '.jpg')
@@ -993,7 +993,7 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 				_image, dil_lines, _ = cv2.findContours(j_white_dilated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 				_image = region.copy()
 				cv2.drawContours(_image, dil_lines, -1, (0, 255, 255), 2)
-				imgshow(_image)
+				# imgshow(_image)
 				not_white = 0
 				cardiac_area_total = 0
 				for k in dil_lines[0]:  # why lines[0]?
