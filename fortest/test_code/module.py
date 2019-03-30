@@ -172,7 +172,7 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	print slide_img.shape
 	slide_img = cv2.cvtColor(slide_img, cv2.COLOR_RGBA2BGR)
 	width_points = [[], [], []]  # add BLUE line for trabe segmentation
-	colors = ((0, 0, 255), (0, 255, 0), (255, 0, 0))
+	# colors = ((0, 0, 255), (0, 255, 0), (255, 0, 0))
 	for t in threshes:
 		mask = cv2.inRange(hsv, t[0], t[1])
 		# mask = cv.inRange(hsv, np.array([170, 43, 43]), np.array([180, 255, 255]))
@@ -232,6 +232,30 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	arg1 = np.linspace(0, width_points[1].__len__(), num, endpoint=False, dtype=int)
 	width_points[0] = [width_points[0][i] for i in arg0]
 	width_points[1] = [width_points[1][i] for i in arg1]
+	'''
+	fit line
+	'''
+	# (vx,vy,x,y)
+	line_outer = cv2.fitLine(np.array(width_points[0]), cv2.DIST_L2, 0, 0.01, 0.01)
+	k_outer = line_outer[1] / line_outer[0]
+	line_inner = cv2.fitLine(np.array(width_points[1]), cv2.DIST_L2, 0, 0.01, 0.01)
+	k_inner = line_inner[1] / line_inner[0]
+	
+	for outer_point in width_points[0]:
+		length = line_outer[2] - outer_point[0][0]
+		outer_point[0][1] = (line_outer[3] - k_outer * length).item()
+		pass
+	
+	for inner_point in width_points[1]:
+		length = line_outer[2] - inner_point[0][0]
+		inner_point[0][1] = (line_inner[3] - k_inner * length).item()
+		pass
+	
+	# length = 300
+	# point_out = (line_outer[2] - length, line_outer[3] - k_outer * length), \
+	#             (line_outer[2] + length, line_outer[3] + k_outer * length)
+	# point_in = (line_inner[2] - length, line_inner[3] - k_inner * length), \
+	#            (line_inner[2] + length, line_inner[3] + k_inner * length)
 	'''
 	m+n
 	'''
@@ -738,14 +762,14 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	'''
 	save images and make dirs
 	'''
-	if not os.path.exists('HE_image' + str(he_patients[patient_id]) + '/whole'):
-		os.makedirs('HE_image' + str(he_patients[patient_id]) + '/whole')
-	if not os.path.exists('MASSON_image' + str(masson_patients[patient_id]) + '/whole'):
-		os.makedirs('MASSON_image' + str(masson_patients[patient_id]) + '/whole')
-	img_name = ('HE_image' + str(he_patients[patient_id]) + '/whole/slide' + str(slide_no) + '.jpg' if (
-			is_masson is False)
-	            else 'HE_image' + str(masson_patients[patient_id]) + '/whole/slide' + str(slide_no) + '.jpg')
-	cv2.imwrite(img_name, rgbimg)  # save the img of segmentation result
+	if not os.path.exists('HE_image' + str(he_patients[patient_id]) + '/segmentation'):
+		os.makedirs('HE_image' + str(he_patients[patient_id]) + '/segmentation')
+	if not os.path.exists('MASSON_image' + str(masson_patients[patient_id]) + '/segmentation'):
+		os.makedirs('MASSON_image' + str(masson_patients[patient_id]) + '/segmentation')
+	# othermask_img_name = ('HE_image' + str(he_patients[patient_id]) + '/segmentation/slide_' + str(slide_no) + '.jpg' if (
+	# 		is_masson is False)
+	#             else 'MASSON_image' + str(masson_patients[patient_id]) + '/segmentation/slide_' + str(slide_no) + '.jpg')
+	# cv2.imwrite(othermask_img_name, rgbimg)  # save the img of segmentation result
 	#################################################
 	'''
 	construct masks
@@ -758,7 +782,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	secondmask = cv2.fillPoly(i, np.array([second], np.int32), 255)
 	if show_img:
-		cv2.imshow(img_name, rgbimg)  # save the img of segmentation result
+		cv2.imshow(othermask_img_name, rgbimg)  # save the img of segmentation result
 		cv2.imshow("firstmask", firstmask)
 		cv2.imshow("secondmask", secondmask)
 	thirdmask = []
@@ -861,15 +885,23 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		'''
 		show and save images
 		'''
-		# imgshow(rgbimg)
+		imgshow(rgbimg)
 		imgshow(firstmask, cmap='gray')
 		imgshow(secondmask, cmap='gray')
 		imgshow(thirdmask, cmap='gray')
 		imgshow(othermask, cmap='gray')
-		img_name = ('HE_image' + str(he_patients[patient_id]) + '/whole/slide' + str(slide_no) + '_other_mask.jpg' if (
-				is_masson is False)
-		            else 'HE_image' + str(masson_patients[patient_id]) + '/whole/slide' + str(slide_no) + '.jpg')
-		cv2.imwrite(img_name, othermask)  # save the img of segmentation result
+		othermask_img_name = (
+			'HE_image' + str(he_patients[patient_id]) + '/segmentation/slide' + str(slide_no) + '_other_mask.jpg' if (
+					is_masson is False)
+			else 'HE_image' + str(masson_patients[patient_id]) + '/segmentation/slide' + str(
+				slide_no) + '_other_mask.jpg')
+		cv2.imwrite(othermask_img_name, othermask)  # save the img of segmentation result
+		rgb_img_name = (
+			'HE_image' + str(he_patients[patient_id]) + '/segmentation/slide' + str(slide_no) + '_result.jpg' if (
+					is_masson is False)
+			else 'MASSON_image' + str(masson_patients[patient_id]) + '/segmentation/slide' + str(
+				slide_no) + '_result.jpg')
+		cv2.imwrite(rgb_img_name, rgbimg)
 		pass
 	cv2.destroyAllWindows()
 	if is_masson is True:
@@ -1000,7 +1032,7 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 					cardiac_area_total = cardiac_area_total + 1
 					if hsv[k[0][1]][k[0][0]][1] > 80:  # 空泡的hsv阈值
 						not_white += 1
-				if not_white > cardiac_area_total/2:  # h: 139-158 s:36-192
+				if not_white > cardiac_area_total / 2:  # h: 139-158 s:36-192
 					non_nuclear_area_space.append([i, white])
 					detect[0] = detect[0] + 1
 					vacuole_cell_contour_list.append(lines)

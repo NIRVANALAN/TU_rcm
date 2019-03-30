@@ -36,7 +36,7 @@ if __name__ == '__main__':
 	# 	write_test_img(masson_slide_path, is_masson=False)
 	# persist process begin#################
 	for i in xrange(0, 1):
-		slide_proc(patient_id=i, start=1, end=2, he=True, masson=False,set_hand_drawn=True)
+		slide_proc(patient_id=i, start=2, end=3, he=True, masson=False,set_hand_drawn=True)
 	'''
 	deal with hand_drawn pics
 	'''
