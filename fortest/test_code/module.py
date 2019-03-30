@@ -247,7 +247,7 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		pass
 	
 	for inner_point in width_points[1]:
-		length = line_outer[2] - inner_point[0][0]
+		length = line_inner[2] - inner_point[0][0]
 		inner_point[0][1] = (line_inner[3] - k_inner * length).item()
 		pass
 	
@@ -769,7 +769,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# othermask_img_name = ('HE_image' + str(he_patients[patient_id]) + '/segmentation/slide_' + str(slide_no) + '.jpg' if (
 	# 		is_masson is False)
 	#             else 'MASSON_image' + str(masson_patients[patient_id]) + '/segmentation/slide_' + str(slide_no) + '.jpg')
-	# cv2.imwrite(othermask_img_name, rgbimg)  # save the img of segmentation result
+	# imgshow(rgbimg)  # save the img of segmentation result
 	#################################################
 	'''
 	construct masks
@@ -781,10 +781,10 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	
 	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	secondmask = cv2.fillPoly(i, np.array([second], np.int32), 255)
-	if show_img:
-		cv2.imshow(othermask_img_name, rgbimg)  # save the img of segmentation result
-		cv2.imshow("firstmask", firstmask)
-		cv2.imshow("secondmask", secondmask)
+	# if show_img:
+	# 	# cv2.imshow(othermask_img_name, rgbimg)  # save the img of segmentation result
+	# 	cv2.imshow("firstmask", firstmask)
+	# 	cv2.imshow("secondmask", secondmask)
 	thirdmask = []
 	if slide_no != 4 and slide_no != 5:
 		i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
@@ -835,10 +835,10 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		othermask = cv2.morphologyEx(othermask, cv2.MORPH_OPEN, kernel, iterations=5)
 		img, other_counters, _ = cv2.findContours(othermask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		#  get mean_point of outer/inner layer
-		outer_mean_point = (np.mean([i[0] for i in x_list[:x_list.__len__() / 2]]),
-		                    np.mean([i[1] for i in x_list[:x_list.__len__() / 2]]))
-		inner_mean_point = (np.mean([i[0] for i in x_list[x_list.__len__() / 2:]]),
-		                    np.mean([i[1] for i in x_list[x_list.__len__() / 2:]]))
+		# outer_mean_point = (np.mean([i[0] for i in x_list[:x_list.__len__() / 2]]),
+		#                     np.mean([i[1] for i in x_list[:x_list.__len__() / 2]]))
+		# inner_mean_point = (np.mean([i[0] for i in x_list[x_list.__len__() / 2:]]),
+		#                     np.mean([i[1] for i in x_list[x_list.__len__() / 2:]]))
 		#  reconstruct with_point_lines
 		# for i in width_points:  # (vx,vy,x,y)
 		line_outer = cv2.fitLine(np.array(width_points[0]), cv2.DIST_L2, 0, 0.01, 0.01)
@@ -846,7 +846,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		line_inner = cv2.fitLine(np.array(width_points[1]), cv2.DIST_L2, 0, 0.01, 0.01)
 		k_inner = line_inner[1] / line_inner[0]
 		
-		length = 300
+		length = 350
 		point_out = (line_outer[2] - length, line_outer[3] - k_outer * length), \
 		            (line_outer[2] + length, line_outer[3] + k_outer * length)
 		point_in = (line_inner[2] - length, line_inner[3] - k_inner * length), \
@@ -886,10 +886,10 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		show and save images
 		'''
 		imgshow(rgbimg)
-		imgshow(firstmask, cmap='gray')
-		imgshow(secondmask, cmap='gray')
-		imgshow(thirdmask, cmap='gray')
-		imgshow(othermask, cmap='gray')
+		# imgshow(firstmask, cmap='gray')
+		# imgshow(secondmask, cmap='gray')
+		# imgshow(thirdmask, cmap='gray')
+		# imgshow(othermask, cmap='gray')
 		othermask_img_name = (
 			'HE_image' + str(he_patients[patient_id]) + '/segmentation/slide' + str(slide_no) + '_other_mask.jpg' if (
 					is_masson is False)

@@ -210,7 +210,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 	# he_slide_no = 0
 	mask_level = 6
 	slide_processed = openslide.open_slide(he_slide_path[he_slide_no])
-	slide_dimension = slide_processed.dimensions
+	# slide_dimension = slide_processed.dimensions
 	firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(mask_level, slide_processed,
 	                                                                        he_erosion_iteration_time_list,
 	                                                                        masson_erosion_iteration_time_list,
@@ -218,6 +218,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 	                                                                        slide_no=he_slide_no,
 	                                                                        hand_drawn=set_hand_drawn,
 	                                                                        image_path=hand_drawn_img[he_slide_no])
+	print 'mask read done'
 	global he_mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	magnify = pow(2, mask_level)
@@ -234,7 +235,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# 证明这个像素点在对应的Mask里面
-						print str(he_patients[patient_id]) + " HE: " + str(he_slide_no) + he_mask_name[a] + ": " + str(
+						print str(he_patients[patient_id]) + " HE: " + str(he_slide_no) + ' ' + he_mask_name[a] + ": " + str(
 							x) + " " + str(y)
 						# print x, y
 						region = np.array(slide_processed.read_region((x, y), 0, (area_length, area_length)))
