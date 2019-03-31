@@ -217,7 +217,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 	                                                                        patient_id=patient_id,
 	                                                                        slide_no=he_slide_no,
 	                                                                        hand_drawn=set_hand_drawn,
-	                                                                        image_path=hand_drawn_img[he_slide_no])
+	                                                                        image_path=hand_drawn_img)
 	print 'mask read done'
 	global he_mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
@@ -235,7 +235,8 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# 证明这个像素点在对应的Mask里面
-						print str(he_patients[patient_id]) + " HE: " + str(he_slide_no) + ' ' + he_mask_name[a] + ": " + str(
+						print str(he_patients[patient_id]) + " HE: " + str(he_slide_no) + ' ' + he_mask_name[
+							a] + ": " + str(
 							x) + " " + str(y)
 						# print x, y
 						region = np.array(slide_processed.read_region((x, y), 0, (area_length, area_length)))
@@ -567,7 +568,11 @@ def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=Fa
 	for slide_no in xrange(start, end):
 		if he:
 			try:
-				he_proc(slide_no, he_slide_path[0], patient_id, set_hand_drawn, he_slide_path[1] if set_hand_drawn else None)
+				for split_path in he_slide_path[1]:
+					if int(split_path[-5]) == slide_no + 1:
+						he_proc(slide_no, he_slide_path[0], patient_id, set_hand_drawn,
+						        split_path if set_hand_drawn else None)
+				continue
 			except BaseException, e:
 				print e.message
 				with open('he_error_slide_log.txt', 'a') as f:
@@ -575,7 +580,8 @@ def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=Fa
 				continue
 		if masson:
 			try:
-				masson_proc(slide_no, masson_slide_path[0], patient_id, set_hand_drawn, masson_slide_path[1] if set_hand_drawn else None)
+				masson_proc(slide_no, masson_slide_path[0], patient_id, set_hand_drawn,
+				            masson_slide_path[1] if set_hand_drawn else None)
 			except BaseException, e:
 				print e.message
 				with open('masson_error_slide_log.txt', 'a') as f:

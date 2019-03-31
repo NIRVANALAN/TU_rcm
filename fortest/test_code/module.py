@@ -243,12 +243,12 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	
 	for outer_point in width_points[0]:
 		length = line_outer[2] - outer_point[0][0]
-		outer_point[0][1] = (line_outer[3] - k_outer * length).item()
+		outer_point[0][1] = ((line_outer[3] - k_outer * length).item() + outer_point[0][1]) / 2
 		pass
 	
 	for inner_point in width_points[1]:
 		length = line_inner[2] - inner_point[0][0]
-		inner_point[0][1] = (line_inner[3] - k_inner * length).item()
+		inner_point[0][1] = ((line_inner[3] - k_inner * length).item() + inner_point[0][1]) / 2
 		pass
 	
 	# length = 300
@@ -704,18 +704,19 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 				#  use np to do subtraction
 				sub_res = np.array(width_points[0][point_index]) - np.array(width_points[1][point_index])
 				y_average_list.append(np.sqrt(np.sum(np.square(sub_res))))
+			cutting_line_points[1].reverse()
 		else:
 			for point_index in xrange(width_points[0].__len__()):
 				cutting_line_points[0].append(
-					[width_points[0][point_index][0][0] / 2 + width_points[1][point_index][0][0] / 2,
-					 width_points[0][point_index][0][1] / 2 + width_points[1][point_index][0][1] / 2])
+					[[width_points[0][point_index][0][0] / 2 + width_points[1][point_index][0][0] / 2,
+					 width_points[0][point_index][0][1] / 2 + width_points[1][point_index][0][1] / 2]])
 				#  euclidean distance
-				y_average_list.append(np.sqrt(np.sum(width_points[0][point_index] - width_points[1][point_index])))
+				sub_res = np.array(width_points[0][point_index]) - np.array(width_points[1][point_index])
+				y_average_list.append(np.sqrt(np.sum(np.square(sub_res))))
 		'''
 		end cutting_line_points calculation
 		'''
 		rcm_thickening.append(abs(np.average(y_average_list)))
-		cutting_line_points[1].reverse()
 		width_points[1].reverse()
 	'''
 	construct regions via width_points and cutting_line_points
@@ -744,9 +745,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		if slide_no != 4 and slide_no != 5:
 			cv2.polylines(rgbimg, second_pts, False, (0, 255, 0), 6)  # green line
 	else:  # hand_drawn
-		cv2.polylines(rgbimg, first_pts, False, (0, 255, 255), 6)  # yellow line
+		cv2.polylines(rgbimg, second_pts, False, (0, 255, 255), 6)  # yellow line
 		if slide_no != 4 and slide_no != 5:
-			cv2.polylines(rgbimg, second_pts, False, (255, 255, 0), 6)  # light blue
+			cv2.polylines(rgbimg, first_pts, False, (255, 255, 0), 6)  # light blue
 		# imgshow(rgbimg)
 		pass
 	
