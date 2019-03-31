@@ -179,12 +179,18 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		# dst = cv.bitwise_and(he_image, he_image, mask=mask)
 		# imgshow(dst)
 		# get points on the contours
+		imgshow(mask, cmap='gray')
 		_, contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		if contours.__len__() is 0:  # now trabe line(blue)
 			continue
-		points = contours[0]
-		for i in contours[1:]:
-			if len(i) > 10:
+		first_index = 0
+		for i in xrange(contours.__len__()):
+			if len(contours[i]) > 15:
+				points = contours[i]
+				first_index = i
+				break
+		for i in contours[first_index:]:
+			if len(i) > 20:
 				points = np.append(points, i, axis=0)
 		points = np.unique(points, axis=0)  # get unique points
 		# draw points in the original image
@@ -887,8 +893,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		show and save images
 		'''
 		imgshow(rgbimg)
-		# imgshow(firstmask, cmap='gray')
-		# imgshow(secondmask, cmap='gray')
+		imgshow(firstmask, cmap='gray')
+		imgshow(secondmask, cmap='gray')
 		# imgshow(thirdmask, cmap='gray')
 		# imgshow(othermask, cmap='gray')
 		othermask_img_name = (

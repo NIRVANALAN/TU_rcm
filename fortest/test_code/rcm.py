@@ -198,6 +198,7 @@ he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole
 
 def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_drawn_img=None):
 	"""
+	:param patient_id: id of patient
 	:param hand_drawn_img: set if it's hand_drawn
 	:param set_hand_drawn: hand_drawn_img path
 	:param he_slide_path: path of he slide
@@ -209,7 +210,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 	he_proc_iter = [0, 0, 0, [0, 0], []]
 	# he_slide_no = 0
 	mask_level = 6
-	slide_processed = openslide.open_slide(he_slide_path[he_slide_no])
+	slide_processed = openslide.open_slide(he_slide_path)
 	# slide_dimension = slide_processed.dimensions
 	firstmask, secondmask, thirdmask, othermask, rcm_thickening = edit_area(mask_level, slide_processed,
 	                                                                        he_erosion_iteration_time_list,
@@ -567,16 +568,18 @@ def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=Fa
 	he_slide_path, masson_slide_path = get_patient_image_path(patient_id)  # patient's image path
 	for slide_no in xrange(start, end):
 		if he:
+			processed_index = 0
 			try:
 				for split_path in he_slide_path[1]:
 					if int(split_path[-5]) == slide_no + 1:
-						he_proc(slide_no, he_slide_path[0], patient_id, set_hand_drawn,
+						processed_index = he_slide_path[1].index(split_path)
+						he_proc(slide_no, he_slide_path[0][processed_index], patient_id, set_hand_drawn,
 						        split_path if set_hand_drawn else None)
 				continue
 			except BaseException, e:
 				print e.message
 				with open('he_error_slide_log.txt', 'a') as f:
-					f.writelines(he_slide_path[0][slide_no] + '：' + e.message + '\n')
+					f.writelines(he_slide_path[0][processed_index] + '：' + e.message + '\n')
 				continue
 		if masson:
 			try:
