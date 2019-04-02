@@ -179,7 +179,7 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		# dst = cv.bitwise_and(he_image, he_image, mask=mask)
 		# imgshow(dst)
 		# get points on the contours
-		imgshow(mask, cmap='gray')
+		# imgshow(mask, cmap='gray')
 		_, contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		if contours.__len__() is 0:  # now trabe line(blue)
 			continue
@@ -247,6 +247,9 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	line_inner = cv2.fitLine(np.array(width_points[1]), cv2.DIST_L2, 0, 0.01, 0.01)
 	k_inner = line_inner[1] / line_inner[0]
 	
+	width_points[0][0][0][0] /= 2
+	width_points[1][0][0][0] /= 2
+	
 	for outer_point in width_points[0]:
 		length = line_outer[2] - outer_point[0][0]
 		outer_point[0][1] = ((line_outer[3] - k_outer * length).item() + outer_point[0][1]) / 2
@@ -257,6 +260,10 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		inner_point[0][1] = ((line_inner[3] - k_inner * length).item() + inner_point[0][1]) / 2
 		pass
 	
+	if abs(k_outer) > 5:
+		width_points[0].sort(key=lambda x: x[0][1])
+	if abs(k_inner) > 5:
+		width_points[1].sort(key=lambda x: x[0][1])
 	# length = 300
 	# point_out = (line_outer[2] - length, line_outer[3] - k_outer * length), \
 	#             (line_outer[2] + length, line_outer[3] + k_outer * length)
@@ -288,7 +295,8 @@ thresh = (outer_thresh, inner_thresh, trabe_thresh)
 
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
-              is_masson=False, patient_id=0, show_img=False, set_vertical=False, hand_drawn=False, image_path=None):
+              is_masson=False, patient_id=0, show_img=False, set_vertical=False, hand_drawn=False, image_path=None,
+              server=False):
 	calculate_trabe_flag = True
 	if slide_no is 3:
 		calculate_trabe_flag = False
@@ -367,13 +375,13 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			area = cv2.contourArea(cnt)
 			if area > 100:
 				points_wall = []
-				for i in cnt:
-					x = i[0][0]
-					y = i[0][1]
+				for mask in cnt:
+					x = mask[0][0]
+					y = mask[0][1]
 					points_wall.append([x, y])
-				i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-				cv2.fillPoly(i, np.array([points_wall], np.int32), 255)
-				rcm_object.append(i)
+				mask = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+				cv2.fillPoly(mask, np.array([points_wall], np.int32), 255)
+				rcm_object.append(mask)
 				if area > max_area:
 					max_area = area
 					max_area_index = len(rcm_object) - 1
@@ -384,9 +392,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		get all other objects -> calculate trabe
 		'''
 		other = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-		for i in range(0, len(rcm_object)):
-			if i != max_area_index:
-				other = cv2.add(other, rcm_object[i])
+		for mask in range(0, len(rcm_object)):
+			if mask != max_area_index:
+				other = cv2.add(other, rcm_object[mask])
 		M0 = cv2.moments(other)
 		if M0["m00"] == 0.0:
 			calculate_trabe_flag = False  # no trabe
@@ -438,8 +446,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		'''
 		if calculate_trabe_flag:
 			points_other = []
-			for i in contours_other:  # contours1 : other
-				for j in i:
+			for mask in contours_other:  # contours1 : other
+				for j in mask:
 					points_other.append(j)
 			points_other = np.array(points_other)
 			rect_other = cv2.minAreaRect(points_other)
@@ -496,36 +504,36 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		# rcm_thickening.append(0)  # no trabe
 		points_wall = rotate_points(points_wall, rect_wall[0], -angle)
 		# rotate the point matrix, base_angle after rotation should be 0
-		for i in avercnts:
-			averpoints = rotate_points(i, rect_wall[0], -angle)
+		for mask in avercnts:
+			averpoints = rotate_points(mask, rect_wall[0], -angle)
 		'''
 		get width_points and height_points
 		'''
 		width_points = [[], [], []]
-		for i in range(0, len(points_wall)):
-			if points_wall[i][0][1] - rect_wall[0][1] > wall_height / 6:
-				width_points[0].append(points_wall[i])
+		for mask in range(0, len(points_wall)):
+			if points_wall[mask][0][1] - rect_wall[0][1] > wall_height / 6:
+				width_points[0].append(points_wall[mask])
 			else:
-				if points_wall[i][0][1] - rect_wall[0][1] < -wall_height / 6:
-					width_points[1].append(points_wall[i])
+				if points_wall[mask][0][1] - rect_wall[0][1] < -wall_height / 6:
+					width_points[1].append(points_wall[mask])
 		
 		height_points = [[], []]
-		for i in xrange(0, len(points_wall)):
-			if points_wall[i][0][0] - rect_wall[0][0] > wall_width / 4:
-				height_points[0].append(points_wall[i])
+		for mask in xrange(0, len(points_wall)):
+			if points_wall[mask][0][0] - rect_wall[0][0] > wall_width / 4:
+				height_points[0].append(points_wall[mask])
 			else:
-				if points_wall[i][0][0] - rect_wall[0][0] < -wall_width / 4:
-					height_points[1].append(points_wall[i])
+				if points_wall[mask][0][0] - rect_wall[0][0] < -wall_width / 4:
+					height_points[1].append(points_wall[mask])
 		'''
 		distinguish outer/inner via average y
 		'''
 		avery0 = 0
-		for i in range(0, len(width_points[0])):
-			avery0 += width_points[0][i][0][1]  # y on base width
+		for mask in range(0, len(width_points[0])):
+			avery0 += width_points[0][mask][0][1]  # y on base width
 		avery0 = avery0 / len(width_points[0])
 		avery1 = 0
-		for i in range(0, len(width_points[1])):
-			avery1 += width_points[1][i][0][1]
+		for mask in range(0, len(width_points[1])):
+			avery1 += width_points[1][mask][0][1]
 		avery1 = avery1 / len(width_points[1])  # y on up width
 		
 		if calculate_trabe_flag:  # 这里代码计算内外膜，和slide03没关系
@@ -548,8 +556,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		下面代码：
 		'''
 		origin_width_points = []
-		for i in avercnts:
-			for j in i:
+		for mask in avercnts:
+			for j in mask:
 				distance0 = 100000
 				for k in width_points[0]:
 					distance = math.sqrt(
@@ -568,8 +576,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		width_points[1] = origin_width_points  # update with origin width points [1]这里是外膜
 		
 		origin_height_points = []
-		for i in avercnts:
-			for j in i:
+		for mask in avercnts:
+			for j in mask:
 				distance0 = 100000
 				for k in height_points[0]:
 					distance = math.sqrt(
@@ -589,41 +597,41 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		'''
 		简化width_points，sort 保证是从左到右的线
 		'''
-		for i in xrange(0, len(width_points[0])):
-			width_points[0][i] = [width_points[0][i][0][0], width_points[0][i][0][1]]
-		for i in xrange(0, len(width_points[1])):
-			width_points[1][i] = [width_points[1][i][0][0], width_points[1][i][0][1]]
+		for mask in xrange(0, len(width_points[0])):
+			width_points[0][mask] = [width_points[0][mask][0][0], width_points[0][mask][0][1]]
+		for mask in xrange(0, len(width_points[1])):
+			width_points[1][mask] = [width_points[1][mask][0][0], width_points[1][mask][0][1]]
 		width_points[0].sort()
 		width_points[1].sort()
-		for i in xrange(0, len(width_points[0])):
-			width_points[0][i] = [[width_points[0][i][0], width_points[0][i][1]]]
-		for i in xrange(0, len(width_points[1])):
-			width_points[1][i] = [[width_points[1][i][0], width_points[1][i][1]]]
+		for mask in xrange(0, len(width_points[0])):
+			width_points[0][mask] = [[width_points[0][mask][0], width_points[0][mask][1]]]
+		for mask in xrange(0, len(width_points[1])):
+			width_points[1][mask] = [[width_points[1][mask][0], width_points[1][mask][1]]]
 		
-		for i in xrange(0, len(height_points[0])):
-			height_points[0][i] = [height_points[0][i][0][0], height_points[0][i][0][1]]
-		for i in xrange(0, len(height_points[1])):
-			height_points[1][i] = [height_points[1][i][0][0], height_points[1][i][0][1]]
+		for mask in xrange(0, len(height_points[0])):
+			height_points[0][mask] = [height_points[0][mask][0][0], height_points[0][mask][0][1]]
+		for mask in xrange(0, len(height_points[1])):
+			height_points[1][mask] = [height_points[1][mask][0][0], height_points[1][mask][0][1]]
 		height_points[0].sort()
 		height_points[1].sort()
-		for i in xrange(0, len(height_points[0])):
-			height_points[0][i] = [[height_points[0][i][0], height_points[0][i][1]]]
-		for i in xrange(0, len(height_points[1])):
-			height_points[1][i] = [[height_points[1][i][0], height_points[1][i][1]]]
+		for mask in xrange(0, len(height_points[0])):
+			height_points[0][mask] = [[height_points[0][mask][0], height_points[0][mask][1]]]
+		for mask in xrange(0, len(height_points[1])):
+			height_points[1][mask] = [[height_points[1][mask][0], height_points[1][mask][1]]]
 		
 		# m+n
 		x_list = []
-		for i in width_points[0]:
-			x_list.append((i[0][0], i[0][1], 0))
-		for i in width_points[1]:
-			x_list.append((i[0][0], i[0][1], 1))
+		for mask in width_points[0]:
+			x_list.append((mask[0][0], mask[0][1], 0))
+		for mask in width_points[1]:
+			x_list.append((mask[0][0], mask[0][1], 1))
 		x_list.sort(key=itemgetter(0))
 		
 		y_list = []
-		for i in height_points[0]:
-			y_list.append((i[0][0], i[0][1], 0))
-		for i in height_points[1]:
-			y_list.append((i[0][0], i[0][1], 1))
+		for mask in height_points[0]:
+			y_list.append((mask[0][0], mask[0][1], 0))
+		for mask in height_points[1]:
+			y_list.append((mask[0][0], mask[0][1], 1))
 		y_list.sort(key=itemgetter(1))
 	'''
 	finish automatically segmentation calculation
@@ -640,52 +648,52 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	rotate back points if not hand_drawn, and construct dividing lines
 	'''
 	if not hand_drawn:
-		for i in range(0, len(x_list)):
-			pl = i - 1
-			pr = i + 1
-			if x_list[i][2] == 0:  # 内膜
+		for mask in range(0, len(x_list)):
+			pl = mask - 1
+			pr = mask + 1
+			if x_list[mask][2] == 0:  # 内膜
 				n = 0
 				m = 1
 			else:  # 外膜
 				n = 1
 				m = 0
 			# while找到最近的对侧的膜上的点，同侧就略过
-			while pl >= 0 and x_list[pl][2] == x_list[i][2]:
+			while pl >= 0 and x_list[pl][2] == x_list[mask][2]:
 				pl = pl - 1
-			while pr < len(x_list) and x_list[pr][2] == x_list[i][2]:
+			while pr < len(x_list) and x_list[pr][2] == x_list[mask][2]:
 				pr = pr + 1
 			# one cutting line for slide_no 4
 			# 以下，通过线性回归找到对边的对应位置的y。两个距离可以用来估计心肌壁厚度
 			if pl >= 0 and pr < len(x_list):
-				y = (x_list[pl][1]) * (x_list[pr][0] - x_list[i][0]) / (x_list[pr][0] - x_list[pl][0]) + (
+				y = (x_list[pl][1]) * (x_list[pr][0] - x_list[mask][0]) / (x_list[pr][0] - x_list[pl][0]) + (
 					x_list[pr][1]) * (
-						    x_list[i][0] - x_list[pl][0]) / (x_list[pr][0] - x_list[pl][0])
+						    x_list[mask][0] - x_list[pl][0]) / (x_list[pr][0] - x_list[pl][0])
 				if slide_no != 4 and slide_no != 5:
-					cutting_line_points[n].append([[int(x_list[i][0]), int((x_list[i][1] - y) / 3 + y)]])
-					cutting_line_points[m].append([[int(x_list[i][0]), int((x_list[i][1] - y) * 2 / 3 + y)]])
+					cutting_line_points[n].append([[int(x_list[mask][0]), int((x_list[mask][1] - y) / 3 + y)]])
+					cutting_line_points[m].append([[int(x_list[mask][0]), int((x_list[mask][1] - y) * 2 / 3 + y)]])
 				else:
-					cutting_line_points[n].append([[int(x_list[i][0]), int((x_list[i][1] - y) / 2 + y)]])
-				y_average_list.append(x_list[i][1] - y)
+					cutting_line_points[n].append([[int(x_list[mask][0]), int((x_list[mask][1] - y) / 2 + y)]])
+				y_average_list.append(x_list[mask][1] - y)
 			elif pl < 0:
 				if slide_no != 4 and slide_no != 5:
 					cutting_line_points[n].append(
-						[[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) / 3 + x_list[pr][1])]])
+						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pr][1]) / 3 + x_list[pr][1])]])
 					cutting_line_points[m].append(
-						[[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) * 2 / 3 + x_list[pr][1])]])
+						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pr][1]) * 2 / 3 + x_list[pr][1])]])
 				else:
 					cutting_line_points[n].append(
-						[[int(x_list[i][0]), int((x_list[i][1] - x_list[pr][1]) / 2 + x_list[pr][1])]])
-				y_average_list.append(x_list[i][1] - x_list[pr][1])
+						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pr][1]) / 2 + x_list[pr][1])]])
+				y_average_list.append(x_list[mask][1] - x_list[pr][1])
 			else:
 				if slide_no != 4 and slide_no != 5:
 					cutting_line_points[n].append(
-						[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 3 + x_list[pl][1])]])
+						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pl][1]) / 3 + x_list[pl][1])]])
 					cutting_line_points[m].append(
-						[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) * 2 / 3 + x_list[pl][1])]])
+						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pl][1]) * 2 / 3 + x_list[pl][1])]])
 				else:
 					cutting_line_points[n].append(
-						[[int(x_list[i][0]), int((x_list[i][1] - x_list[pl][1]) / 2 + x_list[pl][1])]])
-				y_average_list.append(x_list[i][1] - x_list[pl][1])
+						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pl][1]) / 2 + x_list[pl][1])]])
+				y_average_list.append(x_list[mask][1] - x_list[pl][1])
 		rcm_thickening.append(abs(np.average(y_average_list)))
 		width_points[0] = rotate_points(width_points[0], rect_wall[0], angle)
 		width_points[1] = rotate_points(width_points[1], rect_wall[0], angle)
@@ -715,7 +723,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			for point_index in xrange(width_points[0].__len__()):
 				cutting_line_points[0].append(
 					[[width_points[0][point_index][0][0] / 2 + width_points[1][point_index][0][0] / 2,
-					 width_points[0][point_index][0][1] / 2 + width_points[1][point_index][0][1] / 2]])
+					  width_points[0][point_index][0][1] / 2 + width_points[1][point_index][0][1] / 2]])
 				#  euclidean distance
 				sub_res = np.array(width_points[0][point_index]) - np.array(width_points[1][point_index])
 				y_average_list.append(np.sqrt(np.sum(np.square(sub_res))))
@@ -732,9 +740,13 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		second = cutting_line_points[0] + cutting_line_points[1]
 		third = cutting_line_points[0] + width_points[1]
 	else:
-		first = width_points[0] + cutting_line_points[0]
+		reversed_cutting_line_0 = cutting_line_points[0]
+		reversed_cutting_line_0.reverse()
+		first = width_points[0] + reversed_cutting_line_0
+		reversed_cutting_line_0.reverse()
 		second = cutting_line_points[0] + width_points[1]
 		third = []
+		del reversed_cutting_line_0
 	if hand_drawn and width_points[2].__len__() is not 0:
 		trabe_points = width_points[1] + width_points[2]
 	#######################################
@@ -781,36 +793,37 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	'''
 	construct masks
 	'''
-	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-	firstmask = cv2.fillPoly(i, np.array([first], np.int32), 255)  # fillPoly()对于限定轮廓的区域进行填充
+	mask = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+	firstmask = cv2.fillPoly(mask, np.array([first], np.int32), 255)  # fillPoly()对于限定轮廓的区域进行填充
 	
 	# print firstmask[363][154]
 	
-	i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-	secondmask = cv2.fillPoly(i, np.array([second], np.int32), 255)
+	mask = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+	secondmask = cv2.fillPoly(mask, np.array([second], np.int32), 255)
 	# if show_img:
 	# 	# cv2.imshow(othermask_img_name, rgbimg)  # save the img of segmentation result
 	# 	cv2.imshow("firstmask", firstmask)
 	# 	cv2.imshow("secondmask", secondmask)
 	thirdmask = []
 	if slide_no != 4 and slide_no != 5:
-		i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-		thirdmask = cv2.fillPoly(i, np.array([third], np.int32), 255)
+		mask = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+		thirdmask = cv2.fillPoly(mask, np.array([third], np.int32), 255)
 	othermask = []
 	if calculate_trabe_flag and not hand_drawn:
 		box1 = cv2.boxPoints(rect_other)
 		box1 = np.array(box1)
-		for i in range(0, 2):
-			max_area_index = sqrt((box1[i][0] - cx1) * (box1[i][0] - cx1) + (box1[i][1] - cy1) * (box1[i][1] - cy1))
-			n = i
-			for j in range(i, 4):
+		for mask in range(0, 2):
+			max_area_index = sqrt(
+				(box1[mask][0] - cx1) * (box1[mask][0] - cx1) + (box1[mask][1] - cy1) * (box1[mask][1] - cy1))
+			n = mask
+			for j in range(mask, 4):
 				if sqrt((box1[j][0] - cx1) * (box1[j][0] - cx1) + (box1[j][1] - cy1) * (
 						box1[j][1] - cy1)) > max_area_index:
 					max_area_index = sqrt(
 						(box1[j][0] - cx1) * (box1[j][0] - cx1) + (box1[j][1] - cy1) * (box1[j][1] - cy1))
 					n = j
-			k = (box1[i][0], box1[i][1])
-			box1[i] = box1[n]
+			k = (box1[mask][0], box1[mask][1])
+			box1[mask] = box1[n]
 			box1[n] = [k[0], k[1]]
 		
 		other_line = width_points[0]
@@ -825,8 +838,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 			other_line.append([[box1[1][0], box1[1][1]]])
 			other_line.append([[box1[0][0], box1[0][1]]])
 		
-		i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-		othermask = cv2.fillPoly(i, np.array([other_line], np.int32), 255)
+		mask = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+		othermask = cv2.fillPoly(mask, np.array([other_line], np.int32), 255)
 	# otherdensity = areaaveragedensity(fibrosis, grey_img, othermask)
 	elif hand_drawn:
 		# othermask = cv2.fillPoly()
@@ -834,8 +847,8 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		if width_points[2].__len__() is 0:
 			othermask = g_img - firstmask - secondmask - thirdmask
 		else:
-			i = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-			othermask = cv2.fillPoly(i, np.array([trabe_points], np.int32), 255)
+			mask = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+			othermask = cv2.fillPoly(mask, np.array([trabe_points], np.int32), 255)
 		'''
 		add MORPH_OPEN calculation, eliminate areas on the outer side, deprecated in this branch
 		'''
@@ -892,9 +905,24 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		'''
 		show and save images
 		'''
-		imgshow(rgbimg)
-		imgshow(firstmask, cmap='gray')
-		imgshow(secondmask, cmap='gray')
+		if server:
+			cv2.imwrite('log/Mask/HE/' + str(he_patients[patient_id]) + '_slide_{}_({})'.format(slide_no, patient_id) + 'RGB.jpg', rgbimg)
+		else:
+			imgshow(rgbimg)
+		mask_list = [firstmask, secondmask, thirdmask, othermask]
+		mask_index = 0
+		for mask in mask_list:
+			if mask.__len__() > 0:
+				if server:
+					cv2.imwrite('log/Mask/HE/' + str(he_patients[patient_id]) + '_slide_{}_({})_'.format(slide_no,patient_id) + str(
+						mask_index) + '.jpg', mask)  # list of ndarray cannot fo .index()
+					print 'log/Mask/HE/' + str(he_patients[patient_id]) + '_slide_{}_({})_'.format(slide_no,patient_id) + str(
+						mask_index) + '.jpg saved'
+				else:
+					imgshow(mask, cmap='gray')
+			mask_index += 1
+		# imgshow(firstmask, cmap='gray')
+		# imgshow(secondmask, cmap='gray')
 		# imgshow(thirdmask, cmap='gray')
 		# imgshow(othermask, cmap='gray')
 		othermask_img_name = (

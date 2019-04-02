@@ -28,6 +28,14 @@ def persist(patient_id, slide_type, set_start_row=False):
 
 # write test image
 
+def run(start_patient, end_patient, replenish=None, he=True, masson=False, server=False):
+	if replenish is not None:
+		slide_proc(patient_id=start_patient - 1, start=replenish[0], end=replenish[1], he=he, masson=masson,
+		           set_hand_drawn=True, server=server)
+	for i in xrange(start_patient, end_patient):
+		slide_proc(patient_id=i, start=0, end=6, he=he, masson=masson, set_hand_drawn=True, server=server)
+	pass
+
 
 if __name__ == '__main__':
 	init_test_proc()
@@ -35,8 +43,9 @@ if __name__ == '__main__':
 	# 	he_slide_path, masson_slide_path = get_image_path(i)
 	# 	write_test_img(masson_slide_path, is_masson=False)
 	# persist process begin#################
-	for i in xrange(1, 10):
-		slide_proc(patient_id=i, start=0, end=6, he=True, masson=False, set_hand_drawn=True)
+	# for i in xrange(3, 4):
+	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
+	run(8, 20, replenish=None, server=True)
 	'''
 	deal with hand_drawn pics
 	'''

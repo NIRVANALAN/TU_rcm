@@ -196,7 +196,7 @@ def write_test_img(path, saved_img_level, is_masson=False):
 he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
-def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_drawn_img=None):
+def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_drawn_img=None, server=False):
 	"""
 	:param patient_id: id of patient
 	:param hand_drawn_img: set if it's hand_drawn
@@ -218,7 +218,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 	                                                                        patient_id=patient_id,
 	                                                                        slide_no=he_slide_no,
 	                                                                        hand_drawn=set_hand_drawn,
-	                                                                        image_path=hand_drawn_img)
+	                                                                        image_path=hand_drawn_img, server=server)
 	print 'mask read done'
 	global he_mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
@@ -227,6 +227,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 	# i = 0
 	he_max_dimension = slide_processed.dimensions
 	print "dimension working on:", he_max_dimension[1], he_max_dimension[0]
+	pixels = he_max_dimension[1] * he_max_dimension[0]
 	for a in xrange(len(areas)):
 		if areas[a].__len__():
 			cardiac_cell_num_threshold = [80]
@@ -236,9 +237,9 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# 证明这个像素点在对应的Mask里面
-						print str(he_patients[patient_id]) + " HE: " + str(he_slide_no) + ' ' + he_mask_name[
-							a] + ": " + str(
-							x) + " " + str(y)
+						print str(he_patients[patient_id]).split('/')[1] + "({})".format(patient_id) + " HE: " + str(
+							he_slide_no) + ' ' + he_mask_name[
+							      a] + ": " + '{:.4f}%'.format(float(y * he_max_dimension[0] + x) / pixels * 100)
 						# print x, y
 						region = np.array(slide_processed.read_region((x, y), 0, (area_length, area_length)))
 						region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
@@ -563,7 +564,7 @@ def masson_test_proc(masson_working_level=6):
 	pass
 
 
-def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=False):
+def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=False, server=False):
 	# global he_test_path, masson_test_path
 	he_slide_path, masson_slide_path = get_patient_image_path(patient_id)  # patient's image path
 	for slide_no in xrange(start, end):
@@ -574,7 +575,7 @@ def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=Fa
 					if int(split_path[-5]) == slide_no + 1:
 						processed_index = he_slide_path[1].index(split_path)
 						he_proc(slide_no, he_slide_path[0][processed_index], patient_id, set_hand_drawn,
-						        split_path if set_hand_drawn else None)
+						        split_path if set_hand_drawn else None, server=server)
 				continue
 			except BaseException, e:
 				print e.message
