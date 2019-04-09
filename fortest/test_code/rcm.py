@@ -36,7 +36,8 @@ def init_test_proc():
 	# global patient_id
 	global he_test_path
 	global masson_test_path
-	he_test_path, masson_test_path = get_patient_image_path(0)  # test 28330
+	he_test_path, masson_test_path = get_patient_image_path(0, return_type="both", is_he=True,
+	                                                        is_masson=True)  # test 28330
 	global slide_he
 	global slide_masson
 	#  init
@@ -59,32 +60,45 @@ def init_test_proc():
 	print "init finished, working dimension: ", working_dimension, "working level:", max_level
 
 
-def get_patient_image_path(patient_no, return_type="both"):
+def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', for_split=False, is_masson=True,
+                           is_he=True):
 	"""
+	:param is_he: check he
+	:param is_masson: check masson
+	:param for_split: define split image mode
+	:param file_type: define file format (.ndpi / .mrxs)
 	:param patient_no: the number of patient in the patients[] list
 	:param return_type: "both" default
 	:return: the he_path and masson_path
 	"""
 	# patient_no = patients[patient_no]
-	he_patient_no = he_patients[patient_no]
-	masson_patient_no = masson_patients[patient_no]
 	he_path_list = [[], []]
 	masson_path_list = [[], []]
+	if is_he:
+		he_patient_no = he_patients[patient_no]
+	if is_masson:
+		masson_patient_no = masson_patients[patient_no]
 	for i in xrange(1, 7):
-		he_img_name = he_patient_no + '-' + str(i) + '.ndpi'
-		masson_img_name = masson_patient_no + '-' + str(i) + '.ndpi'
-		
-		he_path_iter = img_dir + 'HE' + he_patient_no + he_img_name
-		he_split_image_iter = img_dir + 'RGB/HE/' + he_patient_no.split('/')[1] + '-' + str(i) + '.jpg'
-		if os.path.exists(he_split_image_iter):
-			he_path_list[0].append(he_path_iter)
-			he_path_list[1].append(he_split_image_iter)
-		
-		masson_path_iter = img_dir + 'MASSON' + masson_patient_no + masson_img_name
-		masson_split_image_iter = img_dir + 'RGB/MASSON/' + masson_patient_no.split('/')[1] + '-' + str(i) + '.jpg'
-		if os.path.exists(masson_split_image_iter):
-			masson_path_list[0].append(masson_path_iter)
-			masson_path_list[1].append(masson_split_image_iter)
+		if is_he:
+			he_img_name = he_patient_no + '-' + str(i) + file_type
+			he_path_iter = img_dir + 'HE' + he_patient_no + he_img_name
+			he_split_image_iter = img_dir + 'RGB/HE/' + he_patient_no.split('/')[1] + '-' + str(i) + '.jpg'
+			if for_split and os.path.exists(he_path_iter):
+				he_path_list[0].append(he_path_iter)
+			else:
+				if os.path.exists(he_split_image_iter):
+					he_path_list[0].append(he_path_iter)
+					he_path_list[1].append(he_split_image_iter)
+		if is_masson:
+			masson_img_name = masson_patient_no + '-' + str(i) + file_type
+			masson_path_iter = img_dir + 'MASSON' + masson_patient_no + masson_img_name
+			masson_split_image_iter = img_dir + 'RGB/MASSON/' + masson_patient_no.split('/')[1] + '-' + str(i) + '.jpg'
+			if for_split and os.path.exists(masson_path_iter):
+				masson_path_list[0].append(masson_path_iter)
+			else:
+				if os.path.exists(masson_split_image_iter):
+					masson_path_list[0].append(masson_path_iter)
+					masson_path_list[1].append(masson_split_image_iter)
 	if return_type is "both":
 		return he_path_list, masson_path_list
 	elif return_type is "HE":
@@ -382,11 +396,21 @@ fibrosis_group = [4000, 8000, 12000, 16000, 20000, 24000, 28000, 32000]
 
 
 def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_level=6, hand_drawn=True,
-                image_path=None):  # need debug and fix
+                split_image_path=None):  # need debug and fix
 	masson_proc_time_start = time()
+	
 	masson_whole_result = []
 	masson_result_iter = [0, 0]
-	slide = openslide.open_slide(masson_slide_path[slide_no])
+	slide = openslide.open_slide(masson_slide_path)
+	
+	firstmask, secondmask, thirdmask, othermask, grey_img, hsv, _, rcm_thickening = edit_area(
+		masson_mask_working_level, slide,
+		masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
+		slide_no=slide_no,
+		patient_id=patient_id,
+		hand_drawn=hand_drawn,
+		is_masson=True, image_path=split_image_path)
+	areas = [firstmask, secondmask, thirdmask, othermask]
 	# save global fibrosis image
 	masson_region_slide(slide, 6,
 	                    "fibrosis", masson_patients[patient_id],
@@ -431,14 +455,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	# print working_level
 	# working_dimensions = slide.level_dimensions[masson_mask_working_level]
 	# rcm_thickening =  [other_height, wall_height]
-	firstmask, secondmask, thirdmask, othermask, grey_img, hsv, _, rcm_thickening = edit_area(
-		masson_mask_working_level, slide,
-		masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
-		slide_no=slide_no,
-		patient_id=patient_id,
-		hand_drawn=hand_drawn,
-		is_masson=True, image_path=image_path)
-	areas = [firstmask, secondmask, thirdmask, othermask]
+	
 	masson_working_level = 1  # 因为速度比较快，这里缩放一倍
 	second_max_dimension = slide.level_dimensions[masson_working_level]
 	magnify = pow(2, masson_mask_working_level) / pow(2, masson_working_level)
@@ -564,28 +581,34 @@ def masson_test_proc(masson_working_level=6):
 	pass
 
 
-def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=False, server=False):
+def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=False, server=False, file_type='.ndpi'):
 	# global he_test_path, masson_test_path
-	he_slide_path, masson_slide_path = get_patient_image_path(patient_id)  # patient's image path
+	he_slide_path, masson_slide_path = get_patient_image_path(patient_id, file_type=file_type, is_he=he,
+	                                                          is_masson=masson)  # patient's image path
 	for slide_no in xrange(start, end):
 		if he:
-			processed_index = 0
+			processed_index_he = 0
 			try:
 				for split_path in he_slide_path[1]:
 					if int(split_path[-5]) == slide_no + 1:
-						processed_index = he_slide_path[1].index(split_path)
-						he_proc(slide_no, he_slide_path[0][processed_index], patient_id, set_hand_drawn,
+						processed_index_he = he_slide_path[1].index(split_path)
+						he_proc(slide_no, he_slide_path[0][processed_index_he], patient_id, set_hand_drawn,
 						        split_path if set_hand_drawn else None, server=server)
 				continue
 			except BaseException, e:
 				print e.message
 				with open('he_error_slide_log.txt', 'a') as f:
-					f.writelines(he_slide_path[0][processed_index] + '：' + e.message + '\n')
+					f.writelines(he_slide_path[0][processed_index_he] + '：' + e.message + '\n')
 				continue
 		if masson:
+			processed_index_masson = 0
 			try:
-				masson_proc(slide_no, masson_slide_path[0], patient_id, set_hand_drawn,
-				            masson_slide_path[1] if set_hand_drawn else None)
+				for split_path in masson_slide_path[1]:
+					if int(split_path[-5]) == slide_no + 1:
+						processed_index_masson = masson_slide_path[1].index(split_path)
+						masson_proc(slide_no, masson_slide_path[0][processed_index_masson], patient_id,
+						            hand_drawn=set_hand_drawn,
+						            split_image_path=split_path if set_hand_drawn else None)
 			except BaseException, e:
 				print e.message
 				with open('masson_error_slide_log.txt', 'a') as f:

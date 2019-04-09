@@ -288,7 +288,8 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 '''
 thresh for hand_drawn line extraction
 '''
-outer_thresh = (166, 43, 46), (180, 255, 255)  # RED
+# outer_thresh = (166, 43, 46), (180, 255, 255)  # RED
+outer_thresh = (26, 43, 46), (34, 255, 255)  # RED
 inner_thresh = (35, 43, 46), (77, 255, 255)  # GREEN
 trabe_thresh = (100, 43, 46), (124, 255, 255)  # BLUE
 thresh = (outer_thresh, inner_thresh, trabe_thresh)
@@ -305,7 +306,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	else:
 		print "edit HE"
 	# n = 21
-	print 'level working on' + str(level)
+	print 'level working on ' + str(level)
 	working_dimensions = slide.level_dimensions[level]
 	print 'working dimension:' + str(working_dimensions)
 	img = np.array(slide.read_region((0, 0), level, working_dimensions))
@@ -1152,7 +1153,7 @@ def masson_region_slide(slide, working_level, threshold_type, patient_num, slide
 	# (90, 20, 20), (140, 255, 255) fibrosis
 	# calculate threshold
 	mask = cv2.inRange(hsv, threshold[0], threshold[1])  # s 50-250 in paper
-	region_area = cv2.countNonZero(hsv)
+	region_area = cv2.countNonZero(mask)
 	# cv2.imshow('hsv_cardiac_cell', hsv)
 	# just global image needed...
 	if save_image:
@@ -1188,9 +1189,9 @@ def masson_region_slide(slide, working_level, threshold_type, patient_num, slide
 
 
 def fibrosis_slide(slide, fibrosislevel, start_pos=(0, 0), is_debug=False, dimension=(1000, 1000)):
-	workingDimensions = slide.level_dimensions[fibrosislevel]
+	working_dimensions = slide.level_dimensions[fibrosislevel]
 	if is_debug is False:
-		img = np.array(slide.read_region(start_pos, fibrosislevel, workingDimensions))
+		img = np.array(slide.read_region(start_pos, fibrosislevel, working_dimensions))
 	else:
 		img = np.array(slide.read_region(start_pos, 0, dimension))
 	rr, gg, bb, aa = cv2.split(img)

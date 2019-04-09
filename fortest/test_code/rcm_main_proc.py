@@ -28,30 +28,38 @@ def persist(patient_id, slide_type, set_start_row=False):
 
 # write test image
 
-def run(start_patient, end_patient, replenish=None, he=True, masson=False, server=False):
+def run(start_patient, end_patient, replenish=None, he=True, masson=False, server=False, file_type='.ndpi'):
 	if replenish is not None:
 		slide_proc(patient_id=start_patient - 1, start=replenish[0], end=replenish[1], he=he, masson=masson,
-		           set_hand_drawn=True, server=server)
+		           set_hand_drawn=True, server=server, file_type=file_type)
 	for i in xrange(start_patient, end_patient):
-		slide_proc(patient_id=i, start=0, end=6, he=he, masson=masson, set_hand_drawn=True, server=server)
+		slide_proc(patient_id=i, start=0, end=6, he=he, masson=masson, set_hand_drawn=True, server=server, file_type=file_type)
 	pass
 
 
 if __name__ == '__main__':
 	init_test_proc()
-	# for i in xrange(1, 3):
-	# 	he_slide_path, masson_slide_path = get_image_path(i)
-	# 	write_test_img(masson_slide_path, is_masson=False)
+	
+	# ============= write test images ================= #
+	# for i in xrange(25, 26):
+	# 	slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
+	# 	                                    for_split=True, is_masson=True, is_he=False)
+	# 	write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
+	
+	# ===================================================#
 	# persist process begin#################
 	# for i in xrange(3, 4):
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
-	run(8, 20, replenish=None, server=True)
+	
+	# ================ RUN ================= #
+	run(1, 26, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs')
+	
 	'''
 	deal with hand_drawn pics
 	'''
 	# image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_code/HE_image/25845/whole/25845_slide0.jpg'
 	# image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_images/HE/29708/test_35730-2_LI.jpg'
-	image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_images/HE/29708/test_29708-1_LI2.jpg'
+	# image_path = '/home/zhourongchen/lys/rcm_project/fortest/test_images/HE/29708/test_29708-1_LI2.jpg'
 	# for test only
 	# he_test_proc()
 	# for i in xrange(2, 3):
