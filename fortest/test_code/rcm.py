@@ -403,7 +403,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	masson_result_iter = [0, 0]
 	slide = openslide.open_slide(masson_slide_path)
 	
-	firstmask, secondmask, thirdmask, othermask, grey_img, hsv, _, rcm_thickening = edit_area(
+	firstmask, secondmask, thirdmask, othermask, grey_img, hsv, rcm_thickening = edit_area(
 		masson_mask_working_level, slide,
 		masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
 		slide_no=slide_no,

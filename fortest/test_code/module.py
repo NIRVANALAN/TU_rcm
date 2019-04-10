@@ -236,8 +236,11 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	num = int(width_points[smaller_index].__len__() / percentage)  # 1/percentage from original points
 	arg0 = np.linspace(0, width_points[0].__len__(), num, endpoint=False, dtype=int)
 	arg1 = np.linspace(0, width_points[1].__len__(), num, endpoint=False, dtype=int)
+	arg2 = np.linspace(0, width_points[2].__len__(), num, endpoint=False, dtype=int)
 	width_points[0] = [width_points[0][i] for i in arg0]
 	width_points[1] = [width_points[1][i] for i in arg1]
+	if width_points[2]:
+		width_points[2] = [width_points[2][i] for i in arg2]
 	'''
 	fit line
 	'''
@@ -246,6 +249,9 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	k_outer = line_outer[1] / line_outer[0]
 	line_inner = cv2.fitLine(np.array(width_points[1]), cv2.DIST_L2, 0, 0.01, 0.01)
 	k_inner = line_inner[1] / line_inner[0]
+	if width_points[2]:
+		line_trabe = cv2.fitLine(np.array(width_points[2]), cv2.DIST_L2, 0, 0.01, 0.01)
+		k_trabe = line_trabe[1] / line_trabe[0]
 	
 	width_points[0][0][0][0] /= 2
 	width_points[1][0][0][0] /= 2
@@ -260,10 +266,12 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		inner_point[0][1] = ((line_inner[3] - k_inner * length).item() + inner_point[0][1]) / 2
 		pass
 	
-	if abs(k_outer) > 5:
+	if abs(k_outer) > 3:
 		width_points[0].sort(key=lambda x: x[0][1])
-	if abs(k_inner) > 5:
+	if abs(k_inner) > 3:
 		width_points[1].sort(key=lambda x: x[0][1])
+	if width_points[2] and abs(k_trabe) > 3:
+		width_points[2].sort(key=lambda x: x[0][1])
 	# length = 300
 	# point_out = (line_outer[2] - length, line_outer[3] - k_outer * length), \
 	#             (line_outer[2] + length, line_outer[3] + k_outer * length)
@@ -906,20 +914,23 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		'''
 		show and save images
 		'''
-		if server:
-			cv2.imwrite('log/Mask/HE/' + str(he_patients[patient_id]) + '_slide_{}_({})'.format(slide_no, patient_id) + 'RGB.jpg', rgbimg)
-		else:
+		cv2.imwrite(
+			'log/Mask/HE/' + str(he_patients[patient_id]) + '_slide_{}_({})'.format(slide_no, patient_id) + 'RGB.jpg',
+			rgbimg)
+		if not server:
 			imgshow(rgbimg)
 		mask_list = [firstmask, secondmask, thirdmask, othermask]
 		mask_index = 0
 		for mask in mask_list:
 			if mask.__len__() > 0:
-				if server:
-					cv2.imwrite('log/Mask/HE/' + str(he_patients[patient_id]) + '_slide_{}_({})_'.format(slide_no,patient_id) + str(
-						mask_index) + '.jpg', mask)  # list of ndarray cannot fo .index()
-					print 'log/Mask/HE/' + str(he_patients[patient_id]) + '_slide_{}_({})_'.format(slide_no,patient_id) + str(
-						mask_index) + '.jpg saved'
-				else:
+				mask_image_type = 'MASSON' if is_masson else 'HE'
+				cv2.imwrite('log/Mask/{}/'.format(mask_image_type) + str(he_patients[patient_id]) + '_slide_{}_({})_'.format(slide_no,
+				                                                                                     patient_id) + str(
+					mask_index) + '.jpg', mask)  # list of ndarray cannot fo .index()
+				print 'log/Mask/{}/'.format(mask_image_type) + str(he_patients[patient_id]) + '_slide_{}_({})_'.format(slide_no,
+				                                                                               patient_id) + str(
+					mask_index) + '.jpg saved'
+				if not server:
 					imgshow(mask, cmap='gray')
 			mask_index += 1
 		# imgshow(firstmask, cmap='gray')
@@ -929,7 +940,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		othermask_img_name = (
 			'HE_image' + str(he_patients[patient_id]) + '/segmentation/slide' + str(slide_no) + '_other_mask.jpg' if (
 					is_masson is False)
-			else 'HE_image' + str(masson_patients[patient_id]) + '/segmentation/slide' + str(
+			else 'MASSON_image' + str(masson_patients[patient_id]) + '/segmentation/slide' + str(
 				slide_no) + '_other_mask.jpg')
 		cv2.imwrite(othermask_img_name, othermask)  # save the img of segmentation result
 		rgb_img_name = (
