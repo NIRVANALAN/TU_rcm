@@ -82,7 +82,10 @@ def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', fo
 		if is_he:
 			he_img_name = he_patient_no + '-' + str(i) + file_type
 			he_path_iter = img_dir + 'HE' + he_patient_no + he_img_name
-			he_split_image_iter = img_dir + 'RGB/HE/' + he_patient_no.split('/')[1] + '-' + str(i) + '.jpg'
+			if os.path.exists(img_dir + 'RGB/HE/' + he_patient_no):
+				he_split_image_iter = img_dir + 'RGB/HE' + he_patient_no + he_patient_no + '-' + str(i) + '.jpg'
+			else:
+				he_split_image_iter = img_dir + 'RGB/HE/' + he_patient_no.split('/')[1] + '-' + str(i) + '.jpg'
 			if for_split and os.path.exists(he_path_iter):
 				he_path_list[0].append(he_path_iter)
 			else:
@@ -92,7 +95,12 @@ def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', fo
 		if is_masson:
 			masson_img_name = masson_patient_no + '-' + str(i) + file_type
 			masson_path_iter = img_dir + 'MASSON' + masson_patient_no + masson_img_name
-			masson_split_image_iter = img_dir + 'RGB/MASSON/' + masson_patient_no.split('/')[1] + '-' + str(i) + '.jpg'
+			if os.path.exists(img_dir + 'RGB/MASSON/' + masson_patient_no):
+				masson_split_image_iter = img_dir + 'RGB/MASSON' + masson_patient_no + masson_patient_no + '-' + str(
+					i) + '.jpg'
+			else:
+				masson_split_image_iter = img_dir + 'RGB/MASSON/' + masson_patient_no.split('/')[1] + '-' + str(
+					i) + '.jpg'
 			if for_split and os.path.exists(masson_path_iter):
 				masson_path_list[0].append(masson_path_iter)
 			else:
@@ -434,7 +442,8 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	for x in range(1, number):
 		j = np.zeros((len(fibrosis_img), len(fibrosis_img[0])), np.uint8)
 		j[labels == x] = 255
-		print "fibrosis process:" + str(x / float(number) * 100) + "%"
+		if x % 100 == 0:
+			print "fibrosis process:{:.4f}".format(x / float(number))
 		total_fibrosis_block.append(cv2.countNonZero(j) * (pow(2, fibrosis_level) ** 2))
 	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
 	plt.hist(total_fibrosis_block, fibrosis_group, histtype='bar', rwidth=0.8)
@@ -524,10 +533,10 @@ def masson_persist(whole_res, slide_no, print_res=False):
 
 
 def masson_test_proc(masson_working_level=6):
-	global slide_he
-	global slide_masson
-	print 'working level', masson_working_level
-	working_dimension = slide_masson.level_dimensions[masson_working_level]
+	# global slide_he
+	# global slide_masson
+	# print 'working level', masson_working_level
+	# working_dimension = slide_masson.level_dimensions[masson_working_level]
 	
 	# cardiac_threshold = (155, 140, 50), (175, 230, 255)  # cardiac
 	# fibrosis_threshold = (90, 20, 20), (140, 255, 255)  # fibrosis
@@ -536,9 +545,6 @@ def masson_test_proc(masson_working_level=6):
 	# rgb_img = []
 	
 	def pure_test():
-		# global hsv
-		# global rgb_img
-		# region = np.array(slide_masson.read_region((30000, 30000), 0, (1000, 1000)))
 		test_level = 5
 		test_dimension = slide_masson.level_dimensions[test_level]
 		coord = (22000, 22000)
@@ -569,15 +575,6 @@ def masson_test_proc(masson_working_level=6):
 	
 	pure_test()
 	
-	# slide_no = 2
-	# # slide_he = openslide.open_slide(he_path[slide_no])
-	# slide_masson = openslide.open_slide(masson_test_path[slide_no])
-	# firstmask, secondmask, thirdmask, othermask, greyimg, hsv, fibrosis_img, rcm_thickening = edit_area(
-	# 	masson_working_level,
-	# 	slide_masson,
-	# 	masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
-	# 	slide_no=slide_no,
-	# 	is_masson=True)
 	pass
 
 
@@ -612,7 +609,7 @@ def slide_proc(patient_id, start, end, he=False, masson=False, set_hand_drawn=Fa
 			except BaseException, e:
 				print e.message
 				with open('masson_error_slide_log.txt', 'a') as f:
-					f.writelines(masson_slide_path[0][slide_no] + '：' + e.message + '\n')
+					f.writelines(masson_slide_path[0][processed_index_masson] + '：' + e.message + '\n')
 					continue
 
 

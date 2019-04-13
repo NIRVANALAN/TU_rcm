@@ -39,7 +39,7 @@ def run(start_patient, end_patient, replenish=None, he=True, masson=False, serve
 
 if __name__ == '__main__':
 	init_test_proc()
-	
+	# masson_test_proc()
 	# ============= write test images ================= #
 	# for i in xrange(25, 26):
 	# 	slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
 	
 	# ================ RUN ================= #
-	run(1, 26, replenish=(5, 6), server=False, he=False, masson=True, file_type='.mrxs')
+	run(1, 26, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs')
 	
 	'''
 	deal with hand_drawn pics

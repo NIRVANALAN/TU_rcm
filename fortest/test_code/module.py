@@ -160,10 +160,10 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	:return: width_points, x_list
 	"""
 	# slide_he = openslide.open_slide('/home/zhourongchen/zrc/rcm/images/MASSON/30638/28330-.ndpi')
-	he_image = cv2.imread(image_path)
+	split_image = cv2.imread(image_path)
 	if show_image:
-		imgshow(he_image)
-	hsv = cv2.cvtColor(he_image, cv2.COLOR_BGR2HSV)
+		imgshow(split_image)
+	hsv = cv2.cvtColor(split_image, cv2.COLOR_BGR2HSV)
 	# slide = openslide.open_slide(slide_path)
 	# print he_slide.dimensions
 	# level = 5
@@ -172,14 +172,14 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	print slide_img.shape
 	slide_img = cv2.cvtColor(slide_img, cv2.COLOR_RGBA2BGR)
 	width_points = [[], [], []]  # add BLUE line for trabe segmentation
-	# colors = ((0, 0, 255), (0, 255, 0), (255, 0, 0))
 	for t in threshes:
 		mask = cv2.inRange(hsv, t[0], t[1])
 		# mask = cv.inRange(hsv, np.array([170, 43, 43]), np.array([180, 255, 255]))
-		# dst = cv.bitwise_and(he_image, he_image, mask=mask)
+		# dst = cv.bitwise_and(split_image, split_image, mask=mask)
 		# imgshow(dst)
 		# get points on the contours
-		# imgshow(mask, cmap='gray')
+		if show_image:
+			imgshow(mask, cmap='gray')
 		_, contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		if contours.__len__() is 0:  # now trabe line(blue)
 			continue
@@ -189,9 +189,10 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 				points = contours[i]
 				first_index = i
 				break
-		for i in contours[first_index:]:
-			if len(i) > 20:
-				points = np.append(points, i, axis=0)
+		if first_index > 0:
+			for i in contours[first_index:]:
+				if len(i) > 20:
+					points = np.append(points, i, axis=0)
 		points = np.unique(points, axis=0)  # get unique points
 		# draw points in the original image
 		points = np.array([points], np.int32)  # convert to np.int32 works well
@@ -225,8 +226,8 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		width_points[index].sort()
 		pass
 	
-	if show_image:
-		imgshow(slide_img)
+	# if show_image:
+	# 	imgshow(slide_img)
 	# print he_slide.dimensions[0]/dst.shape[0]
 	'''
 	select some points
@@ -297,15 +298,25 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 thresh for hand_drawn line extraction
 '''
 # outer_thresh = (166, 43, 46), (180, 255, 255)  # RED
-outer_thresh = (26, 43, 46), (34, 255, 255)  # RED
-inner_thresh = (35, 43, 46), (77, 255, 255)  # GREEN
-trabe_thresh = (100, 43, 46), (124, 255, 255)  # BLUE
+outer_thresh = (26, 233, 46), (28, 255, 255)  # YELLOW 27
+inner_thresh = (54, 233, 46), (56, 255, 255)  # GREEN 55
+# trabe_thresh = (100, 43, 46), (124, 255, 255)  # BLUE
+trabe_thresh = (19, 233, 46), (21, 255, 255)  # ORANGE 20
+'''
+[ 20 253 253]
+[ 55 255 231]
+[ 27 254 255]
+[ 20 239 248]
+[ 55 254 230]
+[ 55 255 230]
+[ 27 245 255]
+'''
 thresh = (outer_thresh, inner_thresh, trabe_thresh)
 
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
               is_masson=False, patient_id=0, show_img=False, set_vertical=False, hand_drawn=False, image_path=None,
-              server=False):
+              server=True):
 	calculate_trabe_flag = True
 	if slide_no is 3:
 		calculate_trabe_flag = False
@@ -924,12 +935,17 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		for mask in mask_list:
 			if mask.__len__() > 0:
 				mask_image_type = 'MASSON' if is_masson else 'HE'
-				cv2.imwrite('log/Mask/{}/'.format(mask_image_type) + str(he_patients[patient_id]) + '_slide_{}_({})_'.format(slide_no,
-				                                                                                     patient_id) + str(
-					mask_index) + '.jpg', mask)  # list of ndarray cannot fo .index()
-				print 'log/Mask/{}/'.format(mask_image_type) + str(he_patients[patient_id]) + '_slide_{}_({})_'.format(slide_no,
-				                                                                               patient_id) + str(
-					mask_index) + '.jpg saved'
+				patient_no = masson_patients[patient_id] if is_masson else he_patients[patient_id]
+				cv2.imwrite(
+					'log/Mask/{}'.format(mask_image_type) + patient_no + '({})_slide{}_mask{}.{}'.format(patient_id,
+					                                                                                  slide_no,
+					                                                                                  str(mask_index),
+					                                                                                  'jpg'),
+					mask)  # list of ndarray cannot fo .index()
+				print 'log/Mask/{}'.format(mask_image_type) + '({})_slide_{}_mask{}.{}'.format(patient_id,
+				                                                                           slide_no,
+				                                                                           str(mask_index),
+				                                                                           'jpg') + ' saved'
 				if not server:
 					imgshow(mask, cmap='gray')
 			mask_index += 1
