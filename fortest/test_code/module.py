@@ -1223,7 +1223,7 @@ def fibrosis_slide(slide, fibrosislevel, start_pos=(0, 0), is_debug=False, dimen
 		img = np.array(slide.read_region(start_pos, 0, dimension))
 	rr, gg, bb, aa = cv2.split(img)
 	bgr_cv_img = cv2.merge((bb, gg, rr))
-	cv2.imshow('bgr_img', bgr_cv_img)
+	# cv2.imshow('bgr_img', bgr_cv_img)
 	hsv = cv2.cvtColor(bgr_cv_img, cv2.COLOR_BGR2HSV)
 	hsv = cv2.inRange(hsv, (90, 20, 20), (140, 255, 255))  # s 50-250 in paper
 	return hsv

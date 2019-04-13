@@ -1,4 +1,7 @@
 # coding=utf-8
+import matplotlib
+
+matplotlib.use('Agg')
 import os
 import sys
 from time import time
@@ -409,10 +412,12 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	
 	masson_whole_result = []
 	masson_result_iter = [0, 0]
-	slide = openslide.open_slide(masson_slide_path)
+	slide_processed = openslide.open_slide(masson_slide_path)
+	masson_max_dimension = slide_processed.dimensions
+	pixels = masson_max_dimension[1] * masson_max_dimension[0]
 	
 	firstmask, secondmask, thirdmask, othermask, grey_img, hsv, rcm_thickening = edit_area(
-		masson_mask_working_level, slide,
+		masson_mask_working_level, slide_processed,
 		masson_erosion_iteration_time_list=masson_erosion_iteration_time_list,
 		slide_no=slide_no,
 		patient_id=patient_id,
@@ -420,53 +425,24 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 		is_masson=True, image_path=split_image_path)
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	# save global fibrosis image
-	masson_region_slide(slide, 6,
+	masson_region_slide(slide_processed, 6,
 	                    "fibrosis", masson_patients[patient_id],
-	                    slide_no, dimension=slide.level_dimensions[6],
+	                    slide_no, dimension=slide_processed.level_dimensions[6],
 	                    threshold=fibrosis_threshold,
 	                    save_image=True)
-	masson_region_slide(slide, 6,
+	masson_region_slide(slide_processed, 6,
 	                    "cardiac", masson_patients[patient_id],
-	                    slide_no, dimension=slide.level_dimensions[6],
+	                    slide_no, dimension=slide_processed.level_dimensions[6],
 	                    threshold=cardiac_threshold,
 	                    save_image=True)
-	#####################################################################
-	# fibrosis
-	print "Dealing with fibrosis now"
-	fibrosis_time = time()
-	fibrosis_level = slide.level_count - 5
-	fibrosis_img = fibrosis(slide, fibrosis_level)
-	labels = measure.label(fibrosis_img, connectivity=2)
-	number = labels.max() + 1
-	total_fibrosis_block = []
-	for x in range(1, number):
-		j = np.zeros((len(fibrosis_img), len(fibrosis_img[0])), np.uint8)
-		j[labels == x] = 255
-		if x % 100 == 0:
-			print "fibrosis process:{:.4f}".format(x / float(number))
-		total_fibrosis_block.append(cv2.countNonZero(j) * (pow(2, fibrosis_level) ** 2))
-	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
-	plt.hist(total_fibrosis_block, fibrosis_group, histtype='bar', rwidth=0.8)
-	plt.legend()
-	plt.xlabel('fibrosis plaques area distribution')
-	plt.ylabel('number')
-	plt.title('fibrosis plaques hist')
-	plt.savefig(
-		'MASSON_image' + str(masson_patients[patient_id]) + '/fibrosis/slide_' + str(slide_no) + '_fibrosisPlaques.png',
-		format='png')
-	fibrosis_block_sum = int(np.sum(total_fibrosis_block))
-	fibrosis_block_median = int(np.median(total_fibrosis_block))
-	fibrosis_block_mean = int(np.mean(total_fibrosis_block))
-	fibrosis_block_sd = int(np.std(total_fibrosis_block, ddof=1))
-	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_median, fibrosis_block_mean, fibrosis_block_sd]
-	####################################################################################
+	
 	# i = 0
 	# print working_level
-	# working_dimensions = slide.level_dimensions[masson_mask_working_level]
+	# working_dimensions = slide_processed.level_dimensions[masson_mask_working_level]
 	# rcm_thickening =  [other_height, wall_height]
 	
 	masson_working_level = 1  # 因为速度比较快，这里缩放一倍
-	second_max_dimension = slide.level_dimensions[masson_working_level]
+	second_max_dimension = slide_processed.level_dimensions[masson_working_level]
 	magnify = pow(2, masson_mask_working_level) / pow(2, masson_working_level)
 	# 把图片缩小了两倍，那么就要除去相应的放大倍数
 	area_length = 500  # 这相比HE缩小一倍
@@ -478,17 +454,16 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 					# if area[int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# print x, y
-						print str(masson_patients[patient_id]) + " MASSON: " + str(slide_no) + " " + masson_mask_name[
-							a] + ": " + str(
-							x) + " " + str(y)
-						_, cardiac_area = masson_region_slide(slide, masson_working_level, "cardiac",
+						print str(masson_patients[patient_id].split('/')[1]) + " MASSON: " + str(slide_no) + " " + masson_mask_name[
+							a] + ": " + '{:.4f}%'.format(float(y * masson_max_dimension[0] + x) / pixels * 100)
+						_, cardiac_area = masson_region_slide(slide_processed, masson_working_level, "cardiac",
 						                                      masson_patients[patient_id],
 						                                      slide_no, masson_mask_name[a], store_remain_no,
 						                                      cardiac_threshold,
 						                                      (x, y),
 						                                      is_debug=False,
 						                                      dimension=(area_length, area_length))
-						_, fibrosis_area = masson_region_slide(slide, masson_working_level, "fibrosis",
+						_, fibrosis_area = masson_region_slide(slide_processed, masson_working_level, "fibrosis",
 						                                       masson_patients[patient_id],
 						                                       slide_no, masson_mask_name[a], store_remain_no,
 						                                       fibrosis_threshold,
@@ -507,6 +482,38 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 		print masson_mask_name[a] + " finished" + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
 	# i += 1
 	# The statics for storage should be the result at max_level : 0
+	#####################################################################
+	# fibrosis
+	print "Dealing with fibrosis now"
+	fibrosis_time = time()
+	fibrosis_level = slide_processed.level_count - 5
+	fibrosis_img = fibrosis(slide_processed, fibrosis_level)
+	labels = measure.label(fibrosis_img, connectivity=2)
+	number = labels.max() + 1
+	total_fibrosis_block = []
+	for x in range(1, number):
+		j = np.zeros((len(fibrosis_img), len(fibrosis_img[0])), np.uint8)
+		j[labels == x] = 255
+		if x % 100 == 0:
+			print "patient {} slide {} fibrosis process:{:.4f}".format(masson_patients[patient_id].split('/')[1], slide_no,
+			                                                           (x / float(number)))
+		total_fibrosis_block.append(cv2.countNonZero(j) * (pow(2, fibrosis_level) ** 2))
+	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
+	plt.hist(total_fibrosis_block, fibrosis_group, histtype='bar', rwidth=0.8)
+	plt.legend()
+	plt.xlabel('fibrosis plaques area distribution')
+	plt.ylabel('number')
+	plt.title('fibrosis plaques hist')
+	plt.savefig(
+		'MASSON_image' + str(masson_patients[patient_id]) + '/fibrosis/slide_' + str(
+			slide_no) + '_fibrosisPlaques.png',
+		format='png')
+	fibrosis_block_sum = int(np.sum(total_fibrosis_block))
+	fibrosis_block_median = int(np.median(total_fibrosis_block))
+	fibrosis_block_mean = int(np.mean(total_fibrosis_block))
+	fibrosis_block_sd = int(np.std(total_fibrosis_block, ddof=1))
+	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_median, fibrosis_block_mean, fibrosis_block_sd]
+	####################################################################################
 	masson_whole_result.append(fibrosis_block_info)  # fibrosis statics append
 	masson_whole_result.append(list(magnify * np.array(rcm_thickening)))  # [other_height, wall_height]
 	if not os.path.exists('MASSON_data'):
@@ -516,7 +523,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 		           slide_no) + '_masson_whole_res.txt')
 	masson_whole_result = []
 	print "masson patient: " + str(masson_patients[patient_id]).split('/')[
-		1] + ' slide ' + str(slide_no) + " finished, time consumed: " + str(
+		1] + ' slide_processed ' + str(slide_no) + " finished, time consumed: " + str(
 		time() - masson_proc_time_start) + " s"
 	pass
 
