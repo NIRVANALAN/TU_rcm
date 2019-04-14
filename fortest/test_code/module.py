@@ -1177,6 +1177,7 @@ def masson_region_slide(slide, working_level, threshold_type, patient_num, slide
 	rr, gg, bb, aa = cv2.split(img)
 	bgr_cv_img = cv2.merge((bb, gg, rr))
 	# cv2.imshow('bgr_img', bgr_cv_img)
+	# imgshow(bgr_cv_img)
 	hsv = cv2.cvtColor(bgr_cv_img, cv2.COLOR_BGR2HSV)
 	# (155, 140, 50), (175, 180, 255) cardiac
 	# (90, 20, 20), (140, 255, 255) fibrosis

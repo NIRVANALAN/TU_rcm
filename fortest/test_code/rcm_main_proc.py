@@ -12,7 +12,7 @@ def persist(patient_id, slide_type, set_start_row=False):
 		indexes.sort(key=lambda file_name: int(file_name[:5]))
 		indexes.sort(key=lambda file_name: int(file_name[11:12]))
 		for index in indexes:
-			if int(index.split("_")[0]) == int(patient_id.split("/")[1]):
+			if int(index.split("_")[0]) == int(patient_id.split("/")[1]) and index[-5] != 'k':  # no fibrosis_block.txt
 				file_path.append(index)
 	else:
 		indexes = os.listdir(he_dir)
@@ -54,6 +54,7 @@ if __name__ == '__main__':
 	
 	# ================ RUN ================= #
 	run(1, 26, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs')
+	# persist(masson_patients[0], slide_type="MASSON")
 	
 	'''
 	deal with hand_drawn pics
@@ -69,7 +70,6 @@ if __name__ == '__main__':
 	# write_test_img(he_slide_path, saved_img_level=6)
 	
 	# persist(he_patients[1], slide_type="HE")
-	# persist(masson_patients[i], slide_type="MASSON")
 	
 	# masson_test_proc()
 	# cv2.waitKey(0)

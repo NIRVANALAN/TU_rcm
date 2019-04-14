@@ -425,14 +425,15 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 		is_masson=True, image_path=split_image_path)
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	# save global fibrosis image
-	masson_region_slide(slide_processed, 6,
+	store_level = 6
+	masson_region_slide(slide_processed, store_level,
 	                    "fibrosis", masson_patients[patient_id],
-	                    slide_no, dimension=slide_processed.level_dimensions[6],
+	                    slide_no, dimension=slide_processed.level_dimensions[store_level],
 	                    threshold=fibrosis_threshold,
 	                    save_image=True)
-	masson_region_slide(slide_processed, 6,
+	masson_region_slide(slide_processed, store_level,
 	                    "cardiac", masson_patients[patient_id],
-	                    slide_no, dimension=slide_processed.level_dimensions[6],
+	                    slide_no, dimension=slide_processed.level_dimensions[store_level],
 	                    threshold=cardiac_threshold,
 	                    save_image=True)
 	
@@ -441,7 +442,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	# working_dimensions = slide_processed.level_dimensions[masson_mask_working_level]
 	# rcm_thickening =  [other_height, wall_height]
 	
-	masson_working_level = 1  # 因为速度比较快，这里缩放一倍
+	masson_working_level = 1  # try 3
 	second_max_dimension = slide_processed.level_dimensions[masson_working_level]
 	magnify = pow(2, masson_mask_working_level) / pow(2, masson_working_level)
 	# 把图片缩小了两倍，那么就要除去相应的放大倍数
@@ -454,20 +455,23 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 					# if area[int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# print x, y
-						# print str(masson_patients[patient_id].split('/')[1]) + " MASSON: " + str(slide_no) + " " + masson_mask_name[
-						#	a] + ": " + '{:.4f}%'.format(float(y * masson_max_dimension[0] + x) / pixels * 100)
+						# print str(masson_patients[patient_id].split('/')[1]) + " MASSON: " + str(slide_no) + " " + \
+						#       masson_mask_name[
+						# 	      a] + ": " + '{:.4f}%'.format(float(y * masson_max_dimension[0] + x) / pixels * 100)
 						_, cardiac_area = masson_region_slide(slide_processed, masson_working_level, "cardiac",
 						                                      masson_patients[patient_id],
 						                                      slide_no, masson_mask_name[a], store_remain_no,
 						                                      cardiac_threshold,
-						                                      (x, y),
+						                                      (int(x * pow(2, masson_working_level)),
+						                                       int(y * pow(2, masson_working_level))),
 						                                      is_debug=False,
 						                                      dimension=(area_length, area_length))
 						_, fibrosis_area = masson_region_slide(slide_processed, masson_working_level, "fibrosis",
 						                                       masson_patients[patient_id],
 						                                       slide_no, masson_mask_name[a], store_remain_no,
 						                                       fibrosis_threshold,
-						                                       (x, y),
+						                                       (int(x * pow(2, masson_working_level)),
+						                                        int(y * pow(2, masson_working_level))),
 						                                       is_debug=False,
 						                                       dimension=(area_length, area_length))
 						# if store_remain_no:
@@ -477,7 +481,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 		# statics should be simulated at max_level
 		else:
 			print "area is none"
-		masson_whole_result.append(masson_result_iter)
+			masson_whole_result.append(masson_result_iter)
 		masson_result_iter = [0, 0]
 		print masson_mask_name[a] + " finished" + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
 	# i += 1
@@ -514,8 +518,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	fibrosis_block_median = int(np.median(total_fibrosis_block))
 	fibrosis_block_mean = int(np.mean(total_fibrosis_block))
 	fibrosis_block_sd = int(np.std(total_fibrosis_block, ddof=1))
-	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_median, fibrosis_block_mean, fibrosis_block_sd,
-	                       total_fibrosis_block]
+	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_median, fibrosis_block_mean, fibrosis_block_sd]
 	####################################################################################
 	masson_whole_result.append(fibrosis_block_info)  # fibrosis statics append
 	masson_whole_result.append(list(magnify * np.array(rcm_thickening)))  # [other_height, wall_height]
@@ -524,6 +527,9 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	write_file(masson_whole_result,
 	           'MASSON_data/' + str(masson_patients[patient_id]).split('/')[1] + '_slide' + str(
 		           slide_no) + '_masson_whole_res.txt')
+	write_file(total_fibrosis_block,
+	           'MASSON_data/' + str(masson_patients[patient_id]).split('/')[1] + '_slide' + str(
+		           slide_no) + '_total_fibrosis_block.txt')
 	masson_whole_result = []
 	print "masson patient: " + str(masson_patients[patient_id]).split('/')[
 		1] + ' slide_processed ' + str(slide_no) + " finished, time consumed: " + str(
@@ -643,7 +649,7 @@ def masson_data_process(whole_res):
 	tmp_s = fibrosis_whole_area + cardiac_whole_area
 	new_res.append(cardiac_whole_area / tmp_s)
 	new_res.append(fibrosis_whole_area / tmp_s)
-	new_res += whole_res[-6:]
+	new_res += whole_res[-7:]
 	return new_res
 	pass
 
