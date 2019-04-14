@@ -33,7 +33,8 @@ def run(start_patient, end_patient, replenish=None, he=True, masson=False, serve
 		slide_proc(patient_id=start_patient - 1, start=replenish[0], end=replenish[1], he=he, masson=masson,
 		           set_hand_drawn=True, server=server, file_type=file_type)
 	for i in xrange(start_patient, end_patient):
-		slide_proc(patient_id=i, start=0, end=6, he=he, masson=masson, set_hand_drawn=True, server=server, file_type=file_type)
+		slide_proc(patient_id=i, start=0, end=6, he=he, masson=masson, set_hand_drawn=True, server=server,
+		           file_type=file_type)
 	pass
 
 
@@ -52,7 +53,7 @@ if __name__ == '__main__':
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
 	
 	# ================ RUN ================= #
-	run(1, 26, replenish=None, server=True, he=False, masson=True, file_type='.mrxs')
+	run(14, 26, replenish=(2, 6), server=True, he=False, masson=True, file_type='.mrxs')
 	
 	'''
 	deal with hand_drawn pics

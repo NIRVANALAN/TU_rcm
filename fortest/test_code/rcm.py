@@ -454,8 +454,8 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 					# if area[int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# print x, y
-						print str(masson_patients[patient_id].split('/')[1]) + " MASSON: " + str(slide_no) + " " + masson_mask_name[
-							a] + ": " + '{:.4f}%'.format(float(y * masson_max_dimension[0] + x) / pixels * 100)
+						# print str(masson_patients[patient_id].split('/')[1]) + " MASSON: " + str(slide_no) + " " + masson_mask_name[
+						#	a] + ": " + '{:.4f}%'.format(float(y * masson_max_dimension[0] + x) / pixels * 100)
 						_, cardiac_area = masson_region_slide(slide_processed, masson_working_level, "cardiac",
 						                                      masson_patients[patient_id],
 						                                      slide_no, masson_mask_name[a], store_remain_no,
@@ -492,12 +492,14 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	number = labels.max() + 1
 	total_fibrosis_block = []
 	for x in range(1, number):
-		j = np.zeros((len(fibrosis_img), len(fibrosis_img[0])), np.uint8)
-		j[labels == x] = 255
-		if x % 100 == 0:
-			print "patient {} slide {} fibrosis process:{:.4f}".format(masson_patients[patient_id].split('/')[1], slide_no,
-			                                                           (x / float(number)))
-		total_fibrosis_block.append(cv2.countNonZero(j) * (pow(2, fibrosis_level) ** 2))
+		# j = np.zeros((len(fibrosis_img), len(fibrosis_img[0])), np.uint8)
+		# j[labels == x] = 255
+		total_fibrosis_block.append(np.count_nonzero(labels == x) * (pow(2, fibrosis_level) ** 2))
+		if x % 1000 == 0:
+			print "patient:{} slide:{} fibrosis process:({}/{}) time_consumed:{:.4f}".format(
+				masson_patients[patient_id].split('/')[1],
+				slide_no,
+				x, number, (time() - fibrosis_time))
 	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
 	plt.hist(total_fibrosis_block, fibrosis_group, histtype='bar', rwidth=0.8)
 	plt.legend()
