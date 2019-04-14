@@ -481,7 +481,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 		# statics should be simulated at max_level
 		else:
 			print "area is none"
-			masson_whole_result.append(masson_result_iter)
+		masson_whole_result.append(masson_result_iter)
 		masson_result_iter = [0, 0]
 		print masson_mask_name[a] + " finished" + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
 	# i += 1
