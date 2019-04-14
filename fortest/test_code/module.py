@@ -193,6 +193,8 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 			for i in contours[first_index:]:
 				if len(i) > 20:
 					points = np.append(points, i, axis=0)
+		else:
+			continue
 		points = np.unique(points, axis=0)  # get unique points
 		# draw points in the original image
 		points = np.array([points], np.int32)  # convert to np.int32 works well

@@ -96,8 +96,8 @@ def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', fo
 					he_path_list[0].append(he_path_iter)
 					he_path_list[1].append(he_split_image_iter)
 		if is_masson:
-			masson_img_name = masson_patient_no + '-' + str(i) + file_type
-			masson_path_iter = img_dir + 'MASSON' + masson_patient_no + masson_img_name
+			masson_slide_name = masson_patient_no + '-' + str(i) + file_type
+			masson_path_iter = img_dir + 'MASSON' + masson_patient_no + masson_slide_name
 			if os.path.exists(img_dir + 'RGB/MASSON/' + masson_patient_no):
 				masson_split_image_iter = img_dir + 'RGB/MASSON' + masson_patient_no + masson_patient_no + '-' + str(
 					i) + '.jpg'
@@ -514,7 +514,8 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	fibrosis_block_median = int(np.median(total_fibrosis_block))
 	fibrosis_block_mean = int(np.mean(total_fibrosis_block))
 	fibrosis_block_sd = int(np.std(total_fibrosis_block, ddof=1))
-	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_median, fibrosis_block_mean, fibrosis_block_sd]
+	fibrosis_block_info = [fibrosis_block_sum, fibrosis_block_median, fibrosis_block_mean, fibrosis_block_sd,
+	                       total_fibrosis_block]
 	####################################################################################
 	masson_whole_result.append(fibrosis_block_info)  # fibrosis statics append
 	masson_whole_result.append(list(magnify * np.array(rcm_thickening)))  # [other_height, wall_height]
