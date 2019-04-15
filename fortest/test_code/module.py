@@ -803,11 +803,14 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	'''
 	save images and make dirs
 	'''
-	if not os.path.exists('HE_image' + str(he_patients[patient_id]) + '/segmentation'):
-		os.makedirs('HE_image' + str(he_patients[patient_id]) + '/segmentation')
-	if not os.path.exists('MASSON_image' + str(masson_patients[patient_id]) + '/segmentation'):
-		os.makedirs('MASSON_image' + str(masson_patients[patient_id]) + '/segmentation')
-	# othermask_img_name = ('HE_image' + str(he_patients[patient_id]) + '/segmentation/slide_' + str(slide_no) + '.jpg' if (
+	if not is_masson:
+		if not os.path.exists('HE_image' + str(he_patients[patient_id]) + '/segmentation'):
+			os.makedirs('HE_image' + str(he_patients[patient_id]) + '/segmentation')
+	else:
+		if not os.path.exists('MASSON_image' + str(masson_patients[patient_id]) + '/segmentation'):
+			os.makedirs('MASSON_image' + str(masson_patients[patient_id]) + '/segmentation')
+	# othermask_img_name =
+	# ('HE_image' + str(he_patients[patient_id]) + '/segmentation/slide_' + str(slide_no) + '.jpg' if (
 	# 		is_masson is False)
 	#             else 'MASSON_image' + str(masson_patients[patient_id]) + '/segmentation/slide_' + str(slide_no) + '.jpg')
 	# imgshow(rgbimg)  # save the img of segmentation result
@@ -927,9 +930,9 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		'''
 		show and save images
 		'''
-		cv2.imwrite(
-			'log/Mask/HE/' + str(he_patients[patient_id]) + '_slide_{}_({})'.format(slide_no, patient_id) + 'RGB.jpg',
-			rgbimg)
+		# cv2.imwrite(
+		# 	'log/Mask/HE/' + str(he_patients[patient_id]) + '_slide_{}_({})'.format(slide_no, patient_id) + 'RGB.jpg',
+		# 	rgbimg)
 		if not server:
 			imgshow(rgbimg)
 		mask_list = [firstmask, secondmask, thirdmask, othermask]
@@ -940,14 +943,15 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 				patient_no = masson_patients[patient_id] if is_masson else he_patients[patient_id]
 				cv2.imwrite(
 					'log/Mask/{}'.format(mask_image_type) + patient_no + '({})_slide{}_mask{}.{}'.format(patient_id,
-					                                                                                  slide_no,
-					                                                                                  str(mask_index),
-					                                                                                  'jpg'),
+					                                                                                     slide_no,
+					                                                                                     str(
+						                                                                                     mask_index),
+					                                                                                     'jpg'),
 					mask)  # list of ndarray cannot fo .index()
 				print 'log/Mask/{}'.format(mask_image_type) + '({})_slide_{}_mask{}.{}'.format(patient_id,
-				                                                                           slide_no,
-				                                                                           str(mask_index),
-				                                                                           'jpg') + ' saved'
+				                                                                               slide_no,
+				                                                                               str(mask_index),
+				                                                                               'jpg') + ' saved'
 				if not server:
 					imgshow(mask, cmap='gray')
 			mask_index += 1

@@ -53,7 +53,7 @@ if __name__ == '__main__':
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
 	
 	# ================ RUN ================= #
-	run(1, 26, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs')
+	run(18, 26, replenish=None, server=True, he=False, masson=True, file_type='.mrxs')
 	# persist(masson_patients[0], slide_type="MASSON")
 	
 	'''
