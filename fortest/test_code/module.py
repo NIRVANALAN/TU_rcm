@@ -23,8 +23,14 @@ he_filename.sort(key=lambda x: int(x[:-1]))
 for i in he_filename:
 	he_patients.append('/' + i)
 	pass
-masson_filename = os.listdir(img_dir + '/MASSON')
-masson_filename.sort(key=lambda x: int(x[:-1]))
+masson_filename_all = os.listdir(img_dir + '/MASSON')
+masson_filename = []
+for i in masson_filename_all:
+	if len(i.split('.')) == 1:
+		masson_filename.append(i)
+
+# masson_filename.sort(key=lambda x: int(x[:-1]))
+masson_filename.sort()
 for i in masson_filename:
 	masson_patients.append('/' + i)
 	pass

@@ -204,7 +204,11 @@ def write_test_img(path, saved_img_level, is_masson=False):
 		img_dir_path = './../test_images/MASSON/'
 	for i in path:
 		slide_iter = openslide.open_slide(i)
-		whole_dimension = slide_iter.level_dimensions[saved_img_level]
+		try:
+			whole_dimension = slide_iter.level_dimensions[saved_img_level]
+		except:
+			print 'slide {} corrupt'.format(i)
+			continue
 		region = np.array((slide_iter.read_region((0, 0), saved_img_level, whole_dimension)))
 		region = cv2.cvtColor(region, cv2.COLOR_BGR2RGB)
 		# cv2.imshow(i, region)
@@ -398,8 +402,19 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 
 
 # for masson proc later
-cardiac_threshold = (155, 43, 46), (175, 255, 255)  # cardiac
-fibrosis_threshold = (100, 43, 46), (134, 255, 255)  # fibrosis
+cardiac_threshold = (155, 40, 46), (180, 255, 255)  # cardiac
+fibrosis_threshold = (78, 20, 46), (155, 255, 255)  # fibrosis
+'''
+[147  13 219]
+[146  16 217]
+[141   8 234]
+[169  11 245]
+[164  13 223]
+[146   9 237]
+[138  11 226]
+[165   2 252]
+[142  12 233]
+'''
 
 masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
@@ -425,7 +440,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 		is_masson=True, image_path=split_image_path)
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	# save global fibrosis image
-	store_level = 6
+	store_level = 4
 	masson_region_slide(slide_processed, store_level,
 	                    "fibrosis", masson_patients[patient_id],
 	                    slide_no, dimension=slide_processed.level_dimensions[store_level],
@@ -505,6 +520,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 				slide_no,
 				x, number, (time() - fibrosis_time))
 	print "fibrosis finished. Time consumed:" + str(time() - fibrosis_time)
+	plt.cla()
 	plt.hist(total_fibrosis_block, fibrosis_group, histtype='bar', rwidth=0.8)
 	plt.legend()
 	plt.xlabel('fibrosis plaques area distribution')

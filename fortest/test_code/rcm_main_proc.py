@@ -42,20 +42,20 @@ if __name__ == '__main__':
 	init_test_proc()
 	# masson_test_proc()
 	# ============= write test images ================= #
-	# for i in xrange(25, 26):
+	# for i in xrange(26, 30):
 	# 	slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
 	# 	                                    for_split=True, is_masson=True, is_he=False)
 	# 	write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
-	
 	# ===================================================#
+	
 	# persist process begin#################
 	# for i in xrange(3, 4):
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
 	
 	# ================ RUN ================= #
-	run(18, 26, replenish=None, server=True, he=False, masson=True, file_type='.mrxs')
+	run(1, 26, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs')
 	# persist(masson_patients[0], slide_type="MASSON")
-	
+	# ================ RUN ==================#
 	'''
 	deal with hand_drawn pics
 	'''
