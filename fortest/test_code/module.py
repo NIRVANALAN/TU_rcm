@@ -19,7 +19,8 @@ masson_patients = []
 img_dir = './../../rcm_images/'
 # he patients
 he_filename = os.listdir(img_dir + '/HE')
-he_filename.sort(key=lambda x: int(x[:-1]))
+# he_filename.sort(key=lambda x: int(x[:-1]))
+he_filename.sort()
 for i in he_filename:
 	he_patients.append('/' + i)
 	pass
