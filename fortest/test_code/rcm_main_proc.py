@@ -44,14 +44,14 @@ if __name__ == '__main__':
 	init_test_proc()
 	# masson_test_proc()
 	# ============= write test images ================= #
-	# MASSON: 36
+	# MASSON: 41
 	# HE : 20
-	# for i in xrange(36, 37): # MASSON
+	for i in xrange(41,42):   # MASSON
 	# for i in xrange(18, 20):  # HE
 	# MASSON:
-	# slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
-	#                                     for_split=True, is_masson=True, is_he=False)
-	# write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
+		slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
+		                                    for_split=True, is_masson=True, is_he=False, is_hcm=True)
+		write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
 	
 	# HE
 	# slide_path = get_patient_image_path(i, return_type="HE", file_type='.mrxs',

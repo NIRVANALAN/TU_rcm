@@ -12,29 +12,34 @@ import matplotlib.pyplot as plt
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
-
-he_patients = []
-masson_patients = []
+slide_type_all = ['RCM', 'HCM', 'NORMAL']
+he_patients = [[], [], []]  # RCM HCM NORMAL
+masson_patients = [[], [], []]  # RCM HCM NORMAL
 # patient_id = 1
 img_dir = './../../rcm_images/'
 # he patients
-he_filename = os.listdir(img_dir + '/HE')
+# he_filename = os.listdir(img_dir + '/HE')
 # he_filename.sort(key=lambda x: int(x[:-1]))
-he_filename.sort()
-for i in he_filename:
-	he_patients.append('/' + i)
-	pass
-masson_filename_all = os.listdir(img_dir + '/MASSON')
-masson_filename = []
-for i in masson_filename_all:
-	if len(i.split('.')) == 1:
-		masson_filename.append(i)
+# he_filename.sort()
+for slide_type in slide_type_all:
+	slide_dir = img_dir + 'HE/{}'.format(slide_type)
+	he_filename = os.listdir(slide_dir)
+	he_filename.sort()
+	for i in he_filename:
+		he_patients[slide_type_all.index(slide_type)].append('/' + i)
+		pass
 
+for slide_type in slide_type_all:
+	slide_dir = img_dir + 'MASSON/{}'.format(slide_type)
+	masson_filename = os.listdir(slide_dir)
+	masson_filename.sort()
+	for i in masson_filename:
+		masson_patients[slide_type_all.index(slide_type)].append('/' + i)
+		pass
+# for i in masson_filename_all:
+# 	if len(i.split('.')) == 1:
+# 		masson_filename.append(i)
 # masson_filename.sort(key=lambda x: int(x[:-1]))
-masson_filename.sort()
-for i in masson_filename:
-	masson_patients.append('/' + i)
-	pass
 
 
 def distance_between_point_line(line, point):

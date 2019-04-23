@@ -64,8 +64,10 @@ def init_test_proc():
 
 
 def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', for_split=False, is_masson=True,
-                           is_he=True):
+                           is_he=True, is_hcm=False, is_normal=False):
 	"""
+	:param is_normal: check if normal
+	:param is_hcm: check if hcm pathological slide
 	:param is_he: check he
 	:param is_masson: check masson
 	:param for_split: define split image mode
@@ -77,18 +79,22 @@ def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', fo
 	# patient_no = patients[patient_no]
 	he_path_list = [[], []]
 	masson_path_list = [[], []]
+	if is_normal:
+		slide__type = 'NORMAL'
+	else:
+		slide__type = 'RCM' if not is_hcm else 'HCM'
 	if is_he:
-		he_patient_no = he_patients[patient_no]
+		he_patient_no = he_patients[slide_type_all.index(slide__type)][patient_no]
 	if is_masson:
-		masson_patient_no = masson_patients[patient_no]
+		masson_patient_no = masson_patients[slide_type_all.index(slide__type)][patient_no]
 	for i in xrange(1, 7):
 		if is_he:
 			he_img_name = he_patient_no + '-' + str(i) + file_type
-			he_path_iter = img_dir + 'HE' + he_patient_no + he_img_name
-			if os.path.exists(img_dir + 'RGB/HE/' + he_patient_no):
-				he_split_image_iter = img_dir + 'RGB/HE' + he_patient_no + he_patient_no + '-' + str(i) + '.jpg'
+			he_path_iter = img_dir + 'HE/{}'.format(slide__type) + he_patient_no + he_img_name
+			if os.path.exists(img_dir + 'RGB/HE/{}'.format(slide__type) + he_patient_no):
+				he_split_image_iter = img_dir + 'RGB/HE/{}'.format(slide__type) + he_patient_no + he_patient_no + '-' + str(i) + '.jpg'
 			else:
-				he_split_image_iter = img_dir + 'RGB/HE/' + he_patient_no.split('/')[1] + '-' + str(i) + '.jpg'
+				he_split_image_iter = img_dir + 'RGB/HE/{}'.format(slide__type) + he_patient_no.split('/')[1] + '-' + str(i) + '.jpg'
 			if for_split and os.path.exists(he_path_iter):
 				he_path_list[0].append(he_path_iter)
 			else:
@@ -97,12 +103,12 @@ def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', fo
 					he_path_list[1].append(he_split_image_iter)
 		if is_masson:
 			masson_slide_name = masson_patient_no + '-' + str(i) + file_type
-			masson_path_iter = img_dir + 'MASSON' + masson_patient_no + masson_slide_name
-			if os.path.exists(img_dir + 'RGB/MASSON/' + masson_patient_no):
-				masson_split_image_iter = img_dir + 'RGB/MASSON' + masson_patient_no + masson_patient_no + '-' + str(
+			masson_path_iter = img_dir + 'MASSON/{}'.format(slide__type) + masson_patient_no + masson_slide_name
+			if os.path.exists(img_dir + 'RGB/MASSON/{}'.format(slide__type) + masson_patient_no):
+				masson_split_image_iter = img_dir + 'RGB/MASSON/{}'.format(slide__type) + masson_patient_no + masson_patient_no + '-' + str(
 					i) + '.jpg'
 			else:
-				masson_split_image_iter = img_dir + 'RGB/MASSON/' + masson_patient_no.split('/')[1] + '-' + str(
+				masson_split_image_iter = img_dir + 'RGB/MASSON/{}'.format(slide__type) + masson_patient_no.split('/')[1] + '-' + str(
 					i) + '.jpg'
 			if for_split and os.path.exists(masson_path_iter):
 				masson_path_list[0].append(masson_path_iter)
