@@ -544,7 +544,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	           'MASSON_data/' + str(masson_patients[patient_id]).split('/')[1] + '_slide' + str(
 		           slide_no) + '_masson_whole_res.txt')
 	write_file(total_fibrosis_block,
-	           'MASSON_data/' + str(masson_patients[patient_id]).split('/')[1] + '_slide' + str(
+	           'MASSON_fibrosis_data/' + str(masson_patients[patient_id]).split('/')[1] + '_slide' + str(
 		           slide_no) + '_total_fibrosis_block.txt')
 	masson_whole_result = []
 	print "masson patient: " + str(masson_patients[patient_id]).split('/')[
@@ -665,7 +665,7 @@ def masson_data_process(whole_res):
 	tmp_s = fibrosis_whole_area + cardiac_whole_area
 	new_res.append(cardiac_whole_area / tmp_s)
 	new_res.append(fibrosis_whole_area / tmp_s)
-	new_res += whole_res[-7:]
+	new_res += whole_res[-6:]
 	return new_res
 	pass
 

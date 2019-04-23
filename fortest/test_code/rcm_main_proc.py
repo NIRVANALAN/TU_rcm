@@ -9,15 +9,17 @@ def persist(patient_id, slide_type, set_start_row=False):
 	file_path = []
 	if slide_type is "MASSON":
 		indexes = os.listdir(masson_dir)
-		indexes.sort(key=lambda file_name: int(file_name[:5]))
-		indexes.sort(key=lambda file_name: int(file_name[11:12]))
+		# indexes.sort(key=lambda file_name: int(file_name[:5]))
+		# indexes.sort(key=lambda file_name: int(file_name[11:12]))
+		indexes.sort()
 		for index in indexes:
-			if int(index.split("_")[0]) == int(patient_id.split("/")[1]) and index[-5] != 'k':  # no fibrosis_block.txt
+			if int(index.split("_")[0]) == int(patient_id.split("/")[1]):  # no fibrosis_block.txt
 				file_path.append(index)
 	else:
 		indexes = os.listdir(he_dir)
-		indexes.sort(key=lambda file_name: int(file_name[:5]))
-		indexes.sort(key=lambda file_name: int(file_name[11:12]))
+		# indexes.sort(key=lambda file_name: int(file_name[:5]))
+		# indexes.sort(key=lambda file_name: int(file_name[11:12]))
+		indexes.sort()
 		for index in indexes:
 			if int(index.split("_")[0]) == int(patient_id.split("/")[1]):
 				file_path.append(index)
@@ -45,16 +47,16 @@ if __name__ == '__main__':
 	# MASSON: 36
 	# HE : 20
 	# for i in xrange(36, 37): # MASSON
-	for i in xrange(18, 20):  # HE
-		# MASSON:
-		# slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
-		#                                     for_split=True, is_masson=True, is_he=False)
-		# write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
-		
-		# HE
-		slide_path = get_patient_image_path(i, return_type="HE", file_type='.mrxs',
-		                                    for_split=True, is_masson=False, is_he=True)
-		write_test_img(slide_path[0], is_masson=False, saved_img_level=6)
+	# for i in xrange(18, 20):  # HE
+	# MASSON:
+	# slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
+	#                                     for_split=True, is_masson=True, is_he=False)
+	# write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
+	
+	# HE
+	# slide_path = get_patient_image_path(i, return_type="HE", file_type='.mrxs',
+	#                                     for_split=True, is_masson=False, is_he=True)
+	# write_test_img(slide_path[0], is_masson=False, saved_img_level=6)
 	
 	# ===================================================#
 	
@@ -64,8 +66,15 @@ if __name__ == '__main__':
 	
 	# ================ RUN ================= #
 	# run(1, 26, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs')
-	# persist(masson_patients[0], slide_type="MASSON")
 	# ================ RUN ==================#
+	# ================ PERSIST ===============#
+	# for i in range(0, 26):
+		#persist(masson_patients[i], slide_type="MASSON")
+		# persist(masson_patients[i], slide_type="HE")
+	# for i in range(0, 20):
+	# 	persist(he_patients[i], slide_type="HE")
+	# ================ PERSIST ===============#
+	
 	'''
 	deal with hand_drawn pics
 	'''
