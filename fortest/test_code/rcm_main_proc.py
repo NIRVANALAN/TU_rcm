@@ -1,4 +1,5 @@
 # coding=utf-8
+from multiprocessing.dummy import Pool as ThreadPool
 from rcm import *
 
 he_dir = os.getcwd() + "/HE_data"
@@ -40,18 +41,39 @@ def run(start_patient, end_patient, replenish=None, he=True, masson=False, serve
 	pass
 
 
+def run_parallel(start_patient, end_patient, replenish=None, he=True, masson=False, server=False,
+                 file_type='.ndpi', slide_type='RCM', threads=12):
+	pool = ThreadPool(threads)
+	task_list = []
+	
+	if replenish is not None:
+		task_list.append(
+			[start_patient - 1, replenish[0], replenish[1], he, masson, True, server, file_type, slide_type])
+	# slide_proc(patient_id=start_patient - 1, start=replenish[0], end=replenish[1], he=he, masson=masson,
+	#            set_hand_drawn=True, server=server, file_type=file_type)
+	for i in xrange(start_patient, end_patient):
+		task_list.append([i, 0, 6, he, masson, True, server, file_type, slide_type])
+	# slide_proc(patient_id=i, start=0, end=6, he=he, masson=masson, set_hand_drawn=True, server=server,
+	#            file_type=file_type)
+	pool.map(slide_proc, task_list)
+	pool.close()
+	pool.join()
+	pass
+
+
 if __name__ == '__main__':
 	init_test_proc()
 	# masson_test_proc()
 	# ============= write test images ================= #
 	# MASSON: 41
 	# HE : 20
-	for i in xrange(41,42):   # MASSON
-	# for i in xrange(18, 20):  # HE
-	# MASSON:
-		slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
-		                                    for_split=True, is_masson=True, is_he=False, is_hcm=True)
-		write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
+	# for i in xrange(41, 42):  # MASSON RCM
+	# for i in xrange(18, 20):  # HE RCM
+	# for i in xrange(0, 4):  # MASSON HCM
+	# 	# MASSON:
+	# 	slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
+	# 	                                    for_split=True, is_masson=True, is_he=False, is_hcm=True)
+	# 	write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
 	
 	# HE
 	# slide_path = get_patient_image_path(i, return_type="HE", file_type='.mrxs',
@@ -66,11 +88,13 @@ if __name__ == '__main__':
 	
 	# ================ RUN ================= #
 	# run(1, 26, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs')
+	run_parallel(1, 26, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs')
 	# ================ RUN ==================#
+	
 	# ================ PERSIST ===============#
 	# for i in range(0, 26):
-		#persist(masson_patients[i], slide_type="MASSON")
-		# persist(masson_patients[i], slide_type="HE")
+	# persist(masson_patients[i], slide_type="MASSON")
+	# persist(masson_patients[i], slide_type="HE")
 	# for i in range(0, 20):
 	# 	persist(he_patients[i], slide_type="HE")
 	# ================ PERSIST ===============#
