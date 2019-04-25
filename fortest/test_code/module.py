@@ -817,11 +817,11 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	save images and make dirs
 	'''
 	if not is_masson:
-		if not os.path.exists('HE_image' + str(he_patients[patient_id]) + '/segmentation'):
-			os.makedirs('HE_image' + str(he_patients[patient_id]) + '/segmentation')
+		if not os.path.exists('HE_image' + str(he_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation'):
+			os.makedirs('HE_image' + str(he_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation')
 	else:
 		if not os.path.exists('MASSON_image' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation'):
-			os.makedirs('MASSON_image' + str(masson_patients[patient_id]) + '/segmentation')
+			os.makedirs('MASSON_image' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation')
 	# othermask_img_name =
 	# ('HE_image' + str(he_patients[patient_id]) + '/segmentation/slide_' + str(slide_no) + '.jpg' if (
 	# 		is_masson is False)

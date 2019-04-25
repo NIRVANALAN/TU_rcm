@@ -234,7 +234,8 @@ def write_test_img(path, saved_img_level, is_masson=False):
 he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
-def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_drawn_img=None, server=False,slide_type='RCM'):
+def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_drawn_img=None, server=False,
+            slide_type='RCM'):
 	"""
 	:param patient_id: id of patient
 	:param hand_drawn_img: set if it's hand_drawn
@@ -275,7 +276,8 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# 证明这个像素点在对应的Mask里面
-						print str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[1] + "({})".format(patient_id) + " HE: " + str(
+						print str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
+							      1] + "({})".format(patient_id) + " HE: " + str(
 							he_slide_no) + ' ' + he_mask_name[
 							      a] + ": " + '{:.4f}%'.format(float(y * he_max_dimension[0] + x) / pixels * 100)
 						# print x, y
@@ -431,7 +433,7 @@ fibrosis_group = [4000, 8000, 12000, 16000, 20000, 24000, 28000, 32000]
 
 
 def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_level=6, hand_drawn=True,
-                split_image_path=None,slide_type='RCM'):  # need debug and fix
+                split_image_path=None, slide_type='RCM'):  # need debug and fix
 	masson_proc_time_start = time()
 	
 	masson_whole_result = []
@@ -483,7 +485,8 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 						#       masson_mask_name[
 						# 	      a] + ": " + '{:.4f}%'.format(float(y * masson_max_dimension[0] + x) / pixels * 100)
 						_, cardiac_area = masson_region_slide(slide_processed, masson_working_level, "cardiac",
-						                                      masson_patients[slide_type_all.index(slide_type)][patient_id],
+						                                      masson_patients[slide_type_all.index(slide_type)][
+							                                      patient_id],
 						                                      slide_no, masson_mask_name[a], store_remain_no,
 						                                      cardiac_threshold,
 						                                      (int(x * pow(2, masson_working_level)),
@@ -491,7 +494,8 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 						                                      is_debug=False,
 						                                      dimension=(area_length, area_length))
 						_, fibrosis_area = masson_region_slide(slide_processed, masson_working_level, "fibrosis",
-						                                       masson_patients[slide_type_all.index(slide_type)][patient_id],
+						                                       masson_patients[slide_type_all.index(slide_type)][
+							                                       patient_id],
 						                                       slide_no, masson_mask_name[a], store_remain_no,
 						                                       fibrosis_threshold,
 						                                       (int(x * pow(2, masson_working_level)),
@@ -507,7 +511,8 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 			print "area is none"
 		masson_whole_result.append(masson_result_iter)
 		masson_result_iter = [0, 0]
-		print masson_patients[slide_type_all.index(slide_type)][patient_id] + masson_mask_name[a] + " finished" + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
+		print masson_patients[slide_type_all.index(slide_type)][patient_id] + masson_mask_name[
+			a] + " finished" + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
 	# i += 1
 	# The statics for storage should be the result at max_level : 0
 	#####################################################################
@@ -550,10 +555,12 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 	if not os.path.exists('MASSON_data'):
 		os.mkdir('MASSON_data')
 	write_file(masson_whole_result,
-	           'MASSON_data/' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[1] + '_slide' + str(
+	           'MASSON_data/' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
+		           1] + '_slide' + str(
 		           slide_no) + '_masson_whole_res.txt')
 	write_file(total_fibrosis_block,
-	           'MASSON_fibrosis_data/' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[1] + '_slide' + str(
+	           'MASSON_fibrosis_data/' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
+		           1] + '_slide' + str(
 		           slide_no) + '_total_fibrosis_block.txt')
 	masson_whole_result = []
 	print "masson patient: " + str(masson_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
@@ -632,7 +639,7 @@ def slide_proc(arg_list):
 					if int(split_path[-5]) == slide_no + 1:
 						processed_index_he = he_slide_path[1].index(split_path)
 						he_proc(slide_no, he_slide_path[0][processed_index_he], patient_id, set_hand_drawn,
-						        split_path if set_hand_drawn else None, server=server,slide_type=slide_type)
+						        split_path if set_hand_drawn else None, server=server, slide_type=slide_type)
 				continue
 			except BaseException, e:
 				print e.message
@@ -647,7 +654,7 @@ def slide_proc(arg_list):
 						processed_index_masson = masson_slide_path[1].index(split_path)
 						masson_proc(slide_no, masson_slide_path[0][processed_index_masson], patient_id,
 						            hand_drawn=set_hand_drawn,
-						            split_image_path=split_path if set_hand_drawn else None,slide_type=slide_type)
+						            split_image_path=split_path if set_hand_drawn else None, slide_type=slide_type)
 			except BaseException, e:
 				print e.message
 				with open('masson_error_slide_log.txt', 'a') as f:
