@@ -1,7 +1,7 @@
 # coding=utf-8
 import matplotlib
 
-# matplotlib.use('Agg')
+matplotlib.use('Agg')
 import os
 import sys
 from time import time
@@ -64,10 +64,9 @@ def init_test_proc():
 
 
 def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', for_split=False, is_masson=True,
-                           is_he=True, is_hcm=False, is_normal=False):
+                           is_he=True, slide_type='RCM'):
 	"""
-	:param is_normal: check if normal
-	:param is_hcm: check if hcm pathological slide
+	:param slide_type: assign specific slide_type
 	:param is_he: check he
 	:param is_masson: check masson
 	:param for_split: define split image mode
@@ -79,23 +78,23 @@ def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', fo
 	# patient_no = patients[patient_no]
 	he_path_list = [[], []]
 	masson_path_list = [[], []]
-	if is_normal:
-		slide__type = 'NORMAL'
-	else:
-		slide__type = 'RCM' if not is_hcm else 'HCM'
+	# if is_normal:
+	# 	slide__type = 'NORMAL'
+	# else:
+	# 	slide__type = 'RCM' if not is_hcm else 'HCM'
 	if is_he:
-		he_patient_no = he_patients[slide_type_all.index(slide__type)][patient_no]
+		he_patient_no = he_patients[slide_type_all.index(slide_type)][patient_no]
 	if is_masson:
-		masson_patient_no = masson_patients[slide_type_all.index(slide__type)][patient_no]
+		masson_patient_no = masson_patients[slide_type_all.index(slide_type)][patient_no]
 	for i in xrange(1, 7):
 		if is_he:
 			he_img_name = he_patient_no + '-' + str(i) + file_type
-			he_path_iter = img_dir + 'HE/{}'.format(slide__type) + he_patient_no + he_img_name
-			if os.path.exists(img_dir + 'RGB/HE/{}'.format(slide__type) + he_patient_no):
+			he_path_iter = img_dir + 'HE/{}'.format(slide_type) + he_patient_no + he_img_name
+			if os.path.exists(img_dir + 'RGB/HE/{}'.format(slide_type) + he_patient_no):
 				he_split_image_iter = img_dir + 'RGB/HE/{}'.format(
-					slide__type) + he_patient_no + he_patient_no + '-' + str(i) + '.jpg'
+					slide_type) + he_patient_no + he_patient_no + '-' + str(i) + '.jpg'
 			else:
-				he_split_image_iter = img_dir + 'RGB/HE/{}'.format(slide__type) + he_patient_no + '-' + str(i) + '.jpg'
+				he_split_image_iter = img_dir + 'RGB/HE/{}'.format(slide_type) + he_patient_no + '-' + str(i) + '.jpg'
 			if for_split and os.path.exists(he_path_iter):
 				he_path_list[0].append(he_path_iter)
 			else:
@@ -104,13 +103,13 @@ def get_patient_image_path(patient_no, return_type="both", file_type='.ndpi', fo
 					he_path_list[1].append(he_split_image_iter)
 		if is_masson:
 			masson_slide_name = masson_patient_no + '-' + str(i) + file_type
-			masson_path_iter = img_dir + 'MASSON/{}'.format(slide__type) + masson_patient_no + masson_slide_name
-			if os.path.exists(img_dir + 'RGB/MASSON/{}'.format(slide__type) + masson_patient_no):
+			masson_path_iter = img_dir + 'MASSON/{}'.format(slide_type) + masson_patient_no + masson_slide_name
+			if os.path.exists(img_dir + 'RGB/MASSON/{}'.format(slide_type) + masson_patient_no):
 				masson_split_image_iter = img_dir + 'RGB/MASSON/{}'.format(
-					slide__type) + masson_patient_no + masson_patient_no + '-' + str(
+					slide_type) + masson_patient_no + masson_patient_no + '-' + str(
 					i) + '.jpg'
 			else:
-				masson_split_image_iter = img_dir + 'RGB/MASSON/{}'.format(slide__type) + masson_patient_no.split('/')[
+				masson_split_image_iter = img_dir + 'RGB/MASSON/{}'.format(slide_type) + masson_patient_no.split('/')[
 					1] + '-' + str(
 					i) + '.jpg'
 			if for_split and os.path.exists(masson_path_iter):
@@ -257,7 +256,8 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 	                                                                        patient_id=patient_id,
 	                                                                        slide_no=he_slide_no,
 	                                                                        hand_drawn=set_hand_drawn,
-	                                                                        image_path=hand_drawn_img, server=server)
+	                                                                        image_path=hand_drawn_img, server=server,
+	                                                                        slide_type=slide_type)
 	print 'mask read done'
 	global he_mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
@@ -297,7 +297,7 @@ def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_d
 			print "area is none"
 		# he_proc_iter[5].append(detect[5])  # 空泡的[area] 暂时没算出来，后面算，这里填空
 		he_proc_iter[3][1] = rcm_thickening
-		print (he_mask_name[a] + "finished!")
+		print(he_mask_name[a] + "finished!")
 		# i += 1
 		he_whole_res.append(he_proc_iter)
 		he_proc_iter = [0, 0, 0, [0, 0], []]  # erase the he_proc_iter var
@@ -413,7 +413,7 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 
 
 # for masson proc later
-cardiac_threshold = (155, 40, 46), (180, 255, 255)  # cardiac
+cardiac_threshold = (155, 15, 46), (180, 255, 255)  # cardiac
 fibrosis_threshold = (78, 20, 46), (155, 255, 255)  # fibrosis
 '''
 [147  13 219]
@@ -448,7 +448,7 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 		slide_no=slide_no,
 		patient_id=patient_id,
 		hand_drawn=hand_drawn,
-		is_masson=True, image_path=split_image_path)
+		is_masson=True, image_path=split_image_path, slide_type=slide_type)
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	# save global fibrosis image
 	store_level = 4
@@ -511,8 +511,8 @@ def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_lev
 			print "area is none"
 		masson_whole_result.append(masson_result_iter)
 		masson_result_iter = [0, 0]
-		print masson_patients[slide_type_all.index(slide_type)][patient_id] + masson_mask_name[
-			a] + " finished" + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
+		print masson_patients[slide_type_all.index(slide_type)][patient_id] + " " + masson_mask_name[
+			a] + " finished " + "time consumed now: " + str(time() - masson_proc_time_start) + "s"
 	# i += 1
 	# The statics for storage should be the result at max_level : 0
 	#####################################################################
@@ -630,7 +630,8 @@ def slide_proc(arg_list):
 	patient_id, start, end, he, masson, set_hand_drawn, server, file_type, slide_type = arg_list
 	# global he_test_path, masson_test_path
 	he_slide_path, masson_slide_path = get_patient_image_path(patient_id, file_type=file_type, is_he=he,
-	                                                          is_masson=masson)  # patient's image path
+	                                                          is_masson=masson,
+	                                                          slide_type=slide_type)  # patient's image path
 	for slide_no in xrange(start, end):
 		if he:
 			processed_index_he = 0

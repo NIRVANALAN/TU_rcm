@@ -36,7 +36,8 @@ for slide_type in slide_type_all:
 	for i in masson_filename:
 		masson_patients[slide_type_all.index(slide_type)].append('/' + i)
 		pass
-	
+
+
 # for i in masson_filename_all:
 # 	if len(i.split('.')) == 1:
 # 		masson_filename.append(i)
@@ -282,9 +283,9 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 	# 	inner_point[0][1] = ((line_inner[3] - k_inner * length).item() + inner_point[0][1]) / 2
 	# 	pass
 	
-	if abs(k_outer) > 1:
+	if abs(k_outer) > 1.5:
 		width_points[0].sort(key=lambda x: x[0][1])
-	if abs(k_inner) > 1:
+	if abs(k_inner) > 1.5:
 		width_points[1].sort(key=lambda x: x[0][1])
 	if width_points[2] and abs(k_trabe) > 3:
 		width_points[2].sort(key=lambda x: x[0][1])
@@ -331,7 +332,7 @@ thresh = (outer_thresh, inner_thresh, trabe_thresh)
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
               is_masson=False, patient_id=0, show_img=False, set_vertical=False, hand_drawn=False, image_path=None,
-              server=True,slide_type='RCM'):
+              server=True, slide_type='RCM'):
 	calculate_trabe_flag = True
 	if slide_no is 3:
 		calculate_trabe_flag = False
@@ -817,11 +818,14 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	save images and make dirs
 	'''
 	if not is_masson:
-		if not os.path.exists('HE_image' + str(he_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation'):
+		if not os.path.exists(
+				'HE_image' + str(he_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation'):
 			os.makedirs('HE_image' + str(he_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation')
 	else:
-		if not os.path.exists('MASSON_image' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation'):
-			os.makedirs('MASSON_image' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation')
+		if not os.path.exists(
+				'MASSON_image' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation'):
+			os.makedirs(
+				'MASSON_image' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation')
 	# othermask_img_name =
 	# ('HE_image' + str(he_patients[patient_id]) + '/segmentation/slide_' + str(slide_no) + '.jpg' if (
 	# 		is_masson is False)
@@ -953,18 +957,21 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		for mask in mask_list:
 			if mask.__len__() > 0:
 				mask_image_type = 'MASSON' if is_masson else 'HE'
-				patient_no = masson_patients[slide_type_all.index(slide_type)][patient_id] if is_masson else he_patients[slide_type_all.index(slide_type)][patient_id]
+				patient_no = masson_patients[slide_type_all.index(slide_type)][patient_id] if is_masson else \
+					he_patients[slide_type_all.index(slide_type)][patient_id]
 				cv2.imwrite(
-					'log/Mask/{}'.format(mask_image_type) + patient_no + '({})_slide{}_mask{}.{}'.format(patient_id,
-					                                                                                     slide_no,
-					                                                                                     str(
-						                                                                                     mask_index),
-					                                                                                     'jpg'),
+					'log/Mask/{}'.format(mask_image_type) + patient_no + '({}_{})_slide{}_mask{}.{}'.format(slide_type,
+					                                                                                        patient_id,
+					                                                                                        slide_no,
+					                                                                                        str(
+						                                                                                        mask_index),
+					                                                                                        'jpg'),
 					mask)  # list of ndarray cannot fo .index()
-				print 'log/Mask/{}'.format(mask_image_type) + patient_no + '/({})_slide_{}_mask{}.{}'.format(patient_id,
-				                                                                               slide_no,
-				                                                                               str(mask_index),
-				                                                                               'jpg') + ' saved'
+				print 'log/Mask/{}'.format(mask_image_type) + patient_no + '/({}_{})_slide_{}_mask{}.{}'.format(
+					slide_type, patient_id,
+					slide_no,
+					str(mask_index),
+					'jpg') + ' saved'
 				if not server:
 					imgshow(mask, cmap='gray')
 			mask_index += 1
@@ -973,17 +980,21 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 		# imgshow(thirdmask, cmap='gray')
 		# imgshow(othermask, cmap='gray')
 		othermask_img_name = (
-			'HE_image' + str(he_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation/slide' + str(slide_no) + '_other_mask.jpg' if (
+			'HE_image' + str(he_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation/slide' + str(
+				slide_no) + '_other_mask.jpg' if (
 					is_masson is False)
-			else 'MASSON_image' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation/slide' + str(
+			else 'MASSON_image' + str(
+				masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation/slide' + str(
 				slide_no) + '_other_mask.jpg')
 		cv2.imwrite(othermask_img_name, othermask)  # save the img of segmentation result
 		rgb_img_name = (
-			'HE_image' + str(he_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation/slide' + str(slide_no) + '_result.jpg' if (
+			'HE_image' + str(he_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation/slide' + str(
+				slide_no) + '_result.jpg' if (
 					is_masson is False)
-			else 'MASSON_image' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation/slide' + str(
+			else 'MASSON_image' + str(
+				masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation/slide' + str(
 				slide_no) + '_result.jpg')
-		imgshow(rgbimg)
+		# imgshow(rgbimg)
 		cv2.imwrite(rgb_img_name, rgbimg)
 		pass
 	cv2.destroyAllWindows()

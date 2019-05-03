@@ -45,7 +45,7 @@ def run(start_patient, end_patient, replenish=None, he=True, masson=False, serve
 
 
 def run_parallel(start_patient, end_patient, replenish=None, he=True, masson=False, server=False,
-                 file_type='.ndpi', slide_type='RCM', threads=8):
+                 file_type='.ndpi', slide_type='RCM', threads=20):
 	pool = ThreadPool(threads)
 	task_list = []
 	
@@ -91,8 +91,9 @@ if __name__ == '__main__':
 	
 	# ================ RUN ================= #
 	# run(11, 26, replenish=(3, 6), server=False, he=True, masson=False, file_type='.ndpi', slide_type='RCM')
-	run(25, 26, replenish=(4, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
-	# run_parallel(26, 40, replenish=None, server=True, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	# run(1, 26, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
+	run_parallel(0, 26, replenish=None, server=True, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	run_parallel(0, 14, replenish=None, server=True, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
 	# ================ RUN ==================#
 	
 	# ================ PERSIST ===============#
