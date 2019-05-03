@@ -31,13 +31,16 @@ def persist(patient_id, slide_type, set_start_row=False):
 
 # write test image
 
-def run(start_patient, end_patient, replenish=None, he=True, masson=False, server=False, file_type='.ndpi'):
+def run(start_patient, end_patient, replenish=None, he=True, masson=False, server=False, file_type='.ndpi',
+        slide_type='RCM'):
 	if replenish is not None:
-		slide_proc(patient_id=start_patient - 1, start=replenish[0], end=replenish[1], he=he, masson=masson,
-		           set_hand_drawn=True, server=server, file_type=file_type)
+		args = [start_patient - 1, replenish[0], replenish[1], he, masson,
+		        True, server, file_type, slide_type]
+		slide_proc(args)
 	for i in xrange(start_patient, end_patient):
-		slide_proc(patient_id=i, start=0, end=6, he=he, masson=masson, set_hand_drawn=True, server=server,
-		           file_type=file_type)
+		args = [start_patient - 1, replenish[0], replenish[1], he, masson,
+		        True, server, file_type, slide_type]
+		slide_proc(args)
 	pass
 
 
@@ -87,8 +90,9 @@ if __name__ == '__main__':
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
 	
 	# ================ RUN ================= #
-	# run(1, 26, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs')
-	run_parallel(26, 40, replenish=None, server=True, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	# run(11, 26, replenish=(3, 6), server=False, he=True, masson=False, file_type='.ndpi', slide_type='RCM')
+	run(25, 26, replenish=(4, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	# run_parallel(26, 40, replenish=None, server=True, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
 	# ================ RUN ==================#
 	
 	# ================ PERSIST ===============#

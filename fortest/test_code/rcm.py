@@ -1,7 +1,7 @@
 # coding=utf-8
 import matplotlib
 
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 import os
 import sys
 from time import time

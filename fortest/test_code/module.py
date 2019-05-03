@@ -269,22 +269,22 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		line_trabe = cv2.fitLine(np.array(width_points[2]), cv2.DIST_L2, 0, 0.01, 0.01)
 		k_trabe = line_trabe[1] / line_trabe[0]
 	
-	width_points[0][0][0][0] /= 2
-	width_points[1][0][0][0] /= 2
+	# width_points[0][0][0][0] /= 2
+	# width_points[1][0][0][0] /= 2
 	
-	for outer_point in width_points[0]:
-		length = line_outer[2] - outer_point[0][0]
-		outer_point[0][1] = ((line_outer[3] - k_outer * length).item() + outer_point[0][1]) / 2
-		pass
+	# for outer_point in width_points[0]:
+	# 	length = line_outer[2] - outer_point[0][0]
+	# 	outer_point[0][1] = ((line_outer[3] - k_outer * length).item() + outer_point[0][1]) / 2
+	# 	pass
+	#
+	# for inner_point in width_points[1]:
+	# 	length = line_inner[2] - inner_point[0][0]
+	# 	inner_point[0][1] = ((line_inner[3] - k_inner * length).item() + inner_point[0][1]) / 2
+	# 	pass
 	
-	for inner_point in width_points[1]:
-		length = line_inner[2] - inner_point[0][0]
-		inner_point[0][1] = ((line_inner[3] - k_inner * length).item() + inner_point[0][1]) / 2
-		pass
-	
-	if abs(k_outer) > 3:
+	if abs(k_outer) > 1:
 		width_points[0].sort(key=lambda x: x[0][1])
-	if abs(k_inner) > 3:
+	if abs(k_inner) > 1:
 		width_points[1].sort(key=lambda x: x[0][1])
 	if width_points[2] and abs(k_trabe) > 3:
 		width_points[2].sort(key=lambda x: x[0][1])
@@ -682,63 +682,63 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	'''
 	rotate back points if not hand_drawn, and construct dividing lines
 	'''
-	if not hand_drawn:
-		for mask in range(0, len(x_list)):
-			pl = mask - 1
-			pr = mask + 1
-			if x_list[mask][2] == 0:  # 内膜
-				n = 0
-				m = 1
-			else:  # 外膜
-				n = 1
-				m = 0
-			# while找到最近的对侧的膜上的点，同侧就略过
-			while pl >= 0 and x_list[pl][2] == x_list[mask][2]:
-				pl = pl - 1
-			while pr < len(x_list) and x_list[pr][2] == x_list[mask][2]:
-				pr = pr + 1
-			# one cutting line for slide_no 4
-			# 以下，通过线性回归找到对边的对应位置的y。两个距离可以用来估计心肌壁厚度
-			if pl >= 0 and pr < len(x_list):
-				y = (x_list[pl][1]) * (x_list[pr][0] - x_list[mask][0]) / (x_list[pr][0] - x_list[pl][0]) + (
-					x_list[pr][1]) * (
-						    x_list[mask][0] - x_list[pl][0]) / (x_list[pr][0] - x_list[pl][0])
-				if slide_no != 4 and slide_no != 5:
-					cutting_line_points[n].append([[int(x_list[mask][0]), int((x_list[mask][1] - y) / 3 + y)]])
-					cutting_line_points[m].append([[int(x_list[mask][0]), int((x_list[mask][1] - y) * 2 / 3 + y)]])
-				else:
-					cutting_line_points[n].append([[int(x_list[mask][0]), int((x_list[mask][1] - y) / 2 + y)]])
-				y_average_list.append(x_list[mask][1] - y)
-			elif pl < 0:
-				if slide_no != 4 and slide_no != 5:
-					cutting_line_points[n].append(
-						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pr][1]) / 3 + x_list[pr][1])]])
-					cutting_line_points[m].append(
-						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pr][1]) * 2 / 3 + x_list[pr][1])]])
-				else:
-					cutting_line_points[n].append(
-						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pr][1]) / 2 + x_list[pr][1])]])
-				y_average_list.append(x_list[mask][1] - x_list[pr][1])
-			else:
-				if slide_no != 4 and slide_no != 5:
-					cutting_line_points[n].append(
-						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pl][1]) / 3 + x_list[pl][1])]])
-					cutting_line_points[m].append(
-						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pl][1]) * 2 / 3 + x_list[pl][1])]])
-				else:
-					cutting_line_points[n].append(
-						[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pl][1]) / 2 + x_list[pl][1])]])
-				y_average_list.append(x_list[mask][1] - x_list[pl][1])
-		rcm_thickening.append(abs(np.average(y_average_list)))
-		width_points[0] = rotate_points(width_points[0], rect_wall[0], angle)
-		width_points[1] = rotate_points(width_points[1], rect_wall[0], angle)
-		cutting_line_points[0] = rotate_points(cutting_line_points[0], rect_wall[0], angle)
-		cutting_line_points[1] = rotate_points(cutting_line_points[1], rect_wall[0], angle)
-		m = cv2.moments(np.array(width_points[1]))
-		cx1 = int(m["m10"] / m["m00"])
-		cy1 = int(m["m01"] / m["m00"])
-		cutting_line_points[1].reverse()
-		width_points[1].reverse()
+	# if not hand_drawn:
+	# 	for mask in range(0, len(x_list)):
+	# 		pl = mask - 1
+	# 		pr = mask + 1
+	# 		if x_list[mask][2] == 0:  # 内膜
+	# 			n = 0
+	# 			m = 1
+	# 		else:  # 外膜
+	# 			n = 1
+	# 			m = 0
+	# 		# while找到最近的对侧的膜上的点，同侧就略过
+	# 		while pl >= 0 and x_list[pl][2] == x_list[mask][2]:
+	# 			pl = pl - 1
+	# 		while pr < len(x_list) and x_list[pr][2] == x_list[mask][2]:
+	# 			pr = pr + 1
+	# 		# one cutting line for slide_no 4
+	# 		# 以下，通过线性回归找到对边的对应位置的y。两个距离可以用来估计心肌壁厚度
+	# 		if pl >= 0 and pr < len(x_list):
+	# 			y = (x_list[pl][1]) * (x_list[pr][0] - x_list[mask][0]) / (x_list[pr][0] - x_list[pl][0]) + (
+	# 				x_list[pr][1]) * (
+	# 					    x_list[mask][0] - x_list[pl][0]) / (x_list[pr][0] - x_list[pl][0])
+	# 			if slide_no != 4 and slide_no != 5:
+	# 				cutting_line_points[n].append([[int(x_list[mask][0]), int((x_list[mask][1] - y) / 3 + y)]])
+	# 				cutting_line_points[m].append([[int(x_list[mask][0]), int((x_list[mask][1] - y) * 2 / 3 + y)]])
+	# 			else:
+	# 				cutting_line_points[n].append([[int(x_list[mask][0]), int((x_list[mask][1] - y) / 2 + y)]])
+	# 			y_average_list.append(x_list[mask][1] - y)
+	# 		elif pl < 0:
+	# 			if slide_no != 4 and slide_no != 5:
+	# 				cutting_line_points[n].append(
+	# 					[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pr][1]) / 3 + x_list[pr][1])]])
+	# 				cutting_line_points[m].append(
+	# 					[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pr][1]) * 2 / 3 + x_list[pr][1])]])
+	# 			else:
+	# 				cutting_line_points[n].append(
+	# 					[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pr][1]) / 2 + x_list[pr][1])]])
+	# 			y_average_list.append(x_list[mask][1] - x_list[pr][1])
+	# 		else:
+	# 			if slide_no != 4 and slide_no != 5:
+	# 				cutting_line_points[n].append(
+	# 					[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pl][1]) / 3 + x_list[pl][1])]])
+	# 				cutting_line_points[m].append(
+	# 					[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pl][1]) * 2 / 3 + x_list[pl][1])]])
+	# 			else:
+	# 				cutting_line_points[n].append(
+	# 					[[int(x_list[mask][0]), int((x_list[mask][1] - x_list[pl][1]) / 2 + x_list[pl][1])]])
+	# 			y_average_list.append(x_list[mask][1] - x_list[pl][1])
+	# 	rcm_thickening.append(abs(np.average(y_average_list)))
+	# 	width_points[0] = rotate_points(width_points[0], rect_wall[0], angle)
+	# 	width_points[1] = rotate_points(width_points[1], rect_wall[0], angle)
+	# 	cutting_line_points[0] = rotate_points(cutting_line_points[0], rect_wall[0], angle)
+	# 	cutting_line_points[1] = rotate_points(cutting_line_points[1], rect_wall[0], angle)
+	# 	m = cv2.moments(np.array(width_points[1]))
+	# 	cx1 = int(m["m10"] / m["m00"])
+	# 	cy1 = int(m["m01"] / m["m00"])
+	# 	cutting_line_points[1].reverse()
+	# 	width_points[1].reverse()
 	#######################################
 	if hand_drawn:
 		if slide_no != 4 and slide_no != 5:
@@ -961,7 +961,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 						                                                                                     mask_index),
 					                                                                                     'jpg'),
 					mask)  # list of ndarray cannot fo .index()
-				print 'log/Mask/{}'.format(mask_image_type) + '({})_slide_{}_mask{}.{}'.format(patient_id,
+				print 'log/Mask/{}'.format(mask_image_type) + patient_no + '/({})_slide_{}_mask{}.{}'.format(patient_id,
 				                                                                               slide_no,
 				                                                                               str(mask_index),
 				                                                                               'jpg') + ' saved'
@@ -983,6 +983,7 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 					is_masson is False)
 			else 'MASSON_image' + str(masson_patients[slide_type_all.index(slide_type)][patient_id]) + '/segmentation/slide' + str(
 				slide_no) + '_result.jpg')
+		imgshow(rgbimg)
 		cv2.imwrite(rgb_img_name, rgbimg)
 		pass
 	cv2.destroyAllWindows()
