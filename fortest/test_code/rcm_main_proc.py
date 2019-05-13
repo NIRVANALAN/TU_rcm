@@ -14,7 +14,7 @@ def persist(patient_id, slide_type, set_start_row=False):
 		# indexes.sort(key=lambda file_name: int(file_name[11:12]))
 		indexes.sort()
 		for index in indexes:
-			if int(index.split("_")[0]) == int(patient_id.split("/")[1]):  # no fibrosis_block.txt
+			if (index.split("_")[0]) == (patient_id.split("/")[1]):  # no fibrosis_block.txt
 				file_path.append(index)
 	else:
 		indexes = os.listdir(he_dir)
@@ -44,8 +44,8 @@ def run(start_patient, end_patient, replenish=None, he=True, masson=False, serve
 	pass
 
 
-def run_parallel(start_patient, end_patient, replenish=None, he=True, masson=False, server=False,
-                 file_type='.ndpi', slide_type='RCM', threads=20):
+def run_parallel_slide_proc(start_patient, end_patient, replenish=None, he=True, masson=False, server=False,
+                            file_type='.ndpi', slide_type='RCM', threads=12):
 	pool = ThreadPool(threads)
 	task_list = []
 	
@@ -64,6 +64,70 @@ def run_parallel(start_patient, end_patient, replenish=None, he=True, masson=Fal
 	pass
 
 
+def run_parallel_base_proc(start_patient, end_patient, replenish=None, he=True, masson=False, server=False,
+                           file_type='.ndpi', slide_type='RCM', threads=12):
+	pool = ThreadPool(threads)
+	slide_task_list = []
+	
+	if replenish is not None:
+		slide_task_list.append(
+			[start_patient - 1, replenish[0], replenish[1], he, masson, True, server, file_type, slide_type])
+	# slide_proc(patient_id=start_patient - 1, start=replenish[0], end=replenish[1], he=he, masson=masson,
+	#            set_hand_drawn=True, server=server, file_type=file_type)
+	for i in xrange(start_patient, end_patient):
+		slide_task_list.append([i, 0, 6, he, masson, True, server, file_type, slide_type])
+	# slide_proc(patient_id=i, start=0, end=6, he=he, masson=masson, set_hand_drawn=True, server=server,
+	#            file_type=file_type)
+	
+	he_task_list = []
+	masson_task_list = []
+	for i in slide_task_list:
+		patient_id, start, end, he, masson, set_hand_drawn, server, file_type, slide_type = i
+		he_slide_path, masson_slide_path = get_patient_image_path(patient_id, file_type=file_type, is_he=he,
+		                                                          is_masson=masson,
+		                                                          slide_type=slide_type)  # patient's image path
+		for slide_no in xrange(start, end):
+			if he:
+				processed_index_he = 0
+				# try:
+				for split_path in he_slide_path[1]:
+					if int(split_path[-5]) == slide_no + 1:
+						processed_index_he = he_slide_path[1].index(split_path)
+						he_task_list.append(
+							[slide_no, he_slide_path[0][processed_index_he], patient_id, set_hand_drawn,
+							 split_path if set_hand_drawn else None, server, slide_type])
+				continue
+			# except BaseException, e:
+			# 	print e.message
+			# 	with open('he_error_slide_log.txt', 'a') as f:
+			# 		f.writelines(he_slide_path[0][processed_index_he] + '：' + e.message + '\n')
+			# 	continue
+			if masson:
+				processed_index_masson = 0
+				# try:
+				for split_path in masson_slide_path[1]:
+					if int(split_path[-5]) == slide_no + 1:
+						processed_index_masson = masson_slide_path[1].index(split_path)
+						masson_task_list.append([slide_no, masson_slide_path[0][processed_index_masson], patient_id,
+						                         6, set_hand_drawn, split_path if set_hand_drawn else None, slide_type])
+	# masson_proc()
+	
+	# except BaseException, e:
+	# 	print e.message
+	# 	with open('masson_error_slide_log.txt', 'a') as f:
+	# 		f.writelines(masson_slide_path[0][processed_index_masson] + '：' + e.message + '\n')
+	# 		continue
+	
+	# pool.map(slide_proc, slide_task_list)
+	if he:
+		pool.map(he_proc, he_task_list)
+	if masson:
+		pool.map(masson_proc, masson_task_list)
+	pool.close()
+	pool.join()
+	pass
+
+
 if __name__ == '__main__':
 	init_test_proc()
 	# masson_test_proc()
@@ -72,16 +136,19 @@ if __name__ == '__main__':
 	# HE : 20
 	# for i in xrange(41, 42):  # MASSON RCM
 	# for i in xrange(18, 20):  # HE RCM
-	# for i in xrange(0, 4):  # MASSON HCM
+	# for i in xrange(0, 20):  # HE RCM
+	# for i in xrange(0, 4):  # HE RCM
+	# for i in xrange(0, 26):  # MASSON DCM
+	# for i in xrange(0, 12):  # MASSON HCM
 	# 	# MASSON:
-	# 	slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
-	# 	                                    for_split=True, is_masson=True, is_he=False, is_hcm=True)
-	# 	write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
+	# slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
+	#                                     for_split=True, is_masson=True, is_he=False, slide_type='HCM')
+	# write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
 	
 	# HE
-	# slide_path = get_patient_image_path(i, return_type="HE", file_type='.mrxs',
-	#                                     for_split=True, is_masson=False, is_he=True)
-	# write_test_img(slide_path[0], is_masson=False, saved_img_level=6)
+	# 	slide_path = get_patient_image_path(i, return_type="HE", file_type='.mrxs',
+	# 	                                    for_split=True, is_masson=False, is_he=True, slide_type='NORMAL')
+	# 	write_test_img(slide_path[0], is_masson=False, saved_img_level=6)
 	
 	# ===================================================#
 	
@@ -91,14 +158,21 @@ if __name__ == '__main__':
 	
 	# ================ RUN ================= #
 	# run(11, 26, replenish=(3, 6), server=False, he=True, masson=False, file_type='.ndpi', slide_type='RCM')
-	# run(1, 26, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
-	run_parallel(0, 26, replenish=None, server=True, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
-	run_parallel(0, 14, replenish=None, server=True, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
+	run(27, 27, replenish=(4, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	# run(10, 13, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
+	# run(9, 10, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	# run_parallel(26, 27, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	# run_parallel(0, 12, replenish=None, server=True, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
+	# run_parallel_slide_proc(0, 4, replenish=None, server=True, he=False, masson=True, file_type='.mrxs',
+	#                         slide_type='HCM')
+	
+	# run_parallel_base_proc(27, 27, replenish=(3, 5), server=True, he=False, masson=True, file_type='.mrxs',
+	#                        slide_type='RCM')
 	# ================ RUN ==================#
 	
 	# ================ PERSIST ===============#
-	# for i in range(0, 26):
-	# persist(masson_patients[i], slide_type="MASSON")
+	# for i in range(0, 12):
+	# 	persist(masson_patients[2][i], slide_type="MASSON")
 	# persist(masson_patients[i], slide_type="HE")
 	# for i in range(0, 20):
 	# 	persist(he_patients[i], slide_type="HE")

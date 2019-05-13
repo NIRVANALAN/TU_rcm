@@ -233,8 +233,8 @@ def write_test_img(path, saved_img_level, is_masson=False):
 he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
-def he_proc(he_slide_no, he_slide_path, patient_id, set_hand_drawn=False, hand_drawn_img=None, server=False,
-            slide_type='RCM'):
+def he_proc(he_task_list):
+	he_slide_no, he_slide_path, patient_id, set_hand_drawn, hand_drawn_img, server, slide_type = he_task_list
 	"""
 	:param patient_id: id of patient
 	:param hand_drawn_img: set if it's hand_drawn
@@ -432,8 +432,9 @@ masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'W
 fibrosis_group = [4000, 8000, 12000, 16000, 20000, 24000, 28000, 32000]
 
 
-def masson_proc(slide_no, masson_slide_path, patient_id, masson_mask_working_level=6, hand_drawn=True,
-                split_image_path=None, slide_type='RCM'):  # need debug and fix
+def masson_proc(task_list):  # need debug and fix
+	slide_no, masson_slide_path, patient_id, masson_mask_working_level, hand_drawn, \
+	split_image_path, slide_type = task_list
 	masson_proc_time_start = time()
 	
 	masson_whole_result = []
@@ -639,8 +640,9 @@ def slide_proc(arg_list):
 				for split_path in he_slide_path[1]:
 					if int(split_path[-5]) == slide_no + 1:
 						processed_index_he = he_slide_path[1].index(split_path)
-						he_proc(slide_no, he_slide_path[0][processed_index_he], patient_id, set_hand_drawn,
-						        split_path if set_hand_drawn else None, server=server, slide_type=slide_type)
+						he_arg_list = [slide_no, he_slide_path[0][processed_index_he], patient_id, set_hand_drawn,
+						               split_path if set_hand_drawn else None, server, slide_type]
+						he_proc(he_arg_list)
 				continue
 			except BaseException, e:
 				print e.message
@@ -653,9 +655,9 @@ def slide_proc(arg_list):
 				for split_path in masson_slide_path[1]:
 					if int(split_path[-5]) == slide_no + 1:
 						processed_index_masson = masson_slide_path[1].index(split_path)
-						masson_proc(slide_no, masson_slide_path[0][processed_index_masson], patient_id,
-						            hand_drawn=set_hand_drawn,
-						            split_image_path=split_path if set_hand_drawn else None, slide_type=slide_type)
+						masson_arg_list = [slide_no, masson_slide_path[0][processed_index_masson], patient_id,
+						                   6, set_hand_drawn, split_path if set_hand_drawn else None, slide_type]
+						masson_proc(masson_arg_list)
 			except BaseException, e:
 				print e.message
 				with open('masson_error_slide_log.txt', 'a') as f:
@@ -689,7 +691,7 @@ def masson_data_process(whole_res):
 
 
 def xls_persist_slide(file_name, slide_type, start_row=-1, set_start_row=False):  # save one slide into .xls
-	patient_no = int(file_name.split('_')[0])
+	patient_no = (file_name.split('_')[0])
 	slide_no = int(file_name.split('_')[1][-1])
 	if slide_type is "HE":  # HE
 		# file_name = 'HE_data/28330_slide0_he_whole_res.txt'

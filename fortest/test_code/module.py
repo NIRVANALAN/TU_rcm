@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
-slide_type_all = ['RCM', 'HCM', 'NORMAL']
-he_patients = [[], [], []]  # RCM HCM NORMAL
-masson_patients = [[], [], []]  # RCM HCM NORMAL
+slide_type_all = ['RCM', 'HCM', 'NORMAL', 'DCM']
+he_patients = [[], [], [], []]  # RCM HCM NORMAL DCM
+masson_patients = [[], [], [], []]  # RCM HCM NORMAL DCM
 # patient_id = 1
 img_dir = './../../rcm_images/'
 # he patients
@@ -846,10 +846,11 @@ def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_it
 	# 	# cv2.imshow(othermask_img_name, rgbimg)  # save the img of segmentation result
 	# 	cv2.imshow("firstmask", firstmask)
 	# 	cv2.imshow("secondmask", secondmask)
-	thirdmask = []
+	# thirdmask = []
+	thirdmask = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
 	if slide_no != 4 and slide_no != 5:
-		mask = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
-		thirdmask = cv2.fillPoly(mask, np.array([third], np.int32), 255)
+		# thirdmask = np.zeros((working_dimensions[1], working_dimensions[0]), np.uint8)
+		thirdmask = cv2.fillPoly(thirdmask, np.array([third], np.int32), 255)
 	othermask = []
 	if calculate_trabe_flag and not hand_drawn:
 		box1 = cv2.boxPoints(rect_other)
