@@ -233,6 +233,14 @@ def write_test_img(path, saved_img_level, is_masson=False):
 he_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 
+def try_he_proc(he_task_list):
+	try:
+		he_proc(he_task_list)
+	except BaseException, e:
+		print e
+		print he_task_list
+
+
 def he_proc(he_task_list):
 	he_slide_no, he_slide_path, patient_id, set_hand_drawn, hand_drawn_img, server, slide_type = he_task_list
 	"""
@@ -258,7 +266,7 @@ def he_proc(he_task_list):
 	                                                                        hand_drawn=set_hand_drawn,
 	                                                                        image_path=hand_drawn_img, server=server,
 	                                                                        slide_type=slide_type)
-	print 'mask read done'
+	print '{} mask read done'.format(he_slide_no)
 	global he_mask_name
 	areas = [firstmask, secondmask, thirdmask, othermask]
 	magnify = pow(2, mask_level)
@@ -284,7 +292,7 @@ def he_proc(he_task_list):
 						region = np.array(slide_processed.read_region((x, y), 0, (area_length, area_length)))
 						region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 						hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
-						detect = detect_process(region, hsv, he_patients[patient_id], he_slide_no, he_mask_name[a],
+						detect = detect_process(region, hsv, he_patients[slide_type_all.index(slide_type)][patient_id], he_slide_no, he_mask_name[a],
 						                        cardiac_cell_num_threshold, vacuole_cell_num_threshold, False)
 						he_proc_iter[0] += (detect[0])  # 空泡
 						he_proc_iter[1] += (detect[1])  # 心肌
@@ -304,10 +312,10 @@ def he_proc(he_task_list):
 	if not os.path.exists('HE_data'):
 		os.mkdir('HE_data')
 	write_file(he_whole_res,
-	           'HE_data/' + str(he_patients[patient_id]).split('/')[1] + '_slide' + str(
+	           'HE_data/' + str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[1] + '_slide' + str(
 		           he_slide_no) + '_he_whole_res.txt')
 	he_whole_res = []
-	print "HE patient: " + str(he_patients[patient_id]).split('/')[1] + ' slide no:' + str(
+	print "HE patient: " + str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[1] + ' slide no:' + str(
 		he_slide_no) + " finished.Time consumed:" + str(
 		time() - he_proc_start_time) + " s"
 
@@ -430,6 +438,14 @@ fibrosis_threshold = (78, 20, 46), (155, 255, 255)  # fibrosis
 masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
 
 fibrosis_group = [4000, 8000, 12000, 16000, 20000, 24000, 28000, 32000]
+
+
+def try_masson_proc(task_list):
+	try:
+		masson_proc(task_list)
+	except BaseException, e:
+		print e
+		print task_list
 
 
 def masson_proc(task_list):  # need debug and fix

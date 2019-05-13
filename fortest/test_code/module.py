@@ -197,13 +197,13 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		_, contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 		if contours.__len__() is 0:  # now trabe line(blue)
 			continue
-		first_index = 0
+		first_index = -1
 		for i in xrange(contours.__len__()):
 			if len(contours[i]) > 15:
 				points = contours[i]
 				first_index = i
 				break
-		if first_index > 0:
+		if first_index >= 0:
 			for i in contours[first_index:]:
 				if len(i) > 20:
 					points = np.append(points, i, axis=0)
@@ -287,7 +287,7 @@ def hand_draw_split_test(level, threshes, image_path, slide, show_image=False):
 		width_points[0].sort(key=lambda x: x[0][1])
 	if abs(k_inner) > 1.5:
 		width_points[1].sort(key=lambda x: x[0][1])
-	if width_points[2] and abs(k_trabe) > 3:
+	if width_points[2] and abs(k_trabe) > 1.5:
 		width_points[2].sort(key=lambda x: x[0][1])
 	# length = 300
 	# point_out = (line_outer[2] - length, line_outer[3] - k_outer * length), \
@@ -319,6 +319,7 @@ inner_thresh = (54, 233, 46), (56, 255, 255)  # GREEN 55
 # trabe_thresh = (100, 43, 46), (124, 255, 255)  # BLUE
 trabe_thresh = (19, 233, 46), (21, 255, 255)  # ORANGE 20
 '''
+new thresh
 [ 20 253 253]
 [ 55 255 231]
 [ 27 254 255]
@@ -327,7 +328,36 @@ trabe_thresh = (19, 233, 46), (21, 255, 255)  # ORANGE 20
 [ 55 255 230]
 [ 27 245 255]
 '''
-thresh = (outer_thresh, inner_thresh, trabe_thresh)
+old_outer_thresh = (177, 210, 46), (180, 255, 255)  # RED 178
+old_inner_thresh = (54, 220, 46), (56, 255, 255)  # GREEN 55
+old_trabe_thresh = (109, 220, 46), (112, 255, 255)  # BLUE 110
+'''
+old thresh
+[169 196 189]
+[176 211 210]
+[179 219 215]
+[178 213 222]
+[  0 213 208]
+[178 224 221]
+[179 218 221]
+[176 217 214]
+[179 220 219]
+[178 223 225]
+[  0 210 216]
+[179 217 210]
+[ 55 220 216]
+[ 55 238 219]
+[ 54 236 217]
+[ 55 241 222]
+[ 55 238 219]
+[110 249 220]
+[111 231 188]
+[110 255 224]
+[110 255 227]
+[110 253 230]
+'''
+# thresh = (outer_thresh, inner_thresh, trabe_thresh)
+thresh = (old_outer_thresh, old_inner_thresh, old_trabe_thresh)
 
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
@@ -1146,7 +1176,7 @@ def detect_process(region, hsv, patient_num, slide_no, processed_mask_name, card
 			cv2.drawContours(vacuole_image, contour[0], -1, (0, 0, 255), 2)
 		# if not os.path.exists('HE_image/' + str(patient_num)):
 		# 	os.mkdir()
-		if not os.path.exists('HE_image/' + str(patient_num) + '/vacuole_cells'):
+		if not os.path.exists('HE_image' + str(patient_num) + '/vacuole_cells'):
 			os.makedirs('HE_image' + str(patient_num) + '/vacuole_cells')
 		if debug_mod:
 			imgshow(vacuole_image)

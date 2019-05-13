@@ -38,7 +38,7 @@ def run(start_patient, end_patient, replenish=None, he=True, masson=False, serve
 		        True, server, file_type, slide_type]
 		slide_proc(args)
 	for i in xrange(start_patient, end_patient):
-		args = [start_patient - 1, replenish[0], replenish[1], he, masson,
+		args = [start_patient - 1, 0, 6, he, masson,
 		        True, server, file_type, slide_type]
 		slide_proc(args)
 	pass
@@ -65,7 +65,7 @@ def run_parallel_slide_proc(start_patient, end_patient, replenish=None, he=True,
 
 
 def run_parallel_base_proc(start_patient, end_patient, replenish=None, he=True, masson=False, server=False,
-                           file_type='.ndpi', slide_type='RCM', threads=12):
+                           file_type='.ndpi', slide_type='RCM', threads=18):
 	pool = ThreadPool(threads)
 	slide_task_list = []
 	
@@ -120,9 +120,9 @@ def run_parallel_base_proc(start_patient, end_patient, replenish=None, he=True, 
 	
 	# pool.map(slide_proc, slide_task_list)
 	if he:
-		pool.map(he_proc, he_task_list)
+		pool.map(try_he_proc, he_task_list)
 	if masson:
-		pool.map(masson_proc, masson_task_list)
+		pool.map(try_masson_proc, masson_task_list)
 	pool.close()
 	pool.join()
 	pass
@@ -157,8 +157,10 @@ if __name__ == '__main__':
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
 	
 	# ================ RUN ================= #
-	# run(11, 26, replenish=(3, 6), server=False, he=True, masson=False, file_type='.ndpi', slide_type='RCM')
-	run(27, 27, replenish=(4, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	# run(1, 20, replenish=(0, 6), server=False, he=True, masson=False, file_type='.ndpi', slide_type='RCM')
+	
+	# run(27, 27, replenish=(2, 3), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	
 	# run(10, 13, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
 	# run(9, 10, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
 	# run_parallel(26, 27, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
@@ -166,13 +168,20 @@ if __name__ == '__main__':
 	# run_parallel_slide_proc(0, 4, replenish=None, server=True, he=False, masson=True, file_type='.mrxs',
 	#                         slide_type='HCM')
 	
-	# run_parallel_base_proc(27, 27, replenish=(3, 5), server=True, he=False, masson=True, file_type='.mrxs',
-	#                        slide_type='RCM')
+	# MASSON
+	# run_parallel_base_proc(4, 12, replenish=None, server=True, he=False, masson=True, file_type='.mrxs',
+	#                        slide_type='HCM')
+	#  HE
+	run_parallel_base_proc(1, 20, replenish=(0, 6), server=True, he=True, masson=False, file_type='.ndpi',
+	                       slide_type='RCM')
+	
 	# ================ RUN ==================#
 	
 	# ================ PERSIST ===============#
-	# for i in range(0, 12):
-	# 	persist(masson_patients[2][i], slide_type="MASSON")
+	# for i in range(4, 12):
+	# 	persist(masson_patients[1][i], slide_type="MASSON")  # HCM
+	#
+	# persist(masson_patients[0][i], slide_type="MASSON") # RCM
 	# persist(masson_patients[i], slide_type="HE")
 	# for i in range(0, 20):
 	# 	persist(he_patients[i], slide_type="HE")
