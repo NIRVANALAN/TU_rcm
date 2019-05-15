@@ -22,7 +22,7 @@ def persist(patient_id, slide_type, set_start_row=False):
 		# indexes.sort(key=lambda file_name: int(file_name[11:12]))
 		indexes.sort()
 		for index in indexes:
-			if int(index.split("_")[0]) == int(patient_id.split("/")[1]):
+			if (index.split("_")[0]) == (patient_id.split("/")[1]):
 				file_path.append(index)
 	for f in file_path:
 		xls_persist_slide(f, slide_type, set_start_row)
@@ -157,7 +157,7 @@ if __name__ == '__main__':
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
 	
 	# ================ RUN ================= #
-	# run(1, 20, replenish=(0, 6), server=False, he=True, masson=False, file_type='.ndpi', slide_type='RCM')
+	# run(20, 20, replenish=(5, 6), server=False, he=True, masson=False, file_type='.mrxs', slide_type='RCM')
 	
 	# run(27, 27, replenish=(2, 3), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
 	
@@ -172,8 +172,8 @@ if __name__ == '__main__':
 	# run_parallel_base_proc(4, 12, replenish=None, server=True, he=False, masson=True, file_type='.mrxs',
 	#                        slide_type='HCM')
 	#  HE
-	run_parallel_base_proc(1, 20, replenish=(0, 6), server=True, he=True, masson=False, file_type='.ndpi',
-	                       slide_type='RCM')
+	# run_parallel_base_proc(18, 20, replenish=None, server=True, he=True, masson=False, file_type='.mrxs',
+	#                        slide_type='RCM')
 	
 	# ================ RUN ==================#
 	
@@ -183,8 +183,8 @@ if __name__ == '__main__':
 	#
 	# persist(masson_patients[0][i], slide_type="MASSON") # RCM
 	# persist(masson_patients[i], slide_type="HE")
-	# for i in range(0, 20):
-	# 	persist(he_patients[i], slide_type="HE")
+	for i in range(0, 20):
+		persist(he_patients[0][i], slide_type="HE")  # RCM
 	# ================ PERSIST ===============#
 	
 	'''

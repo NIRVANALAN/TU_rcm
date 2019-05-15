@@ -284,10 +284,11 @@ def he_proc(he_task_list):
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# 证明这个像素点在对应的Mask里面
-						print str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
-							      1] + "({})".format(patient_id) + " HE: " + str(
-							he_slide_no) + ' ' + he_mask_name[
-							      a] + ": " + '{:.4f}%'.format(float(y * he_max_dimension[0] + x) / pixels * 100)
+						if int(float(y * he_max_dimension[0] + x) / pixels * 100) % 5 == 0:
+							print str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
+								      1] + "({})".format(patient_id) + " HE: " + str(
+								he_slide_no) + ' ' + he_mask_name[
+								      a] + ": " + '{:.4f}%'.format(float(y * he_max_dimension[0] + x) / pixels * 100)
 						# print x, y
 						region = np.array(slide_processed.read_region((x, y), 0, (area_length, area_length)))
 						region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)

@@ -356,8 +356,8 @@ old thresh
 [110 255 227]
 [110 253 230]
 '''
-# thresh = (outer_thresh, inner_thresh, trabe_thresh)
-thresh = (old_outer_thresh, old_inner_thresh, old_trabe_thresh)
+thresh = (outer_thresh, inner_thresh, trabe_thresh)
+# thresh = (old_outer_thresh, old_inner_thresh, old_trabe_thresh)
 
 
 def edit_area(level, slide, he_erosion_iteration_time_list=[], masson_erosion_iteration_time_list=[], slide_no=0,
