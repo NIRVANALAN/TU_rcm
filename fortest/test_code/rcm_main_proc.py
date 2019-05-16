@@ -65,7 +65,7 @@ def run_parallel_slide_proc(start_patient, end_patient, replenish=None, he=True,
 
 
 def run_parallel_base_proc(start_patient, end_patient, replenish=None, he=True, masson=False, server=False,
-                           file_type='.ndpi', slide_type='RCM', threads=18):
+                           file_type='.mrxs', slide_type='RCM', threads=18):
 	pool = ThreadPool(threads)
 	slide_task_list = []
 	
@@ -157,7 +157,7 @@ if __name__ == '__main__':
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
 	
 	# ================ RUN ================= #
-	# run(20, 20, replenish=(5, 6), server=False, he=True, masson=False, file_type='.mrxs', slide_type='RCM')
+	# run(1, 20, replenish=(5, 6), server=False, he=True, masson=False, file_type='.mrxs', slide_type='DCM')
 	
 	# run(27, 27, replenish=(2, 3), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
 	
@@ -172,8 +172,8 @@ if __name__ == '__main__':
 	# run_parallel_base_proc(4, 12, replenish=None, server=True, he=False, masson=True, file_type='.mrxs',
 	#                        slide_type='HCM')
 	#  HE
-	# run_parallel_base_proc(18, 20, replenish=None, server=True, he=True, masson=False, file_type='.mrxs',
-	#                        slide_type='RCM')
+	run_parallel_base_proc(0, 20, replenish=None, server=True, he=True, masson=False, file_type='.mrxs',
+	                       slide_type='DCM')
 	
 	# ================ RUN ==================#
 	
@@ -183,8 +183,8 @@ if __name__ == '__main__':
 	#
 	# persist(masson_patients[0][i], slide_type="MASSON") # RCM
 	# persist(masson_patients[i], slide_type="HE")
-	for i in range(0, 20):
-		persist(he_patients[0][i], slide_type="HE")  # RCM
+	# for i in range(0, 20):
+	# 	persist(he_patients[0][i], slide_type="HE")  # RCM
 	# ================ PERSIST ===============#
 	
 	'''

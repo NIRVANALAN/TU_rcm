@@ -1,5 +1,6 @@
 # coding=utf-8
 import matplotlib
+import traceback
 
 matplotlib.use('Agg')
 import os
@@ -237,7 +238,7 @@ def try_he_proc(he_task_list):
 	try:
 		he_proc(he_task_list)
 	except BaseException, e:
-		print e
+		traceback.print_exc()
 		print he_task_list
 
 
@@ -284,16 +285,17 @@ def he_proc(he_task_list):
 					# if whole_img[x * magnify + 500][y * magnify + 500] != 0:
 					if areas[a][int((y + area_length / 2) / magnify)][int((x + area_length / 2) / magnify)] != 0:
 						# 证明这个像素点在对应的Mask里面
-						if int(float(y * he_max_dimension[0] + x) / pixels * 100) % 5 == 0:
-							print str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
-								      1] + "({})".format(patient_id) + " HE: " + str(
-								he_slide_no) + ' ' + he_mask_name[
-								      a] + ": " + '{:.4f}%'.format(float(y * he_max_dimension[0] + x) / pixels * 100)
+						# if int(float(y * he_max_dimension[0] + x) / pixels * 100) % 5 == 0:
+						# 	print str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
+						# 		      1] + "({})".format(patient_id) + " HE: " + str(
+						# 		he_slide_no) + ' ' + he_mask_name[
+						# 		      a] + ": " + '{:.4f}%'.format(float(y * he_max_dimension[0] + x) / pixels * 100)
 						# print x, y
 						region = np.array(slide_processed.read_region((x, y), 0, (area_length, area_length)))
 						region = cv2.cvtColor(region, cv2.COLOR_RGBA2BGR)
 						hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
-						detect = detect_process(region, hsv, he_patients[slide_type_all.index(slide_type)][patient_id], he_slide_no, he_mask_name[a],
+						detect = detect_process(region, hsv, he_patients[slide_type_all.index(slide_type)][patient_id],
+						                        he_slide_no, he_mask_name[a],
 						                        cardiac_cell_num_threshold, vacuole_cell_num_threshold, False)
 						he_proc_iter[0] += (detect[0])  # 空泡
 						he_proc_iter[1] += (detect[1])  # 心肌
@@ -306,17 +308,19 @@ def he_proc(he_task_list):
 			print "area is none"
 		# he_proc_iter[5].append(detect[5])  # 空泡的[area] 暂时没算出来，后面算，这里填空
 		he_proc_iter[3][1] = rcm_thickening
-		print(he_mask_name[a] + "finished!")
+		print("{} ".format(he_slide_no) + he_mask_name[a] + "finished!")
 		# i += 1
 		he_whole_res.append(he_proc_iter)
 		he_proc_iter = [0, 0, 0, [0, 0], []]  # erase the he_proc_iter var
 	if not os.path.exists('HE_data'):
 		os.mkdir('HE_data')
 	write_file(he_whole_res,
-	           'HE_data/' + str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[1] + '_slide' + str(
+	           'HE_data/' + str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
+		           1] + '_slide' + str(
 		           he_slide_no) + '_he_whole_res.txt')
 	he_whole_res = []
-	print "HE patient: " + str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[1] + ' slide no:' + str(
+	print "HE patient: " + str(he_patients[slide_type_all.index(slide_type)][patient_id]).split('/')[
+		1] + ' slide no:' + str(
 		he_slide_no) + " finished.Time consumed:" + str(
 		time() - he_proc_start_time) + " s"
 
@@ -445,7 +449,7 @@ def try_masson_proc(task_list):
 	try:
 		masson_proc(task_list)
 	except BaseException, e:
-		print e
+		traceback.print_exc()
 		print task_list
 
 
@@ -484,7 +488,7 @@ def masson_proc(task_list):  # need debug and fix
 	# i = 0
 	# print working_level
 	# working_dimensions = slide_processed.level_dimensions[masson_mask_working_level]
-	# rcm_thickening =  [other_height, wall_height]
+	# rcm_thickening =  [other_height, wall_slheight]
 	
 	masson_working_level = 1  # try 3
 	second_max_dimension = slide_processed.level_dimensions[masson_working_level]
@@ -662,7 +666,8 @@ def slide_proc(arg_list):
 						he_proc(he_arg_list)
 				continue
 			except BaseException, e:
-				print e.message
+				# print e.message
+				traceback.print_exc()
 				with open('he_error_slide_log.txt', 'a') as f:
 					f.writelines(he_slide_path[0][processed_index_he] + '：' + e.message + '\n')
 				continue
@@ -676,7 +681,8 @@ def slide_proc(arg_list):
 						                   6, set_hand_drawn, split_path if set_hand_drawn else None, slide_type]
 						masson_proc(masson_arg_list)
 			except BaseException, e:
-				print e.message
+				# print e.message
+				traceback.print_exc()
 				with open('masson_error_slide_log.txt', 'a') as f:
 					f.writelines(masson_slide_path[0][processed_index_masson] + '：' + e.message + '\n')
 					continue
