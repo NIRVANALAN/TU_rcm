@@ -1251,6 +1251,7 @@ def masson_region_slide(slide, working_level, threshold_type, patient_num, slide
 			os.makedirs("MASSON_image" + str(patient_num) + '/' + threshold_type)
 		# subtracted = cv2.subtract(bgr_cv_img, hsv)
 		t = cv2.subtract(bgr_cv_img, cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR))
+		# imgshow(t)
 		cv2.imwrite(
 			"MASSON_image" + str(patient_num) + '/' + threshold_type + "/slide" + str(
 				slide_no) + ".jpg", t)  # threshold

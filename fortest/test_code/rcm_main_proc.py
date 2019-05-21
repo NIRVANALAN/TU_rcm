@@ -25,7 +25,10 @@ def persist(patient_id, slide_type, set_start_row=False):
 			if (index.split("_")[0]) == (patient_id.split("/")[1]):
 				file_path.append(index)
 	for f in file_path:
-		xls_persist_slide(f, slide_type, set_start_row)
+		try:
+			xls_persist_slide(f, slide_type, set_start_row)
+		except:
+			traceback.print_exc()
 	pass
 
 
@@ -138,18 +141,19 @@ if __name__ == '__main__':
 	# for i in xrange(18, 20):  # HE RCM
 	# for i in xrange(0, 20):  # HE RCM
 	# for i in xrange(0, 4):  # HE RCM
-	# for i in xrange(0, 26):  # MASSON DCM
+	# for i in xrange(14, 16):  # HE HCM
+	# for i in xrange(0, 1):  # MASSON DCM
 	# for i in xrange(0, 12):  # MASSON HCM
 	# 	# MASSON:
-	# slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
-	#                                     for_split=True, is_masson=True, is_he=False, slide_type='HCM')
-	# write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
+	# 	slide_path = get_patient_image_path(i, return_type="MASSON", file_type='.mrxs',
+	# 	                                    for_split=True, is_masson=True, is_he=False, slide_type='DCM')
+	# 	write_test_img(slide_path[0], is_masson=True, saved_img_level=6)
 	
 	# HE
 	# 	slide_path = get_patient_image_path(i, return_type="HE", file_type='.mrxs',
-	# 	                                    for_split=True, is_masson=False, is_he=True, slide_type='NORMAL')
+	# 	                                    for_split=True, is_masson=False, is_he=True, slide_type='HCM')
 	# 	write_test_img(slide_path[0], is_masson=False, saved_img_level=6)
-	
+	#
 	# ===================================================#
 	
 	# persist process begin#################
@@ -157,35 +161,45 @@ if __name__ == '__main__':
 	# 	slide_proc(patient_id=i, start=3, end=6, he=True, masson=False, set_hand_drawn=True)
 	
 	# ================ RUN ================= #
-	# run(1, 20, replenish=(5, 6), server=False, he=True, masson=False, file_type='.mrxs', slide_type='DCM')
+	# run(15, 20, replenish=(0, 6), server=False, he=True, masson=False, file_type='.mrxs', slide_type='DCM')
 	
 	# run(27, 27, replenish=(2, 3), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
 	
-	# run(10, 13, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
+	# run(4, 13, replenish=(1, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
 	# run(9, 10, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
+	# run(1, 1, replenish=(0, 6), server=False, he=False, masson=True, file_type='.mrxs', slide_type='DCM')
 	# run_parallel(26, 27, replenish=(0, 6), server=True, he=False, masson=True, file_type='.mrxs', slide_type='RCM')
 	# run_parallel(0, 12, replenish=None, server=True, he=False, masson=True, file_type='.mrxs', slide_type='NORMAL')
 	# run_parallel_slide_proc(0, 4, replenish=None, server=True, he=False, masson=True, file_type='.mrxs',
 	#                         slide_type='HCM')
 	
 	# MASSON
-	# run_parallel_base_proc(4, 12, replenish=None, server=True, he=False, masson=True, file_type='.mrxs',
-	#                        slide_type='HCM')
+	# hcm 12
+	# dcm 26
+	# normal 12
+	# rcm 26
+	run_parallel_base_proc(0, 26, replenish=None, server=True, he=False, masson=True, file_type='.mrxs',
+	                       slide_type='RCM')
 	#  HE
-	run_parallel_base_proc(0, 20, replenish=None, server=True, he=True, masson=False, file_type='.mrxs',
-	                       slide_type='DCM')
+	# run_parallel_base_proc(15, 16, replenish=None, server=True, he=True, masson=False, file_type='.mrxs',
+	#                        slide_type='HCM')
 	
 	# ================ RUN ==================#
 	
 	# ================ PERSIST ===============#
-	# for i in range(4, 12):
+	# for i in range(0, 26):
 	# 	persist(masson_patients[1][i], slide_type="MASSON")  # HCM
 	#
 	# persist(masson_patients[0][i], slide_type="MASSON") # RCM
+	#	persist(masson_patients[3][i], slide_type="MASSON") # DCM
 	# persist(masson_patients[i], slide_type="HE")
-	# for i in range(0, 20):
-	# 	persist(he_patients[0][i], slide_type="HE")  # RCM
-	# ================ PERSIST ===============#
+	# for i in range(0, 4):
+		# RCM HCM NORMAL DCM
+		# persist(he_patient s[0][i], slide_type="HE")  # RCM
+		# persist(he_patients[3][i], slide_type="HE")  # DCM
+		# persist(he_patients[1][i], slide_type="HE")  # HCM
+		# persist(he_patients[2][i], slide_type="HE")  # HCM
+	# ================ PERSIST ===============#/
 	
 	'''
 	deal with hand_drawn pics

@@ -301,7 +301,8 @@ def he_proc(he_task_list):
 						he_proc_iter[1] += (detect[1])  # 心肌
 						he_proc_iter[2] += (detect[2])  # 非心肌
 						he_proc_iter[3][0] += (detect[3])  # 总面积
-						he_proc_iter[4].append(detect[4])  # 心肌细胞的[area, perimeter]
+						if detect[4].__len__() != 0:
+							he_proc_iter[4].append(detect[4])  # 心肌细胞的[area, perimeter]
 		# if cardiac_cell_num_threshold > 0:
 		# 	cardiac_cell_num_threshold -= 1
 		else:
@@ -426,8 +427,10 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 
 
 # for masson proc later
-cardiac_threshold = (155, 15, 46), (180, 255, 255)  # cardiac
-fibrosis_threshold = (78, 20, 46), (155, 255, 255)  # fibrosis
+# cardiac_threshold = (155, 15, 46), (180, 255, 255)  # cardiac
+cardiac_threshold = (129, 30, 46), (180, 255, 255)  # cardiac
+# fibrosis_threshold = (78, 40, 46), (155, 255, 255)  # fibrosis
+fibrosis_threshold = (110, 40, 46), (125, 255, 255)  # fibrosis
 '''
 [147  13 219]
 [146  16 217]
@@ -485,6 +488,7 @@ def masson_proc(task_list):  # need debug and fix
 	                    threshold=cardiac_threshold,
 	                    save_image=True)
 	
+	# return
 	# i = 0
 	# print working_level
 	# working_dimensions = slide_processed.level_dimensions[masson_mask_working_level]
