@@ -428,19 +428,11 @@ def he_statics_persistence(whole_res, slide_no, print_res=False, magnify_level=6
 
 # for masson proc later
 # cardiac_threshold = (155, 15, 46), (180, 255, 255)  # cardiac
-cardiac_threshold = (129, 30, 46), (180, 255, 255)  # cardiac
-# fibrosis_threshold = (78, 40, 46), (155, 255, 255)  # fibrosis
-fibrosis_threshold = (110, 40, 46), (125, 255, 255)  # fibrosis
+
+# 221
 '''
-[147  13 219]
-[146  16 217]
-[141   8 234]
-[169  11 245]
-[164  13 223]
-[146   9 237]
-[138  11 226]
-[165   2 252]
-[142  12 233]
+cardiac_threshold = (120, 20, 46), (180, 255, 255)  # cardiac
+fibrosis_threshold = (105, 14, 46), (120, 255, 255)  # fibrosis of pathological slides
 '''
 
 masson_mask_name = ['Endocardium', 'Midcardium', 'Epicardium', 'Heart_trabe', 'Whole']
@@ -458,7 +450,9 @@ def try_masson_proc(task_list):
 
 def masson_proc(task_list):  # need debug and fix
 	slide_no, masson_slide_path, patient_id, masson_mask_working_level, hand_drawn, \
-	split_image_path, slide_type = task_list
+	split_image_path, slide_type, just_save_img, threshold = task_list
+	
+	cardiac_threshold, fibrosis_threshold = threshold
 	masson_proc_time_start = time()
 	
 	masson_whole_result = []
@@ -478,17 +472,17 @@ def masson_proc(task_list):  # need debug and fix
 	# save global fibrosis image
 	store_level = 4
 	masson_region_slide(slide_processed, store_level,
-	                    "fibrosis", masson_patients[slide_type_all.index(slide_type)][patient_id],
-	                    slide_no, dimension=slide_processed.level_dimensions[store_level],
-	                    threshold=fibrosis_threshold,
-	                    save_image=True)
-	masson_region_slide(slide_processed, store_level,
 	                    "cardiac", masson_patients[slide_type_all.index(slide_type)][patient_id],
 	                    slide_no, dimension=slide_processed.level_dimensions[store_level],
 	                    threshold=cardiac_threshold,
 	                    save_image=True)
-	
-	# return
+	masson_region_slide(slide_processed, store_level,
+	                    "fibrosis", masson_patients[slide_type_all.index(slide_type)][patient_id],
+	                    slide_no, dimension=slide_processed.level_dimensions[store_level],
+	                    threshold=fibrosis_threshold,
+	                    save_image=True)
+	if just_save_img:
+		return
 	# i = 0
 	# print working_level
 	# working_dimensions = slide_processed.level_dimensions[masson_mask_working_level]
