@@ -1,6 +1,7 @@
 # coding=utf-8
 from multiprocessing.dummy import Pool as ThreadPool
 from rcm import *
+from masson_threshold import *
 
 he_dir = os.getcwd() + "/HE_data"
 masson_dir = os.getcwd() + "/MASSON_data"
@@ -74,7 +75,7 @@ def run_parallel_base_proc(start_patient, end_patient, replenish=None, he=True, 
 	
 	# ['RCM', '2-5',
 	# ((135, 20, 46), (180, 255, 255)),((110, 14, 46), (146, 255, 255))] # patient_no-slide_no, card, fib # of fib0
-	if run_specific is not None:
+	if run_specific:
 		for i in run_specific:
 			todo = i[1].split('-')
 			if todo.__len__() == 2:
@@ -93,11 +94,12 @@ def run_parallel_base_proc(start_patient, end_patient, replenish=None, he=True, 
 		if replenish is not None:
 			slide_task_list.append(
 				[start_patient - 1, replenish[0], replenish[1], he, masson, True, server, file_type, slide_type,
-				 just_save_img])
+				 just_save_img, (cardiac_threshold_general, fibrosis_threshold_general)])
 		# slide_proc(patient_id=start_patient - 1, start=replenish[0], end=replenish[1], he=he, masson=masson,
 		#            set_hand_drawn=True, server=server, file_type=file_type)
 		for i in xrange(start_patient, end_patient):
-			slide_task_list.append([i, 0, 6, he, masson, True, server, file_type, slide_type, just_save_img])
+			slide_task_list.append([i, 0, 6, he, masson, True, server, file_type, slide_type, just_save_img,
+			                        (cardiac_threshold_general, fibrosis_threshold_general)])
 		# slide_proc(patient_id=i, start=0, end=6, he=he, masson=masson, set_hand_drawn=True, server=server,
 		#            file_type=file_type)
 	he_task_list = []
@@ -210,17 +212,7 @@ if __name__ == '__main__':
 	fib 0
 	'''
 	"""
-	cardiac_threshold_0 = (122, 20, 46), (180, 255, 255)  # cardiac 0
-	fibrosis_threshold_2 = (110, 14, 46), (127, 255, 255)  # fibrosis 2
-	cardiac_threshold_general = (135, 20, 46), (180, 255, 255)  # cardiac general
-	fibrosis_threshold_general = (110, 14, 46), (138, 255, 255)  # fibrosis of pathological slides general
-	fibrosis_threshold_0 = (110, 14, 46), (146, 255, 255)  # fibrosis 0
-	# fib 2
-	fibrosis_threshold_dcm_51139 = (110, 14, 46), (124, 255, 255)  # fibrosis 2 DCM-51139
-	fibrosis_threshold_normal_hs0169 = (110, 14, 46), (120, 255, 255)  # fibrosis 2 NORMAL-HS0169
-	fibrosis_threshold_NORMAL_HS0173_2 = (110, 14, 46), (115, 255, 255)  # fibrosis 2 NORMAL-HS0173_2
-	fibrosis_threshold_RCM_HS0221 = (110, 14, 46), (124, 255, 255)  # fibrosis 2 RCM-HS0221 除了1
-	fibrosis_threshold_RCM_HS0221_1 = (110, 14, 46), (117, 255, 255)  # fibrosis 2 RCM-HS0221 1
+
 	
 	# MASSON
 	# hcm 12
@@ -231,21 +223,26 @@ if __name__ == '__main__':
 	#                        file_type='.mrxs',
 	#                        slide_type='HCM', just_save_img=False)
 	#
+	run_parallel_base_proc(start_patient=0, end_patient=26, replenish=None, server=True, he=False, masson=True,
+	                       file_type='.mrxs',
+	                       slide_type='DCM', just_save_img=False)
+	#
+	
 	# run_parallel_base_proc(start_patient=0, end_patient=26, replenish=None, server=True, he=False, masson=True,
 	#                        file_type='.mrxs',
-	#                        slide_type='DCM', just_save_img=False)
-	#
-	run_parallel_base_proc(start_patient=0, end_patient=0, replenish=None, server=True, he=False, masson=True,
-	                       file_type='.mrxs',
-	                       slide_type='RCM', just_save_img=False, run_specific=[
+	#                        slide_type='RCM', just_save_img=False)
+	
+	# run_parallel_base_proc(start_patient=0, end_patient=0, replenish=None, server=True, he=False, masson=True,
+	#                        file_type='.mrxs',
+	#                        slide_type='RCM', just_save_img=False, run_specific=[
 			# '''
 			# fibrosis 0
-			['HCM', '11', cardiac_threshold_general, fibrosis_threshold_0],  # 48835
-			['NORMAL', '2', cardiac_threshold_general, fibrosis_threshold_0],  # HS094
-			['NORMAL', '5', cardiac_threshold_general, fibrosis_threshold_0],  # HS179
-			['DCM', '10', cardiac_threshold_general, fibrosis_threshold_0],  # 35096
-			['RCM', '11', cardiac_threshold_general, fibrosis_threshold_0],  # 39062
-			['RCM', '13', cardiac_threshold_general, fibrosis_threshold_0],  # 41124
+			# ['HCM', '11', cardiac_threshold_general, fibrosis_threshold_0],  # 48835
+			# ['NORMAL', '2', cardiac_threshold_general, fibrosis_threshold_0],  # HS094
+			# ['NORMAL', '5', cardiac_threshold_general, fibrosis_threshold_0],  # HS179
+			# ['DCM', '10', cardiac_threshold_general, fibrosis_threshold_0],  # 35096
+			# ['RCM', '11', cardiac_threshold_general, fibrosis_threshold_0],  # 39062
+			# ['RCM', '13', cardiac_threshold_general, fibrosis_threshold_0],  # 41124
 			# '''
 			# '''
 			# # fibrosis 2, cardiac 0
@@ -258,7 +255,7 @@ if __name__ == '__main__':
 			# # ['RCM', '24', cardiac_threshold_0, fibrosis_threshold_RCM_HS0221],  # 221
 			# ['RCM', '24-0', cardiac_threshold_0, fibrosis_threshold_RCM_HS0221_1],  # 221 only 1
 			# '''
-		])
+		# ])
 
 	# run_parallel_base_proc(start_patient=0, end_patient=26, replenish=None, server=True, he=False, masson=True,
 	#                        file_type='.mrxs',
@@ -278,11 +275,16 @@ if __name__ == '__main__':
 	# ================ RUN ==================#
 	
 	# ================ PERSIST ===============#
+	# MASSON
+	# hcm 12
+	# dcm 26
+	# normal 12
+	# rcm 26
 	# for i in range(0, 26):
-	# 	persist(masson_patients[1][i], slide_type="MASSON")  # HCM
-	#
-	# persist(masson_patients[0][i], slide_type="MASSON") # RCM
-	#	persist(masson_patients[3][i], slide_type="MASSON") # DCM
+		# persist(masson_patients[1][i], slide_type="MASSON")  # HCM
+		# persist(masson_patients[0][i], slide_type="MASSON") # RCM
+		# persist(masson_patients[2][i], slide_type="MASSON")  # NORMAL
+		# persist(masson_patients[3][i], slide_type="MASSON") # DCM
 	# persist(masson_patients[i], slide_type="HE")
 	# for i in range(0, 4):
 	# RCM HCM NORMAL DCM
